@@ -269,6 +269,7 @@ export const IStokView: React.FC = () => {
     const roomRef = useRef<RoomManager | null>(null); 
     const pinRef = useRef(accessPin); 
     const isMounted = useRef(true);
+    const isDestroyedRef = useRef(false); // Track intentional destruction
     const msgEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     
@@ -410,6 +411,7 @@ export const IStokView: React.FC = () => {
         };
         setMyProfile(newProfile);
         if (peerRef.current) {
+            isDestroyedRef.current = true;
             peerRef.current.destroy();
             setTimeout(() => window.location.reload(), 500);
         }
@@ -461,6 +463,8 @@ export const IStokView: React.FC = () => {
 
     // --- INITIALIZE PEERJS ---
     useEffect(() => {
+        isDestroyedRef.current = false; // Reset destruction flag
+
         const initPeer = async () => {
             const Peer = (await import('peerjs')).default;
             const iceServers = await getIceServers();
@@ -511,10 +515,15 @@ export const IStokView: React.FC = () => {
 
             peer.on('disconnected', () => {
                  console.log("[ISTOK_NET] Disconnected from signalling server.");
-                 // Auto-reconnect to signalling
-                 setTimeout(() => {
-                     if (peer && !peer.destroyed) peer.reconnect();
-                 }, 3000);
+                 // Auto-reconnect to signalling only if NOT intentionally destroyed
+                 if (!isDestroyedRef.current) {
+                     setTimeout(() => {
+                         if (!isDestroyedRef.current && peer && !peer.destroyed) {
+                             console.log("[ISTOK_NET] Attempting Reconnect...");
+                             peer.reconnect();
+                         }
+                     }, 3000);
+                 }
             });
 
             peerRef.current = peer;
@@ -525,7 +534,11 @@ export const IStokView: React.FC = () => {
         }
 
         return () => {
-            if (peerRef.current) peerRef.current.destroy();
+            isDestroyedRef.current = true; // Mark as intentionally destroyed
+            if (peerRef.current) {
+                peerRef.current.destroy();
+                peerRef.current = null;
+            }
         };
     }, [mode, myProfile.id]);
 

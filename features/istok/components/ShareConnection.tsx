@@ -15,6 +15,7 @@ export const ShareConnection: React.FC<ShareConnectionProps> = ({ peerId, pin, o
 
     useEffect(() => {
         const baseUrl = window.location.origin;
+        // Standard Hash routing for PWA safety
         const url = `${baseUrl}/#connect=${peerId}&key=${pin}`;
         setShareUrl(url);
     }, [peerId, pin]);
@@ -33,7 +34,7 @@ export const ShareConnection: React.FC<ShareConnectionProps> = ({ peerId, pin, o
         if (navigator.share) {
             try {
                 await navigator.share({
-                    title: 'IStok Link',
+                    title: 'IStok Secure Link',
                     text: `Connect to Secure ID: ${peerId}\nPIN: ${pin}`,
                     url: shareUrl,
                 });

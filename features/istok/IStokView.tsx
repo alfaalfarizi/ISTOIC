@@ -8,10 +8,10 @@ import { activatePrivacyShield } from '../../utils/privacyShield';
 import { 
     Send, Zap, Radio, ScanLine, Server,
     Clock, Check, CheckCheck,
-    Mic, Square,
+    Mic, MicOff, Square,
     Menu, Skull, Activity,
     PhoneCall, QrCode, User, Shield, AlertTriangle, History, ArrowRight,
-    X, RefreshCw, Lock, Flame, ShieldAlert, Image as ImageIcon, Loader2, ArrowLeft, Wifi
+    X, RefreshCw, Lock, Flame, ShieldAlert, Image as ImageIcon, Loader2, ArrowLeft, Wifi, UploadCloud
 } from 'lucide-react';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { SidebarIStokContact, IStokSession } from './components/SidebarIStokContact';
@@ -21,6 +21,7 @@ import { CallNotification } from './components/CallNotification';
 import { MessageNotification } from './components/MessageNotification';
 import { AudioMessagePlayer, getSupportedMimeType } from './components/vn';
 import { compressImage, ImageMessage } from './components/gambar';
+import { IStokAuth } from './components/IStokAuth';
 
 // --- CONSTANTS ---
 const CHUNK_SIZE = 16384; 
@@ -135,14 +136,14 @@ const getIceServers = async (): Promise<any[]> => {
         try {
             const response = await fetch(`https://${meteredDomain}/api/v1/turn/credentials?apiKey=${meteredKey}`);
             const iceServers = await response.json();
-            console.log("[ISTOK_NET] Relay Servers (TURN) Acquired.");
+            console.log("[ISTOK_NET] Relay Servers (TURN) Acquired from Metered.");
             return iceServers;
         } catch (e) {
             console.warn("[ISTOK_NET] Failed to fetch TURN servers, falling back to STUN.", e);
         }
     }
 
-    // 2. Robust STUN Fallback list
+    // 2. Robust STUN Fallback list (Google + others for redundancy)
     return [
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
@@ -194,6 +195,9 @@ const MessageBubble = React.memo(({ msg, setViewImage, onBurn }: { msg: Message,
                     {msg.ttl && burnStarted && <BurnerTimer ttl={msg.ttl} onBurn={() => onBurn(msg.id)} />}
                 </div>
                 <div className="flex items-center gap-1 mt-1 px-1">
+                    {msg.status === 'PENDING' && <Loader2 size={8} className="animate-spin text-neutral-500" />}
+                    {msg.status === 'SENT' && <Check size={8} className="text-neutral-500" />}
+                    {msg.status === 'READ' && <CheckCheck size={8} className="text-emerald-500" />}
                     {msg.ttl && <ShieldAlert size={8} className="text-red-500" />}
                     <span className="text-[9px] text-neutral-600">{new Date(msg.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>
                 </div>
@@ -272,27 +276,39 @@ const ResumeSessionModal = ({ targetSession, onResume, onNew, onCancel }: { targ
     </div>
 );
 
-const IStokInput = React.memo(({ onSend, onTyping, disabled, isRecording, recordingTime, isVoiceMasked, onToggleMask, onStartRecord, onStopRecord, onAttach, ttlMode, onToggleTtl }: any) => {
+const IStokInput = React.memo(({ onSend, onTyping, disabled, isRecording, recordingTime, isVoiceMasked, onToggleMask, onStartRecord, onStopRecord, onAttach, ttlMode, onToggleTtl, uploadProgress }: any) => {
     const [text, setText] = useState('');
     return (
         <div className="bg-[#09090b] border-t border-white/10 p-3 z-20 pb-[max(env(safe-area-inset-bottom),1rem)]">
             <div className="flex items-center justify-between mb-2 px-1">
-                 <button onClick={onToggleTtl} className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider transition-all ${ttlMode > 0 ? 'bg-red-500/10 border-red-500/30 text-red-500' : 'bg-white/5 border-white/5 text-neutral-500'}`}>
-                    <Flame size={10} className={ttlMode > 0 ? 'fill-current' : ''} />
-                    {ttlMode > 0 ? `${ttlMode}s BURN` : 'PERSIST'}
-                 </button>
+                 <div className="flex gap-2">
+                     <button onClick={onToggleTtl} className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider transition-all ${ttlMode > 0 ? 'bg-red-500/10 border-red-500/30 text-red-500' : 'bg-white/5 border-white/5 text-neutral-500'}`}>
+                        <Flame size={10} className={ttlMode > 0 ? 'fill-current' : ''} />
+                        {ttlMode > 0 ? `${ttlMode}s BURN` : 'PERSIST'}
+                     </button>
+                     {uploadProgress > 0 && uploadProgress < 100 && (
+                         <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[9px] font-black uppercase tracking-wider">
+                             <UploadCloud size={10} className="animate-bounce" />
+                             SENDING {uploadProgress}%
+                         </div>
+                     )}
+                 </div>
                  <span className="text-[8px] font-mono text-neutral-600">E2EE_ACTIVE</span>
             </div>
 
             <div className="flex gap-2 items-end">
                 <button onClick={onAttach} className="p-3 bg-white/5 rounded-full text-neutral-400 hover:text-white transition-colors"><Zap size={20}/></button>
-                <div className="flex-1 bg-white/5 rounded-2xl px-4 py-3 border border-white/5 focus-within:border-emerald-500/30 transition-colors">
+                <div className="flex-1 bg-white/5 rounded-2xl px-4 py-3 border border-white/5 focus-within:border-emerald-500/30 transition-colors relative overflow-hidden">
+                    {/* Progress Bar Background */}
+                    {uploadProgress > 0 && (
+                        <div className="absolute inset-0 bg-blue-500/10 z-0" style={{ width: `${uploadProgress}%`, transition: 'width 0.1s linear' }}></div>
+                    )}
                     <input 
                         value={text} 
                         onChange={e=>{setText(e.target.value); onTyping();}} 
                         onKeyDown={e=>e.key==='Enter'&&text.trim()&&(onSend(text),setText(''))} 
                         placeholder={isRecording ? "Recording..." : "Message..."} 
-                        className="w-full bg-transparent outline-none text-white text-sm placeholder:text-neutral-600" 
+                        className="w-full bg-transparent outline-none text-white text-sm placeholder:text-neutral-600 relative z-10" 
                         disabled={disabled||isRecording}
                     />
                 </div>
@@ -339,6 +355,7 @@ export const IStokView: React.FC = () => {
     const [ttlMode, setTtlMode] = useState<number>(10);
 
     const [pendingImage, setPendingImage] = useState<{base64: string, size: number} | null>(null);
+    const [uploadProgress, setUploadProgress] = useState(0);
     
     const chunkBuffer = useRef<Record<string, { chunks: string[], count: number, total: number }>>({});
 
@@ -638,11 +655,30 @@ export const IStokView: React.FC = () => {
         };
     }, [myProfile.id]);
 
+    // ZOMBIE MODE: Reconnection Logic when returning from background
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                // Check if we were supposed to be connected but connection is dead
+                if (mode === 'CHAT' && connRef.current && !connRef.current.open) {
+                    console.log("[ISTOK_ZOMBIE] Application resumed. Triggering reconnection protocol.");
+                    setStage('RECONNECTING');
+                    // Simple retry logic
+                    if (targetPeerId && accessPin) {
+                        joinSession(targetPeerId, accessPin);
+                    }
+                }
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [mode, targetPeerId, accessPin]);
+
     const startHeartbeat = () => {
         if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current);
         heartbeatIntervalRef.current = setInterval(() => {
             if (connRef.current?.open) {
-                // Keep-alive ping
+                // Keep-alive ping (silent) or check state
                 // connRef.current.send({ type: 'PING' });
             } else {
                 setIsPeerOnline(false);
@@ -798,6 +834,18 @@ export const IStokView: React.FC = () => {
         const messageId = crypto.randomUUID();
         const timestamp = Date.now();
         
+        // Optimistic UI: Add immediately as pending
+        setMessages(prev => [...prev, {
+            id: messageId,
+            sender: 'ME',
+            type: type as any,
+            content,
+            timestamp,
+            status: 'PENDING',
+            ttl: ttlMode > 0 ? ttlMode : undefined,
+            ...extraData
+        }]);
+
         const rawPayload = {
             id: messageId,
             sender: 'THEM',
@@ -811,39 +859,34 @@ export const IStokView: React.FC = () => {
         const encrypted = await encryptData(JSON.stringify(rawPayload), pinRef.current);
         
         if (encrypted) {
-            // --- CHUNKING LOGIC ---
+            // --- CHUNKING LOGIC WITH PROGRESS ---
             if (encrypted.length > CHUNK_SIZE) {
                  const transferId = crypto.randomUUID();
                  const total = Math.ceil(encrypted.length / CHUNK_SIZE);
                  
-                 (async () => {
-                     for (let i = 0; i < total; i++) {
-                         const chunk = encrypted.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-                         connRef.current.send({
-                             type: 'CHUNK',
-                             transferId,
-                             idx: i,
-                             total,
-                             data: chunk
-                         });
-                         // Micro-delay optimization
-                         await new Promise(r => setTimeout(r, 5));
-                     }
-                 })();
+                 for (let i = 0; i < total; i++) {
+                     const chunk = encrypted.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+                     connRef.current.send({
+                         type: 'CHUNK',
+                         transferId,
+                         idx: i,
+                         total,
+                         data: chunk
+                     });
+                     
+                     // Update progress state
+                     setUploadProgress(Math.round(((i + 1) / total) * 100));
+                     
+                     // Micro-delay optimization to prevent buffer overflow
+                     await new Promise(r => setTimeout(r, 5));
+                 }
+                 setUploadProgress(0); // Reset after done
             } else {
                  connRef.current.send({ type: 'MSG', payload: encrypted });
             }
             
-            setMessages(prev => [...prev, {
-                id: messageId,
-                sender: 'ME',
-                type: type as any,
-                content,
-                timestamp,
-                status: 'SENT',
-                ttl: ttlMode > 0 ? ttlMode : undefined,
-                ...extraData
-            }]);
+            // Mark as Sent
+            setMessages(prev => prev.map(m => m.id === messageId ? { ...m, status: 'SENT' } : m));
             playSound('MSG_OUT');
         }
     };
@@ -1019,7 +1062,7 @@ export const IStokView: React.FC = () => {
                         className="p-6 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-4 hover:bg-white/10 transition-all"
                     >
                         <ScanLine className="text-blue-500" />
-                        <div className="text-left"><h3 className="font-bold text-white">JOIN</h3><p className="text-[10px] text-neutral-500">Enter ID</p></div>
+                        <div className="text-left"><h3 className="font-bold text-white">JOIN</h3><p className="text-[10px] text-neutral-500">Enter ID / Scan QR</p></div>
                     </button>
                 </div>
             </div>
@@ -1052,39 +1095,15 @@ export const IStokView: React.FC = () => {
                          <button onClick={() => setShowShare(true)} className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all"><QrCode size={14} /> SHARE CONNECTION</button>
                      </div>
                  ) : (
-                     <div className="w-full max-w-md space-y-4">
-                         {stage !== 'IDLE' ? (
-                             <div className="flex flex-col items-center justify-center gap-6 py-10">
-                                 <div className="relative">
-                                     <div className="w-24 h-24 rounded-full border-4 border-blue-500/20 border-t-blue-500 animate-spin"></div>
-                                     <Radio className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-blue-500" size={32} />
-                                 </div>
-                                 <div className="text-center space-y-1">
-                                     <h2 className="text-xl font-black text-white uppercase tracking-tight animate-pulse">{stage.replace('_', ' ')}</h2>
-                                     <p className="text-xs text-neutral-500 font-mono">ESTABLISHING SECURE TUNNEL</p>
-                                 </div>
-                             </div>
-                         ) : (
-                             <>
-                                <div className="text-center mb-6">
-                                    <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/20">
-                                        <ScanLine className="text-blue-500" size={32} />
-                                    </div>
-                                    <h2 className="text-lg font-black text-white uppercase">CONNECT TO PEER</h2>
-                                </div>
-                                <input 
-                                    value={targetPeerId} 
-                                    onChange={e=> { setTargetPeerId(e.target.value); }} 
-                                    placeholder="TARGET ID" 
-                                    className="w-full bg-[#09090b] p-4 rounded-xl text-white border border-white/10 outline-none text-center font-mono focus:border-blue-500 transition-colors"
-                                />
-                                <input value={accessPin} onChange={e=>setAccessPin(e.target.value)} placeholder="PIN" className="w-full bg-[#09090b] p-4 rounded-xl text-white border border-white/10 outline-none text-center font-mono tracking-widest focus:border-blue-500 transition-colors"/>
-                                <button onClick={() => joinSession()} className="w-full py-4 bg-blue-600 text-white font-black rounded-xl hover:bg-blue-500 transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2">
-                                    <Zap size={16} fill="currentColor" /> INITIATE UPLINK
-                                </button>
-                             </>
-                         )}
-                     </div>
+                     <IStokAuth 
+                        identity={myProfile.username}
+                        onRegenerateIdentity={() => {}}
+                        onHost={() => {}} // Already in join mode
+                        onJoin={(id, pin) => joinSession(id, pin)}
+                        errorMsg={errorMsg}
+                        onErrorClear={() => setErrorMsg('')}
+                        isRelayActive={isRelayActive}
+                     />
                  )}
             </div>
         );
@@ -1164,6 +1183,7 @@ export const IStokView: React.FC = () => {
                 onAttach={() => fileInputRef.current?.click()}
                 ttlMode={ttlMode}
                 onToggleTtl={handleToggleTtl}
+                uploadProgress={uploadProgress}
              />
              <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect} accept="image/*,video/*,audio/*,.pdf,.doc,.txt" />
         </div>

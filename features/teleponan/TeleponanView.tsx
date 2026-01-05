@@ -55,7 +55,11 @@ class VoiceProcessor {
     }
 
     async initMic(stream: MediaStream) {
-        if (this.ctx.state === 'suspended') await this.ctx.resume();
+        // Critical for iOS Safari: Resume context if suspended
+        if (this.ctx.state === 'suspended') {
+            await this.ctx.resume();
+        }
+        
         this.micSource = this.ctx.createMediaStreamSource(stream);
         
         // Default Chain: Mic -> Filter -> Shaper -> Output
@@ -239,6 +243,21 @@ export const TeleponanView: React.FC<TeleponanProps> = ({ onClose, existingPeer,
         }
     }, []); // Run once on mount
 
+    // iOS Audio Context Unlock
+    useEffect(() => {
+        const unlock = () => {
+            if (engineRef.current && engineRef.current.ctx.state === 'suspended') {
+                engineRef.current.ctx.resume();
+            }
+        };
+        window.addEventListener('touchstart', unlock);
+        window.addEventListener('click', unlock);
+        return () => {
+            window.removeEventListener('touchstart', unlock);
+            window.removeEventListener('click', unlock);
+        };
+    }, []);
+
     // Timer
     useEffect(() => {
         let interval: any;
@@ -297,6 +316,8 @@ export const TeleponanView: React.FC<TeleponanProps> = ({ onClose, existingPeer,
                         // If auto-answer, it might be blocked on iOS if no prior interaction.
                         audioRef.current.play().catch(e => console.warn("Auto-play blocked:", e));
                         setState('CONNECTED');
+                        
+                        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
                     }
                 });
                 
@@ -329,6 +350,8 @@ export const TeleponanView: React.FC<TeleponanProps> = ({ onClose, existingPeer,
                     audioRef.current.srcObject = remoteStream;
                     audioRef.current.play().catch(e => console.warn("Auto-play blocked:", e));
                     setState('CONNECTED');
+                    
+                    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
                 }
             });
             
@@ -340,6 +363,7 @@ export const TeleponanView: React.FC<TeleponanProps> = ({ onClose, existingPeer,
     };
 
     const terminateCall = () => {
+        if (navigator.vibrate) navigator.vibrate(200);
         setState('TERMINATED');
         callRef.current?.close();
         engineRef.current?.cleanup();

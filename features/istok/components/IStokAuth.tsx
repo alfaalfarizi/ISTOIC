@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
     Shield, Radio, Server, ScanLine, RefreshCw, 
-    Zap, Fingerprint, Activity, ArrowRight, ShieldCheck 
+    Zap, Fingerprint, Activity, ArrowRight, ShieldCheck,
+    QrCode
 } from 'lucide-react';
 import { type IStokSession } from './SidebarIStokContact';
 
@@ -200,6 +201,13 @@ export const IStokAuth: React.FC<IStokAuthProps> = ({
                                     >
                                         CONNECT
                                     </button>
+                                </div>
+                                
+                                {/* Optional QR Helper */}
+                                <div className="text-center pt-2">
+                                    <p className="text-[8px] text-neutral-600 font-mono">
+                                        OR SCAN QR WITH SYSTEM CAMERA
+                                    </p>
                                 </div>
                             </div>
                         </div>

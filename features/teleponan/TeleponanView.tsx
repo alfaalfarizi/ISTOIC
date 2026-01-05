@@ -54,6 +54,19 @@ class VoiceProcessor {
         this.ambientGain.connect(this.outputNode); // Inject ambient into output
     }
 
+    // iOS HACK: Play silent buffer to robustly unlock audio engine
+    unlock() {
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+        // Play 10ms of silence
+        const buffer = this.ctx.createBuffer(1, 1, 22050);
+        const source = this.ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(this.ctx.destination);
+        source.start(0);
+    }
+
     async initMic(stream: MediaStream) {
         // Critical for iOS Safari: Resume context if suspended
         if (this.ctx.state === 'suspended') {
@@ -243,15 +256,18 @@ export const TeleponanView: React.FC<TeleponanProps> = ({ onClose, existingPeer,
         }
     }, []); // Run once on mount
 
-    // iOS Audio Context Unlock
+    // iOS Audio Context Unlock (Global Listener)
     useEffect(() => {
         const unlock = () => {
-            if (engineRef.current && engineRef.current.ctx.state === 'suspended') {
-                engineRef.current.ctx.resume();
+            if (engineRef.current) {
+                engineRef.current.unlock(); // Trigger silent buffer
             }
         };
-        window.addEventListener('touchstart', unlock);
-        window.addEventListener('click', unlock);
+        
+        // Listen on common interaction events
+        window.addEventListener('touchstart', unlock, { once: true });
+        window.addEventListener('click', unlock, { once: true });
+        
         return () => {
             window.removeEventListener('touchstart', unlock);
             window.removeEventListener('click', unlock);
@@ -311,9 +327,7 @@ export const TeleponanView: React.FC<TeleponanProps> = ({ onClose, existingPeer,
                 call.on('stream', (remoteStream: MediaStream) => {
                     if (audioRef.current) {
                         audioRef.current.srcObject = remoteStream;
-                        // iOS Fix: Must call play() inside user interaction context usually, 
-                        // but since we are inside a button click handler context (via answer call), this might work.
-                        // If auto-answer, it might be blocked on iOS if no prior interaction.
+                        // iOS Fix: Must call play() inside user interaction context usually
                         audioRef.current.play().catch(e => console.warn("Auto-play blocked:", e));
                         setState('CONNECTED');
                         

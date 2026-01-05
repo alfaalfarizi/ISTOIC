@@ -31,6 +31,9 @@ const chunkArray = <T>(array: T[], size: number): T[][] => {
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Yield to main thread to prevent blocking UI
+const yieldToMain = () => new Promise(resolve => setTimeout(resolve, 0));
+
 export const VectorDB = {
     
     async generateEmbedding(text: string): Promise<number[] | null> {
@@ -114,10 +117,17 @@ export const VectorDB = {
 
         const vectors = await LocalDB.getAll<{ id: string, embedding: number[] }>(LocalDB.STORES.VECTORS);
         
-        const scored = vectors.map(v => ({
-            id: v.id,
-            score: cosineSimilarity(queryEmbedding, v.embedding)
-        }));
+        const scored = [];
+        // Non-blocking loop for large datasets
+        for (let i = 0; i < vectors.length; i++) {
+            // Yield every 100 items to avoid freezing UI
+            if (i % 100 === 0) await yieldToMain();
+            
+            scored.push({
+                id: vectors[i].id,
+                score: cosineSimilarity(queryEmbedding, vectors[i].embedding)
+            });
+        }
 
         // Sort descending by score
         scored.sort((a, b) => b.score - a.score);

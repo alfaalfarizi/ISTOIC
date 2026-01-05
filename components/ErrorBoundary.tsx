@@ -1,4 +1,4 @@
-import React, { type ErrorInfo, type ReactNode } from 'react';
+import React, { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Terminal, ZapOff, Copy, Check, ShieldAlert } from 'lucide-react';
 import { debugService } from '../services/debugService';
 import { KEY_MANAGER } from '../services/geminiService';
@@ -20,9 +20,9 @@ interface ErrorBoundaryState {
  * "Fokus pada apa yang ada di depan mata Anda sekarang." — Marcus Aurelius.
  * Menangani kegagalan sistem dengan ketenangan stoik.
  */
-export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   
-  public override state: ErrorBoundaryState = {
+  public state: ErrorBoundaryState = {
     hasError: false,
     error: null,
     errorInfo: null,
@@ -33,7 +33,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     return { hasError: true, error, errorInfo: null, copied: false };
   }
 
-  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.setState({ errorInfo });
     
     const view = this.props.viewName || 'UNKNOWN_MODULE';
@@ -88,7 +88,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       setTimeout(() => this.setState({ copied: false }), 2000);
   };
 
-  override render() {
+  render() {
     const { hasError, error, errorInfo, copied } = this.state;
     const { viewName, children } = this.props;
 

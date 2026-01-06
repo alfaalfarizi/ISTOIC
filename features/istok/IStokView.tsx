@@ -9,8 +9,7 @@ import {
     Mic, Menu, PhoneCall, 
     QrCode, Lock, Flame, 
     ShieldAlert, ArrowLeft, BrainCircuit, Sparkles,
-    Wifi, WifiOff, Paperclip, Camera, Globe, Languages, Check, X,
-    Download, Share as ShareIcon, PlusSquare, Loader2
+    Wifi, WifiOff, Paperclip, Camera, Globe, Languages, Check, X
 } from 'lucide-react';
 
 // --- HOOKS & SERVICES ---
@@ -23,12 +22,12 @@ import { CallNotification } from './components/CallNotification';
 import { MessageBubble } from './components/MessageBubble'; 
 import { QRScanner } from './components/QRScanner'; 
 import { compressImage } from './components/gambar';
-import { AudioMessagePlayer } from './components/vn';
+import { AudioMessagePlayer } from './components/vn'; 
 
 // --- CONSTANTS ---
 const CHUNK_SIZE = 16384; 
-const HEARTBEAT_MS = 3000; // Agresif: Ping tiap 3 detik agar tidak putus
-const CONN_TIMEOUT = 10000; // 10 Detik timeout
+const HEARTBEAT_MS = 3000; // Lebih agresif (3s)
+const CONN_TIMEOUT_MS = 15000;
 
 // Daftar Bahasa Professional
 const SUPPORTED_LANGUAGES = [
@@ -57,11 +56,11 @@ interface Message {
     mimeType?: string;
     ttl?: number; 
     isTranslated?: boolean;
-    originalLang?: string; 
+    originalLang?: string;
 }
 
 type AppMode = 'SELECT' | 'HOST' | 'JOIN' | 'CHAT';
-type ConnectionStage = 'IDLE' | 'FETCHING_RELAYS' | 'INITIALIZING_AGENT' | 'LOCATING_PEER' | 'VERIFYING_KEYS' | 'ESTABLISHING_TUNNEL' | 'AWAITING_APPROVAL' | 'SECURE' | 'RECONNECTING';
+type ConnectionStage = 'IDLE' | 'LOCATING_PEER' | 'FETCHING_RELAYS' | 'VERIFYING_KEYS' | 'ESTABLISHING_TUNNEL' | 'AWAITING_APPROVAL' | 'SECURE' | 'RECONNECTING';
 
 // --- UTILS ---
 const generateAnomalyIdentity = () => `ANOMALY-${Math.floor(Math.random() * 9000) + 1000}`;
@@ -82,29 +81,44 @@ const playSound = (type: 'MSG_IN' | 'MSG_OUT' | 'CONNECT' | 'CALL_RING' | 'BUZZ'
         gain.connect(ctx.destination);
         const now = ctx.currentTime;
         
-        const presets: any = {
-            'MSG_IN': { freq: 800, type: 'sine', dur: 0.1 },
-            'MSG_OUT': { freq: 400, type: 'sine', dur: 0.05 },
-            'CONNECT': { freq: 600, type: 'sine', dur: 0.2 },
-            'TRANSLATE': { freq: 400, type: 'square', dur: 0.15 },
-            'CALL_RING': { freq: 880, type: 'triangle', dur: 0.5 },
-            'BUZZ': { freq: 150, type: 'sawtooth', dur: 0.3 },
-            'AI_THINK': { freq: 1200, type: 'sine', dur: 0.1 },
-        };
-
-        const p = presets[type];
-        if (p) {
-            osc.type = p.type;
-            osc.frequency.setValueAtTime(p.freq, now);
+        if (type === 'MSG_IN') {
+            osc.frequency.setValueAtTime(800, now);
+            osc.frequency.exponentialRampToValueAtTime(400, now + 0.1);
             gain.gain.setValueAtTime(0.1, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + p.dur);
-            osc.start(now); osc.stop(now + p.dur);
+            gain.gain.linearRampToValueAtTime(0, now + 0.1);
+            osc.start(now); osc.stop(now + 0.1);
+        } else if (type === 'TRANSLATE') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.linearRampToValueAtTime(800, now + 0.1);
+            gain.gain.setValueAtTime(0.05, now);
+            gain.gain.linearRampToValueAtTime(0, now + 0.1);
+            osc.start(now); osc.stop(now + 0.1);
+        } else if (type === 'MSG_OUT') {
+            osc.frequency.setValueAtTime(400, now);
+            gain.gain.setValueAtTime(0.05, now);
+            gain.gain.linearRampToValueAtTime(0, now + 0.05);
+            osc.start(now); osc.stop(now + 0.05);
+        } else if (type === 'CONNECT') {
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.linearRampToValueAtTime(1200, now + 0.2);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.linearRampToValueAtTime(0, now + 0.2);
+            osc.start(now); osc.stop(now + 0.2);
+        } else if (type === 'CALL_RING') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(880, now);
+            osc.frequency.setValueAtTime(880, now + 0.5);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.setValueAtTime(0, now + 0.5);
+            osc.start(now); osc.stop(now + 0.5);
         }
     } catch(e) {}
 };
 
-// AGGRESSIVE ICE FETCHING (WALL BREAKER)
+// --- AGGRESSIVE ICE CONFIGURATION ---
 const getIceServers = async (): Promise<any[]> => {
+    // Redundant Public STUNs for Cross-Country Fallback
     const publicIce = [
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:global.stun.twilio.com:3478' },
@@ -112,120 +126,138 @@ const getIceServers = async (): Promise<any[]> => {
         { urls: 'stun:stun2.l.google.com:19302' }
     ];
 
-    const apiKey = import.meta.env.VITE_METERED_API_KEY;
-    if (!apiKey) {
-        console.warn("[ISTOK_NET] ⚠️ No TURN Key found. Using Public STUN (May fail on 4G).");
-        return publicIce;
-    }
-
     try {
-        console.log("[ISTOK_NET] 🚀 Fetching Premium TURN Servers...");
-        // Timeout 3 detik agar tidak bengong kalau Metered down
+        const apiKey = import.meta.env.VITE_METERED_API_KEY;
+        if (!apiKey) return publicIce;
+
+        // Timeout 2 detik agar tidak blocking UI jika API lambat
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
 
         const response = await fetch(`https://istoic.metered.live/api/v1/turn/credentials?apiKey=${apiKey}`, {
             signal: controller.signal
         });
-        clearTimeout(timeoutId);
-
-        if (!response.ok) throw new Error("Metered Auth Failed");
         
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) return publicIce;
         const turnServers = await response.json();
-        console.log("[ISTOK_NET] ✅ TURN Servers Active (Wall Breaker Ready)");
+        
+        // Prioritaskan TURN, lalu STUN publik
         return [...turnServers, ...publicIce];
     } catch (e) {
-        console.error("[ISTOK_NET] ❌ TURN Fetch Failed, falling back to STUN:", e);
+        // Fail-safe return public servers immediately
         return publicIce;
     }
 };
 
-// --- SUB-COMPONENTS ---
-
-const PWAInstallPrompt = () => {
-    const [supportsPWA, setSupportsPWA] = useState(false);
-    const [promptInstall, setPromptInstall] = useState<any>(null);
-    const [isIOS, setIsIOS] = useState(false);
-    const [showIOSHint, setShowIOSHint] = useState(false);
-
-    useEffect(() => {
-        const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-        setIsIOS(ios);
-        const handler = (e: any) => { e.preventDefault(); setPromptInstall(e); setSupportsPWA(true); };
-        window.addEventListener("beforeinstallprompt", handler);
-        return () => window.removeEventListener("beforeinstallprompt", handler);
-    }, []);
-
-    const handleInstall = (e: React.MouseEvent) => {
-        e.preventDefault();
-        if (isIOS) setShowIOSHint(true);
-        else if (promptInstall) promptInstall.prompt();
-    };
-
-    if (!supportsPWA && !isIOS) return null;
-
-    return (
-        <>
-            {supportsPWA && (
-                <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[50] animate-slide-down">
-                    <button onClick={handleInstall} className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-[10px] font-bold text-white shadow-lg hover:bg-white/20 transition-all">
-                        <Download size={12} /> INSTALL APP
-                    </button>
-                </div>
-            )}
-            {showIOSHint && (
-                <div className="fixed inset-0 z-[100001] bg-black/90 backdrop-blur flex flex-col justify-end pb-safe-bottom" onClick={() => setShowIOSHint(false)}>
-                    <div className="bg-[#1c1c1e] rounded-t-3xl p-6 pb-12 animate-slide-up border-t border-white/10">
-                        <h3 className="text-white font-bold text-lg mb-4">Install to iPhone</h3>
-                        <div className="space-y-4 text-sm text-neutral-300">
-                            <div className="flex items-center gap-4"><ShareIcon size={24} className="text-blue-500" /><p>1. Tap <span className="text-white font-bold">Share</span></p></div>
-                            <div className="flex items-center gap-4"><PlusSquare size={24} className="text-white" /><p>2. Tap <span className="text-white font-bold">Add to Home Screen</span></p></div>
-                        </div>
-                        <div className="mt-6 w-12 h-1 bg-white/20 rounded-full mx-auto"></div>
-                    </div>
-                </div>
-            )}
-        </>
-    );
-};
-
-const IStokInput = React.memo(({ onSend, onTyping, disabled, isRecording, recordingTime, isVoiceMasked, onToggleMask, onStartRecord, onStopRecord, onAttach, ttlMode, onToggleTtl, onAiAssist, isAiThinking, translateTarget, setTranslateTarget }: any) => {
+// --- SUB-COMPONENT: INPUT WITH AI TRANSLATE ---
+const IStokInput = React.memo(({ 
+    onSend, onTyping, disabled, isRecording, recordingTime, 
+    isVoiceMasked, onToggleMask, onStartRecord, onStopRecord, 
+    onAttach, ttlMode, onToggleTtl, onAiAssist, isAiThinking,
+    translateTarget, setTranslateTarget
+}: any) => {
     const [text, setText] = useState('');
     const [showLangMenu, setShowLangMenu] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const insertText = (newText: string) => setText(newText);
 
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (showLangMenu && !(e.target as Element).closest('.lang-menu')) {
+                setShowLangMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showLangMenu]);
+
     return (
-        <div className="bg-[#09090b]/95 backdrop-blur border-t border-white/10 p-3 z-20 pb-[calc(env(safe-area-inset-bottom)+1rem)] relative shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+        <div className="bg-[#09090b] border-t border-white/10 p-3 z-20 pb-[max(env(safe-area-inset-bottom),1rem)] relative">
+            
             {showLangMenu && (
                 <div className="lang-menu absolute bottom-full left-4 mb-2 bg-[#121214] border border-white/10 rounded-xl p-2 shadow-2xl w-48 animate-slide-up z-50">
-                    <div className="text-[9px] font-bold text-neutral-500 mb-2 px-2 uppercase tracking-widest border-b border-white/5 pb-1">AI CORE TRANSLATE</div>
+                    <div className="text-[9px] font-bold text-neutral-500 mb-2 px-2 uppercase tracking-widest">AI CORE TRANSLATE</div>
                     <div className="space-y-1 max-h-48 overflow-y-auto custom-scroll">
-                        <button onClick={() => { setTranslateTarget(null); setShowLangMenu(false); }} className={`w-full flex items-center gap-2 p-2 rounded-lg text-xs font-bold transition-all ${!translateTarget ? 'bg-emerald-600 text-white' : 'text-neutral-400 hover:bg-white/5'}`}><X size={12} /> OFF (Original)</button>
+                        <button 
+                            onClick={() => { setTranslateTarget(null); setShowLangMenu(false); }}
+                            className={`w-full flex items-center gap-2 p-2 rounded-lg text-xs font-bold transition-all ${!translateTarget ? 'bg-emerald-600 text-white' : 'text-neutral-400 hover:bg-white/5'}`}
+                        >
+                            <X size={12} /> OFF (Original)
+                        </button>
                         {SUPPORTED_LANGUAGES.map(lang => (
-                            <button key={lang.code} onClick={() => { setTranslateTarget(lang); setShowLangMenu(false); }} className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-bold transition-all ${translateTarget?.code === lang.code ? 'bg-blue-600 text-white' : 'text-neutral-300 hover:bg-white/5'}`}><span className="flex items-center gap-2">{lang.icon} {lang.name}</span>{translateTarget?.code === lang.code && <Check size={12}/>}</button>
+                            <button 
+                                key={lang.code}
+                                onClick={() => { setTranslateTarget(lang); setShowLangMenu(false); }}
+                                className={`w-full flex items-center justify-between p-2 rounded-lg text-xs font-bold transition-all ${translateTarget?.code === lang.code ? 'bg-blue-600 text-white' : 'text-neutral-300 hover:bg-white/5'}`}
+                            >
+                                <span className="flex items-center gap-2">{lang.icon} {lang.name}</span>
+                                {translateTarget?.code === lang.code && <Check size={12}/>}
+                            </button>
                         ))}
                     </div>
                 </div>
             )}
+
             <div className="flex items-center justify-between mb-2 px-1">
                  <div className="flex gap-2">
-                     <button onClick={onToggleTtl} className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider transition-all ${ttlMode > 0 ? 'bg-red-500/10 border-red-500/30 text-red-500' : 'bg-white/5 border-white/5 text-neutral-500'}`}><Flame size={10} className={ttlMode > 0 ? 'fill-current' : ''} />{ttlMode > 0 ? `${ttlMode}s` : 'OFF'}</button>
-                     <button onClick={() => onAiAssist(text, insertText)} disabled={isAiThinking} className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider transition-all ${isAiThinking ? 'bg-purple-500/20 border-purple-500 text-purple-400 animate-pulse' : 'bg-white/5 border-white/5 text-neutral-500 hover:text-purple-400'}`}>{isAiThinking ? <Sparkles size={10} className="animate-spin" /> : <BrainCircuit size={10} />}{isAiThinking ? 'RACING...' : 'AI DRAFT'}</button>
-                     <button onClick={() => setShowLangMenu(!showLangMenu)} className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider transition-all ${translateTarget ? 'bg-blue-500/20 border-blue-500 text-blue-400' : 'bg-white/5 border-white/5 text-neutral-500'}`}><Globe size={10} />{translateTarget ? translateTarget.code.toUpperCase() : 'LANG'}</button>
+                     <button onClick={onToggleTtl} className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider transition-all ${ttlMode > 0 ? 'bg-red-500/10 border-red-500/30 text-red-500' : 'bg-white/5 border-white/5 text-neutral-500'}`}>
+                        <Flame size={10} className={ttlMode > 0 ? 'fill-current' : ''} />
+                        {ttlMode > 0 ? `${ttlMode}s` : 'OFF'}
+                     </button>
+                     
+                     <button 
+                        onClick={() => onAiAssist(text, insertText)} 
+                        disabled={isAiThinking}
+                        className={`flex items-center gap-1.5 px-2 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider transition-all ${isAiThinking ? 'bg-purple-500/20 border-purple-500 text-purple-400 animate-pulse' : 'bg-white/5 border-white/5 text-neutral-500 hover:text-purple-400 hover:border-purple-500/30'}`}
+                     >
+                        {isAiThinking ? <Sparkles size={10} className="animate-spin" /> : <BrainCircuit size={10} />}
+                        {isAiThinking ? 'RACING...' : 'AI DRAFT'}
+                     </button>
+
+                     <button 
+                        onClick={() => setShowLangMenu(!showLangMenu)}
+                        className={`lang-menu flex items-center gap-1.5 px-2 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider transition-all ${translateTarget ? 'bg-blue-500/20 border-blue-500 text-blue-400' : 'bg-white/5 border-white/5 text-neutral-500 hover:text-white'}`}
+                     >
+                        <Globe size={10} />
+                        {translateTarget ? translateTarget.code.toUpperCase() : 'LANG'}
+                     </button>
                  </div>
+                 
                  <span className="text-[8px] font-mono text-emerald-500/50 flex items-center gap-1"><Lock size={8}/> E2EE</span>
             </div>
+
             <div className="flex gap-2 items-end">
                 <button onClick={onAttach} className="p-3 bg-white/5 rounded-full text-neutral-400 hover:text-white transition-colors"><Paperclip size={20}/></button>
-                <div className={`flex-1 bg-white/5 rounded-2xl px-4 py-3 border focus-within:border-emerald-500/30 transition-colors relative ${translateTarget ? 'border-blue-500/30' : 'border-white/5'}`}>
-                    <input ref={inputRef} value={text} onChange={e=>{setText(e.target.value); onTyping();}} onKeyDown={e=>e.key==='Enter'&&text.trim()&&(onSend(text),setText(''))} placeholder={isRecording ? "Recording..." : (translateTarget ? `Translating to ${translateTarget.name}...` : "Message...")} className="w-full bg-transparent outline-none text-white text-sm placeholder:text-neutral-600" disabled={disabled||isRecording || isAiThinking}/>
+                <div className="flex-1 bg-white/5 rounded-2xl px-4 py-3 border border-white/5 focus-within:border-emerald-500/30 transition-colors relative">
+                    <input 
+                        ref={inputRef}
+                        value={text} 
+                        onChange={e=>{setText(e.target.value); onTyping();}} 
+                        onKeyDown={e=>e.key==='Enter'&&text.trim()&&(onSend(text),setText(''))} 
+                        placeholder={isRecording ? "Recording..." : (translateTarget ? `Translating to ${translateTarget.name}...` : "Message...")} 
+                        className="w-full bg-transparent outline-none text-white text-sm placeholder:text-neutral-600" 
+                        disabled={disabled||isRecording || isAiThinking}
+                    />
                 </div>
                 {text.trim() ? (
-                    <button onClick={()=>{onSend(text); setText('');}} disabled={isAiThinking} className={`p-3 rounded-full text-white shadow-lg transition-all active:scale-95 ${isAiThinking ? 'bg-neutral-700' : (translateTarget ? 'bg-blue-600' : 'bg-emerald-600')}`}>{isAiThinking ? <Loader2 size={20} className="animate-spin"/> : <Send size={20}/>}</button>
+                    <button 
+                        onClick={()=>{onSend(text); setText('');}} 
+                        disabled={isAiThinking}
+                        className={`p-3 rounded-full text-white shadow-lg transition-all active:scale-95 ${isAiThinking ? 'bg-neutral-700 cursor-wait' : (translateTarget ? 'bg-blue-600 hover:bg-blue-500' : 'bg-emerald-600 hover:bg-emerald-500')}`}
+                    >
+                        {isAiThinking ? <Languages size={20} className="animate-pulse"/> : <Send size={20}/>}
+                    </button>
                 ) : (
-                    <button onMouseDown={onStartRecord} onMouseUp={onStopRecord} onTouchStart={onStartRecord} onTouchEnd={onStopRecord} className={`p-3 rounded-full transition-all ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-white/5 text-neutral-400'}`}><Mic size={20}/></button>
+                    <button 
+                        onMouseDown={onStartRecord} onMouseUp={onStopRecord} 
+                        onTouchStart={onStartRecord} onTouchEnd={onStopRecord} 
+                        className={`p-3 rounded-full transition-all ${isRecording ? 'bg-red-500 text-white shadow-[0_0_15px_red] animate-pulse' : 'bg-white/5 text-neutral-400'}`}
+                    >
+                        <Mic size={20}/>
+                    </button>
                 )}
             </div>
         </div>
@@ -235,34 +267,48 @@ const IStokInput = React.memo(({ onSend, onTyping, disabled, isRecording, record
 // --- MAIN COMPONENT ---
 
 export const IStokView: React.FC = () => {
+    // STATE
     const [mode, setMode] = useState<AppMode>('SELECT');
     const [stage, setStage] = useState<ConnectionStage>('IDLE');
     const [errorMsg, setErrorMsg] = useState<string>('');
-    const [myProfile] = useLocalStorage<IStokProfile>('istok_profile_v1', { id: generateStableId(), username: generateAnomalyIdentity(), created: Date.now() });
+    
+    // DATA
+    const [myProfile, setMyProfile] = useLocalStorage<IStokProfile>('istok_profile_v1', {
+        id: generateStableId(),
+        username: generateAnomalyIdentity(),
+        created: Date.now()
+    });
     const [sessions, setSessions] = useLocalStorage<IStokSession[]>('istok_sessions', []);
     
+    // CONNECTION
     const [targetPeerId, setTargetPeerId] = useState<string>('');
     const [accessPin, setAccessPin] = useState<string>('');
     const [pendingJoin, setPendingJoin] = useState<{id:string, pin:string} | null>(null);
     
+    // UI FLAGS
     const [showSidebar, setShowSidebar] = useState(false);
     const [showShare, setShowShare] = useState(false);
     const [showCall, setShowCall] = useState(false);
     const [viewImage, setViewImage] = useState<string|null>(null);
     const [showScanner, setShowScanner] = useState(false);
     
+    // CHAT & MEDIA
     const [messages, setMessages] = useState<Message[]>([]);
     const [isPeerOnline, setIsPeerOnline] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
     const [isVoiceMasked, setIsVoiceMasked] = useState(false);
     const [ttlMode, setTtlMode] = useState(0); 
+    
+    // AI & TRANSLATION
     const [isAiThinking, setIsAiThinking] = useState(false); 
     const [translateTarget, setTranslateTarget] = useState<any>(null);
 
+    // NOTIFICATIONS
     const [incomingRequest, setIncomingRequest] = useState<any>(null);
     const [incomingCall, setIncomingCall] = useState<any>(null);
 
+    // REFS
     const peerRef = useRef<any>(null);
     const connRef = useRef<any>(null);
     const pinRef = useRef(accessPin);
@@ -274,15 +320,14 @@ export const IStokView: React.FC = () => {
     const audioChunksRef = useRef<Blob[]>([]);
     const recordingIntervalRef = useRef<any>(null);
 
+    // --- EFFECTS ---
+
     useEffect(() => { pinRef.current = accessPin; }, [accessPin]);
+    
     useEffect(() => { msgEndRef.current?.scrollIntoView({behavior:'smooth'}); }, [messages]);
 
-    // INIT
     useEffect(() => {
         activatePrivacyShield();
-        document.body.style.overscrollBehavior = 'none';
-        
-        // AUTO DEEP LINK
         try {
             const url = new URL(window.location.href);
             const connect = url.searchParams.get('connect');
@@ -295,25 +340,16 @@ export const IStokView: React.FC = () => {
                 window.history.replaceState({}, '', window.location.pathname);
             }
         } catch(e) {}
-
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                if (peerRef.current && peerRef.current.disconnected) {
-                    console.log("[ISTOK_NET] App foreground, reconnecting peer...");
-                    peerRef.current.reconnect();
-                }
-            }
-        };
-        document.addEventListener("visibilitychange", handleVisibilityChange);
-        return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
     }, []);
 
-    // HEARTBEAT
+    // --- LOGIC: HELPER FUNCTIONS ---
+    
     const startHeartbeat = useCallback(() => {
         if (heartbeatRef.current) clearInterval(heartbeatRef.current);
         heartbeatRef.current = setInterval(() => {
             if (!connRef.current?.open) {
                 setIsPeerOnline(false);
+                // Aggressive check: if not open, try to close cleanly to trigger reconnect
             } else {
                 connRef.current.send({ type: 'PING' });
                 setIsPeerOnline(true);
@@ -324,7 +360,7 @@ export const IStokView: React.FC = () => {
     const handleDisconnect = useCallback(() => {
         setIsPeerOnline(false);
         setStage('RECONNECTING');
-        // Auto retry logic could go here
+        // Auto-attempt reconnect logic could go here
     }, []);
 
     const handleData = useCallback(async (data: any, incomingConn?: any) => {
@@ -332,20 +368,16 @@ export const IStokView: React.FC = () => {
             const { id, idx, total, chunk } = data;
             if(!chunkBuffer.current[id]) chunkBuffer.current[id] = { chunks: new Array(total), count:0, total };
             const buf = chunkBuffer.current[id];
-            if(!buf.chunks[idx]) { buf.chunks[idx] = chunk; buf.count++; }
+            if(!buf.chunks[idx]) {
+                buf.chunks[idx] = chunk;
+                buf.count++;
+            }
             if(buf.count === total) {
                 const full = buf.chunks.join('');
-                delete chunkBuffer.current[id];
+                delete chunkBuffer.current[id]; // Cleanup memory immediately
                 handleData({type:'MSG', payload: full}, incomingConn);
             }
             return;
-        }
-
-        // --- INSTANT NOTIFICATION TRIGGER ---
-        // Jika request koneksi masuk, langsung tampilkan notifikasi tanpa delay enkripsi
-        if (data.type === 'REQ_PRE_CHECK') {
-             playSound('MSG_IN'); // Pre-alert
-             return;
         }
 
         const currentPin = pinRef.current;
@@ -355,9 +387,8 @@ export const IStokView: React.FC = () => {
             if (json) {
                 const req = JSON.parse(json);
                 if (req.type === 'CONNECTION_REQUEST') {
-                    playSound('MSG_IN');
-                    // Force state update immediately
                     setIncomingRequest({ peerId: incomingConn.peer, identity: req.identity, conn: incomingConn });
+                    playSound('MSG_IN');
                 }
             }
         }
@@ -391,18 +422,15 @@ export const IStokView: React.FC = () => {
             const json = await decryptData(data.payload, currentPin);
             if (json) {
                 const msg = JSON.parse(json);
-                setMessages(p => {
-                    const newH = [...p, { ...msg, sender: 'THEM', status: 'READ' }];
-                    return newH.length > 100 ? newH.slice(newH.length - 100) : newH;
-                });
+                setMessages(p => [...p, { ...msg, sender: 'THEM', status: 'READ' }]);
                 playSound('MSG_IN');
             }
         }
         else if (data.type === 'SIGNAL' && data.action === 'BUZZ') { triggerHaptic([100,50,100]); playSound('BUZZ'); }
-        else if (data.type === 'PING') { /* Keep Alive */ }
+        else if (data.type === 'PING') { setIsPeerOnline(true); } // Handle Keep-Alive
     }, [startHeartbeat, setSessions]);
 
-    // --- AGGRESSIVE INIT ---
+    // --- PEER INIT (AGGRESSIVE) ---
     useEffect(() => {
         let mounted = true;
         if (peerRef.current) return;
@@ -410,28 +438,25 @@ export const IStokView: React.FC = () => {
         const init = async () => {
             try {
                 setStage('FETCHING_RELAYS');
-                // 1. Fetch ICE Server first (Blocking)
                 const iceServers = await getIceServers();
                 
                 const { Peer } = await import('peerjs');
                 if (!mounted) return;
 
-                setStage('INITIALIZING_AGENT');
                 const peer = new Peer(myProfile.id, {
-                    debug: 1,
+                    debug: 1, // Keep low for prod speed
                     secure: true,
                     config: { 
                         iceServers, 
                         sdpSemantics: 'unified-plan',
-                        iceTransportPolicy: 'all' // Force TURN usage if needed
+                        iceCandidatePoolSize: 10 // Pre-fetch candidates for speed
                     },
-                    retry_timer: 1000
+                    retry_timer: 500, // Faster retry
                 });
 
                 peer.on('open', () => {
-                    console.log("[ISTOK_NET] Peer Ready (Wall Breaker On):", myProfile.id);
+                    console.log("[ISTOK_NET] Peer Ready (Aggressive Mode):", myProfile.id);
                     setStage('IDLE');
-                    
                     if (pendingJoin) {
                         setTimeout(() => joinSession(pendingJoin.id, pendingJoin.pin), 500);
                         setPendingJoin(null);
@@ -441,7 +466,7 @@ export const IStokView: React.FC = () => {
                 peer.on('connection', c => {
                     c.on('data', d => handleData(d, c));
                     c.on('close', handleDisconnect);
-                    c.on('error', (e) => console.error("Conn Error", e));
+                    c.on('error', (e) => { console.warn("Conn Error", e); handleDisconnect(); });
                 });
 
                 peer.on('call', call => {
@@ -451,23 +476,20 @@ export const IStokView: React.FC = () => {
                 });
 
                 peer.on('error', err => {
-                    console.warn("Peer Error:", err);
                     if (err.type === 'peer-unavailable') { 
-                        setErrorMsg("Target Offline / Blocked"); 
+                        setErrorMsg("Target Offline"); 
                         setStage('IDLE'); 
-                    }
-                    else if (err.type === 'disconnected') { 
-                        peer.reconnect(); 
-                    }
-                    else if (err.type === 'network') {
-                        setErrorMsg("Network Fail - Check 4G/WiFi");
+                    } else if (err.type === 'disconnected') { 
+                        peer.reconnect(); // Aggressive Reconnect
+                    } else if (err.type === 'network') {
+                        // Network changed, force aggressive reconnect
+                         setTimeout(() => peer.reconnect(), 1000);
                     }
                 });
 
                 peerRef.current = peer;
             } catch (e) {
-                console.error("Critical Init Fail", e);
-                setErrorMsg("Init Failed. Refresh App.");
+                setErrorMsg("Net Init Fail");
             }
         };
         init();
@@ -478,52 +500,31 @@ export const IStokView: React.FC = () => {
         };
     }, []);
 
-    // --- CONNECTION LOGIC ---
+    // --- FUNCTIONS ---
 
     const joinSession = (id?: string, pin?: string) => {
         const target = id || targetPeerId;
         const key = pin || accessPin;
-        
-        setMode('JOIN'); 
-        setTargetPeerId(target);
-        setAccessPin(key);
-
         if (!target || !key) return;
 
         if (!peerRef.current || peerRef.current.disconnected) {
-            console.log("Peer Disconnected, reconnecting...");
             peerRef.current?.reconnect();
             setPendingJoin({id: target, pin: key});
             return;
         }
 
         setStage('LOCATING_PEER');
-        if(connRef.current) connRef.current.close();
-
-        // RELIABLE MODE ON
+        
+        // Aggressive Connection Config
         const conn = peerRef.current.connect(target, { 
             reliable: true,
-            serialization: 'json'
+            serialization: 'binary', // Faster than json
+            metadata: { aggressive: true }
         });
         
-        // Timeout Safety
-        const connTimeout = setTimeout(() => {
-            if (!conn.open) {
-                conn.close();
-                setErrorMsg("Connection Timeout. Retrying...");
-                // Auto Retry once
-                setTimeout(() => joinSession(target, key), 2000);
-            }
-        }, CONN_TIMEOUT);
-
         conn.on('open', async () => {
-            clearTimeout(connTimeout);
             setStage('VERIFYING_KEYS');
             connRef.current = conn;
-            
-            // Send Pre-Check (Unencrypted) to wake up UI
-            conn.send({ type: 'REQ_PRE_CHECK' });
-
             const payload = JSON.stringify({ type: 'CONNECTION_REQUEST', identity: myProfile.username });
             const encrypted = await encryptData(payload, key);
             
@@ -532,74 +533,83 @@ export const IStokView: React.FC = () => {
                 setStage('AWAITING_APPROVAL');
             } else {
                 conn.close();
-                setErrorMsg("Encryption Gen Failed");
+                setErrorMsg("Encryption Failed");
             }
         });
 
         conn.on('data', (d: any) => handleData(d, conn));
         conn.on('close', handleDisconnect);
-        conn.on('error', (e: any) => { 
-            clearTimeout(connTimeout);
-            setStage('IDLE'); 
-            setErrorMsg("Conn Error: " + e.message); 
-        });
+        conn.on('error', () => { setStage('IDLE'); setErrorMsg("Conn Error"); });
     };
 
     const handleQRScan = (data: string) => {
         setShowScanner(false);
         playSound('CONNECT');
-        let tId = data, tPin = '';
         try {
             const url = new URL(data);
-            const c = url.searchParams.get('connect');
-            const k = url.searchParams.get('key');
-            if (c && k) { tId = c; tPin = k; }
+            const connect = url.searchParams.get('connect');
+            const key = url.searchParams.get('key');
+            if (connect && key) {
+                joinSession(connect, key);
+                return;
+            }
         } catch(e) {}
-        try {
-           const p = JSON.parse(data);
-           if(p.id && p.pin) { tId = p.id; tPin = p.pin; }
-        } catch(e) {}
+        setTargetPeerId(data);
+    };
 
-        if(tId) {
-            setTargetPeerId(tId);
-            setAccessPin(tPin);
-            joinSession(tId, tPin);
+    // --- POWERFUL AI FEATURES ---
+
+    const handleAiAssist = async (currentText: string, setTextCallback: (t: string) => void) => {
+        setIsAiThinking(true);
+        playSound('AI_THINK');
+        
+        const context = messages.slice(-5).map(m => `${m.sender}: ${m.content}`).join('\n');
+        const prompt = currentText ? 
+            `Draft a continuation or reply for: "${currentText}". Context:\n${context}` : 
+            `Suggest a reply to the last message. Context:\n${context}`;
+
+        try {
+            if (OMNI_KERNEL && OMNI_KERNEL.raceStream) {
+                const stream = OMNI_KERNEL.raceStream(prompt, "You are a helpful, brief chat assistant. Respond in Indonesian.");
+                let fullDraft = '';
+                for await (const chunk of stream) {
+                    if (chunk.text) {
+                        fullDraft += chunk.text;
+                        setTextCallback(fullDraft);
+                    }
+                }
+            } else {
+               setTimeout(() => setTextCallback("AI Engine not ready."), 1000);
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsAiThinking(false);
         }
     };
 
-    // --- AI TRANSLATE ---
+    // --- CORE TRANSLATE LOGIC ---
     const performNeuralTranslation = async (text: string, langName: string): Promise<string> => {
         if (!text) return text;
         try {
             if (OMNI_KERNEL && OMNI_KERNEL.raceStream) {
-                const prompt = `Translate to ${langName}. Professional/Native tone. Text: "${text}"`;
-                const stream = OMNI_KERNEL.raceStream(prompt, "Translator");
+                const prompt = `Translate the following text to ${langName}. 
+                IMPORTANT: Maintain a professional, accurate, and culturally appropriate tone. 
+                Do not add explanations, just return the translated text.
+                Text: "${text}"`;
+                
+                const stream = OMNI_KERNEL.raceStream(prompt, "You are a professional translator engine.");
                 let fullTranslation = '';
                 for await (const chunk of stream) {
                     if (chunk.text) fullTranslation += chunk.text;
                 }
                 return fullTranslation.trim() || text;
             }
+            return text + " [AI Offline]";
+        } catch (e) {
+            console.error("Translation Failed", e);
             return text;
-        } catch (e) { return text; }
-    };
-
-    // --- AI ASSIST ---
-    const handleAiAssist = async (currentText: string, setTextCallback: (t: string) => void) => {
-        setIsAiThinking(true);
-        playSound('AI_THINK');
-        const context = messages.slice(-5).map(m => `${m.sender}: ${m.content}`).join('\n');
-        const prompt = currentText ? `Draft reply for: "${currentText}". Context:\n${context}` : `Suggest reply. Context:\n${context}`;
-        try {
-            if (OMNI_KERNEL) {
-                const stream = OMNI_KERNEL.raceStream(prompt, "Chat Assistant (Indonesian)");
-                let fullDraft = '';
-                for await (const chunk of stream) {
-                    if (chunk.text) { fullDraft += chunk.text; setTextCallback(fullDraft); }
-                }
-            }
-        } catch (e) {}
-        setIsAiThinking(false);
+        }
     };
 
     // --- SEND LOGIC ---
@@ -611,22 +621,23 @@ export const IStokView: React.FC = () => {
 
         if (type === 'TEXT' && translateTarget && content.trim().length > 0) {
             setIsAiThinking(true);
-            playSound('TRANSLATE'); 
-            
-            const timeoutPromise = new Promise<string>((resolve) => setTimeout(() => resolve(content), 5000));
-            const translationPromise = performNeuralTranslation(content, translateTarget.name);
-            
-            finalContent = await Promise.race([translationPromise, timeoutPromise]);
-            if (finalContent !== content) isTranslated = true;
-            
+            playSound('TRANSLATE');
+            finalContent = await performNeuralTranslation(content, translateTarget.name);
+            isTranslated = true;
             setIsAiThinking(false);
         }
 
         const msgId = crypto.randomUUID();
         const timestamp = Date.now();
         const payloadObj = { 
-            id: msgId, type, content: finalContent, timestamp, ttl: ttlMode,
-            isTranslated, originalLang: translateTarget ? translateTarget.name : undefined, ...extras 
+            id: msgId, 
+            type, 
+            content: finalContent, 
+            timestamp, 
+            ttl: ttlMode,
+            isTranslated,
+            originalLang: translateTarget ? translateTarget.name : undefined,
+            ...extras 
         };
         
         const encrypted = await encryptData(JSON.stringify(payloadObj), pinRef.current);
@@ -645,24 +656,17 @@ export const IStokView: React.FC = () => {
             connRef.current.send({ type: 'MSG', payload: encrypted });
         }
 
-        setMessages(p => {
-            const newH = [...p, { ...payloadObj, sender: 'ME', status: 'SENT' } as Message];
-            return newH.length > 100 ? newH.slice(newH.length - 100) : newH;
-        });
+        setMessages(p => [...p, { ...payloadObj, sender: 'ME', status: 'SENT' } as Message]);
         playSound('MSG_OUT');
     };
 
     // --- RENDER ---
     
-    // HOME SCREEN
     if (mode === 'SELECT') {
         return (
-            <div className="h-[100dvh] flex flex-col items-center justify-center p-6 relative font-sans overflow-hidden pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-                {/* Background tanpa Noise, Clean Professional */}
-                <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] to-black"></div>
-                <div className="absolute top-[-20%] left-[-20%] w-[50%] h-[50%] bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none"></div>
+            <div className="h-[100dvh] bg-[#050505] flex flex-col items-center justify-center p-6 relative font-sans overflow-hidden">
+                <div className="absolute top-[-20%] left-[-20%] w-[50%] h-[50%] bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none"></div>
                 
-                {/* NOTIFICATIONS */}
                 {incomingRequest && (
                     <ConnectionNotification 
                         identity={incomingRequest.identity} 
@@ -681,92 +685,94 @@ export const IStokView: React.FC = () => {
                 )}
 
                 <div className="text-center z-10 space-y-2 mb-10">
-                    <h1 className="text-5xl font-black text-white italic tracking-tighter drop-shadow-xl">IStoic <span className="text-emerald-500">P2P</span></h1>
+                    <h1 className="text-5xl font-black text-white italic tracking-tighter drop-shadow-lg">IStoic <span className="text-emerald-500">P2P</span></h1>
                     <div className="flex items-center justify-center gap-2">
-                        <span className="px-2 py-0.5 bg-emerald-900/30 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/20 tracking-wider">V5.0 HYPER</span>
-                        <span className="px-2 py-0.5 bg-blue-900/30 text-blue-400 text-[9px] font-bold rounded border border-blue-500/20 tracking-wider">TURN+</span>
+                        <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 text-[9px] font-bold rounded border border-emerald-500/20">V5.0 HYPER-LINK</span>
+                        <span className="px-2 py-0.5 bg-blue-500/10 text-blue-500 text-[9px] font-bold rounded border border-blue-500/20">GLOBAL MESH</span>
                     </div>
                 </div>
 
                 <div className="grid gap-4 w-full max-w-xs z-10">
-                    <button onClick={()=>{setAccessPin(Math.floor(100000+Math.random()*900000).toString()); setMode('HOST');}} className="group relative p-5 bg-[#0e0e10] border border-white/5 hover:border-emerald-500/50 rounded-2xl flex items-center gap-4 transition-all overflow-hidden hover:shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+                    <button onClick={()=>{setAccessPin(Math.floor(100000+Math.random()*900000).toString()); setMode('HOST');}} className="group relative p-5 bg-[#09090b] border border-white/10 hover:border-emerald-500/50 rounded-2xl flex items-center gap-4 transition-all overflow-hidden">
+                        <div className="absolute inset-0 bg-emerald-500/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                         <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-500 relative"><Server size={24}/></div>
                         <div className="text-left relative">
-                            <h3 className="text-white font-bold tracking-wide text-sm">HOST SECURE</h3>
+                            <h3 className="text-white font-bold tracking-wide">HOST SECURE</h3>
                             <p className="text-[10px] text-neutral-500">Create Encrypted Room</p>
                         </div>
                     </button>
 
-                    <button onClick={()=>setMode('JOIN')} className="group relative p-5 bg-[#0e0e10] border border-white/5 hover:border-blue-500/50 rounded-2xl flex items-center gap-4 transition-all overflow-hidden hover:shadow-[0_0_30px_rgba(59,130,246,0.1)]">
+                    <button onClick={()=>setMode('JOIN')} className="group relative p-5 bg-[#09090b] border border-white/10 hover:border-blue-500/50 rounded-2xl flex items-center gap-4 transition-all overflow-hidden">
+                        <div className="absolute inset-0 bg-blue-500/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                         <div className="p-3 bg-blue-500/10 rounded-xl text-blue-500 relative"><ScanLine size={24}/></div>
                         <div className="text-left relative">
-                            <h3 className="text-white font-bold tracking-wide text-sm">JOIN TARGET</h3>
+                            <h3 className="text-white font-bold tracking-wide">JOIN TARGET</h3>
                             <p className="text-[10px] text-neutral-500">Scan QR / Enter ID</p>
                         </div>
                     </button>
                     
-                    <button onClick={()=>setShowSidebar(true)} className="p-4 text-neutral-500 hover:text-white text-xs font-bold tracking-widest flex items-center justify-center gap-2 transition-colors">
+                    <button onClick={()=>setShowSidebar(true)} className="p-4 text-neutral-500 hover:text-white text-xs font-bold tracking-widest flex items-center justify-center gap-2">
                         <Menu size={14}/> CONTACTS
                     </button>
                 </div>
 
-                <SidebarIStokContact isOpen={showSidebar} onClose={()=>setShowSidebar(false)} sessions={sessions} profile={myProfile} onSelect={(s)=>{ setTargetPeerId(s.id); setAccessPin(s.pin); joinSession(s.id, s.pin); setShowSidebar(false); }} onCallContact={()=>{}} onRenameSession={()=>{}} onDeleteSession={()=>{}} onRegenerateProfile={()=>{}} currentPeerId={null} />
+                <SidebarIStokContact 
+                    isOpen={showSidebar} onClose={()=>setShowSidebar(false)} sessions={sessions} profile={myProfile}
+                    onSelect={(s)=>{ setTargetPeerId(s.id); setAccessPin(s.pin); joinSession(s.id, s.pin); setShowSidebar(false); }}
+                    onCallContact={()=>{}} onRenameSession={()=>{}} onDeleteSession={()=>{}} onRegenerateProfile={()=>{}} currentPeerId={null}
+                />
             </div>
         );
     }
 
-    // CONNECT MODE
     if (mode === 'HOST' || mode === 'JOIN') {
         return (
-            <div className="h-[100dvh] flex flex-col items-center justify-center p-6 relative pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] bg-black">
+            <div className="h-[100dvh] bg-black flex flex-col items-center justify-center p-6 relative">
                 {showScanner && <QRScanner onScan={handleQRScan} onClose={()=>setShowScanner(false)} />}
-                <button onClick={()=>{setMode('SELECT'); setStage('IDLE');}} className="absolute top-[calc(env(safe-area-inset-top)+1.5rem)] left-6 text-neutral-500 hover:text-white flex items-center gap-2 text-xs font-bold z-20"><ArrowLeft size={16}/> ABORT</button>
+
+                <button onClick={()=>{setMode('SELECT'); setStage('IDLE');}} className="absolute top-6 left-6 text-neutral-500 hover:text-white flex items-center gap-2 text-xs font-bold"><ArrowLeft size={16}/> ABORT</button>
                 
-                <div className="w-full max-w-sm bg-[#0e0e10] border border-white/5 p-8 rounded-[32px] text-center space-y-6 animate-slide-up shadow-2xl">
-                    {mode === 'HOST' ? (
-                        <>
-                            <div className="relative inline-flex">
-                                <div className="absolute inset-0 bg-emerald-500 blur-2xl opacity-10 animate-pulse"></div>
-                                <Server className="text-emerald-500 relative z-10" size={48} />
+                {mode === 'HOST' ? (
+                    <div className="w-full max-w-sm bg-[#09090b] border border-white/10 p-8 rounded-[32px] text-center space-y-6 animate-slide-up">
+                        <div className="relative inline-flex">
+                            <div className="absolute inset-0 bg-emerald-500 blur-xl opacity-20 animate-pulse"></div>
+                            <Server className="text-emerald-500 relative z-10" size={48} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-neutral-500 font-mono mb-2">SIGNAL ID</p>
+                            <code className="block bg-black p-3 rounded-lg border border-white/10 text-emerald-500 text-xs font-mono break-all select-all">{myProfile.id}</code>
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-neutral-500 font-mono mb-2">ACCESS PIN</p>
+                            <div className="text-3xl font-black text-white tracking-[0.5em]">{accessPin}</div>
+                        </div>
+                        <button onClick={()=>setShowShare(true)} className="w-full py-3 bg-white/5 hover:bg-white/10 rounded-xl text-white text-xs font-bold flex items-center justify-center gap-2 border border-white/5"><QrCode size={14}/> SHOW QR</button>
+                    </div>
+                ) : (
+                    <div className="w-full max-w-sm space-y-4 animate-slide-up">
+                        <div className="text-center mb-8">
+                            <div onClick={()=>setShowScanner(true)} className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 cursor-pointer hover:bg-blue-500/20 transition border border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.3)]">
+                                <ScanLine className="text-blue-500" size={32}/>
                             </div>
-                            <div>
-                                <p className="text-[10px] text-neutral-500 font-mono mb-2 tracking-widest">SIGNAL ID</p>
-                                <code className="block bg-black p-3 rounded-lg border border-white/10 text-emerald-500 text-xs font-mono break-all select-all">{myProfile.id}</code>
-                            </div>
-                            <div>
-                                <p className="text-[10px] text-neutral-500 font-mono mb-2 tracking-widest">ACCESS PIN</p>
-                                <div className="text-3xl font-black text-white tracking-[0.5em]">{accessPin}</div>
-                            </div>
-                            <button onClick={()=>setShowShare(true)} className="w-full py-3 bg-white/5 hover:bg-white/10 rounded-xl text-white text-xs font-bold flex items-center justify-center gap-2 border border-white/5"><QrCode size={14}/> SHOW QR</button>
-                        </>
-                    ) : (
-                        <>
-                            <div className="text-center mb-8">
-                                <div onClick={()=>setShowScanner(true)} className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4 cursor-pointer hover:bg-blue-500/20 transition border border-blue-500/30 shadow-[0_0_30px_rgba(59,130,246,0.15)]">
-                                    <ScanLine className="text-blue-500" size={32}/>
-                                </div>
-                                <h2 className="text-xl font-bold text-white">ESTABLISH UPLINK</h2>
-                                <p className="text-xs text-neutral-500">Tap icon to scan Neural Code</p>
-                            </div>
-                            <div className="space-y-3">
-                                <input value={targetPeerId} onChange={e=>setTargetPeerId(e.target.value)} placeholder="TARGET ID" className="w-full bg-black p-4 rounded-xl text-white border border-white/10 outline-none text-center font-mono focus:border-blue-500 transition-colors text-xs"/>
-                                <input value={accessPin} onChange={e=>setAccessPin(e.target.value)} placeholder="PIN" className="w-full bg-black p-4 rounded-xl text-white border border-white/10 outline-none text-center font-mono tracking-widest focus:border-blue-500 transition-colors text-lg font-bold"/>
-                            </div>
-                            {stage === 'IDLE' ? (
-                                <div className="flex gap-3 mt-4">
+                            <h2 className="text-xl font-bold text-white">ESTABLISH UPLINK</h2>
+                            <p className="text-xs text-neutral-500">Tap icon to scan Neural Code</p>
+                        </div>
+                        
+                        {stage === 'IDLE' ? (
+                            <>
+                                <input value={targetPeerId} onChange={e=>setTargetPeerId(e.target.value)} placeholder="TARGET ID" className="w-full bg-[#09090b] p-4 rounded-xl text-white border border-white/10 outline-none text-center font-mono focus:border-blue-500 transition-colors"/>
+                                <input value={accessPin} onChange={e=>setAccessPin(e.target.value)} placeholder="PIN" className="w-full bg-[#09090b] p-4 rounded-xl text-white border border-white/10 outline-none text-center font-mono tracking-widest focus:border-blue-500 transition-colors"/>
+                                <div className="flex gap-3">
                                     <button onClick={()=>setShowScanner(true)} className="p-4 bg-white/5 hover:bg-white/10 rounded-xl text-white border border-white/5"><Camera size={20}/></button>
-                                    <button onClick={()=>joinSession(targetPeerId, accessPin)} className="flex-1 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-900/20">CONNECT</button>
+                                    <button onClick={()=>joinSession()} className="flex-1 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-900/20">CONNECT</button>
                                 </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center mt-6 gap-2">
-                                    <div className="w-6 h-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
-                                    <span className="text-[10px] text-blue-400 font-mono animate-pulse">{stage}...</span>
-                                </div>
-                            )}
-                            {errorMsg && <div className="text-red-500 text-[10px] text-center font-mono bg-red-500/10 p-2 rounded border border-red-500/20 mt-2">{errorMsg}</div>}
-                        </>
-                    )}
-                </div>
+                            </>
+                        ) : (
+                            <div className="flex justify-center"><div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div></div>
+                        )}
+                        {errorMsg && <div className="text-red-500 text-xs text-center font-mono bg-red-500/10 p-2 rounded">{errorMsg}</div>}
+                    </div>
+                )}
                 {showShare && <ShareConnection peerId={myProfile.id} pin={accessPin} onClose={()=>setShowShare(false)}/>}
             </div>
         );
@@ -774,10 +780,16 @@ export const IStokView: React.FC = () => {
 
     // CHAT MODE
     return (
-        <div className="h-[100dvh] flex flex-col font-sans relative bg-[#050505] overflow-hidden">
+        <div className="h-[100dvh] bg-[#050505] flex flex-col font-sans relative">
+            {/* OVERLAYS */}
             {viewImage && <div className="fixed inset-0 z-[50] bg-black/95 flex items-center justify-center p-4" onClick={()=>setViewImage(null)}><img src={viewImage} className="max-w-full max-h-full rounded shadow-2xl"/></div>}
             
-            <div className="px-6 py-4 border-b border-white/5 flex justify-between items-center bg-[#09090b] z-20 pt-[calc(env(safe-area-inset-top)+1rem)]">
+            {incomingCall && !showCall && <CallNotification identity={incomingCall.peer} onAnswer={()=>{setShowCall(true)}} onDecline={()=>{incomingCall.close(); setIncomingCall(null);}} />}
+            
+            {showCall && <TeleponanView onClose={()=>{setShowCall(false); setIncomingCall(null);}} existingPeer={peerRef.current} initialTargetId={targetPeerId} incomingCall={incomingCall} secretPin={pinRef.current}/>}
+
+            {/* HEADER */}
+            <div className="px-6 py-4 border-b border-white/10 flex justify-between items-center bg-[#09090b] z-20 pt-[calc(env(safe-area-inset-top)+1rem)]">
                 <div className="flex items-center gap-3">
                     <button onClick={()=>{connRef.current?.close(); setMode('SELECT'); setMessages([]);}} className="text-neutral-400 hover:text-white"><ArrowLeft size={20}/></button>
                     <div className={`w-2.5 h-2.5 rounded-full ${isPeerOnline ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : 'bg-red-500'}`}></div>
@@ -792,15 +804,16 @@ export const IStokView: React.FC = () => {
                 </div>
             </div>
 
-            {/* BACKGROUND CLEAN: No Grain/Noise */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scroll bg-[#050505]">
+            {/* MESSAGES */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scroll bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-95">
                 {messages.map(m => (
                     <MessageBubble key={m.id} msg={m} setViewImage={setViewImage} onBurn={(id: string)=>setMessages(p=>p.filter(x=>x.id!==id))} />
                 ))}
-                {!isPeerOnline && <div className="flex justify-center mt-4"><span className="bg-red-500/10 text-red-500 text-[10px] px-3 py-1 rounded-full flex items-center gap-2 border border-red-500/20"><WifiOff size={10}/> RECONNECTING...</span></div>}
+                {!isPeerOnline && <div className="flex justify-center mt-4"><span className="bg-red-500/20 text-red-500 text-[10px] px-3 py-1 rounded-full flex items-center gap-2"><WifiOff size={10}/> RECONNECTING...</span></div>}
                 <div ref={msgEndRef} />
             </div>
 
+            {/* INPUT */}
             <IStokInput 
                 onSend={(t:string)=>sendMessage('TEXT', t)}
                 onTyping={()=>{}}
@@ -861,12 +874,6 @@ export const IStokView: React.FC = () => {
                 };
                 r.readAsDataURL(f);
             }}/>
-
-            <PWAInstallPrompt />
-            
-            {incomingCall && !showCall && <CallNotification identity={incomingCall.peer} onAnswer={()=>{setShowCall(true)}} onDecline={()=>{incomingCall.close(); setIncomingCall(null);}} />}
-            
-            {showCall && <TeleponanView onClose={()=>{setShowCall(false); setIncomingCall(null);}} existingPeer={peerRef.current} initialTargetId={targetPeerId} incomingCall={incomingCall} secretPin={pinRef.current}/>}
         </div>
     );
 };

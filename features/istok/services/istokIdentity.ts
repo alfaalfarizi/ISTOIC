@@ -57,6 +57,11 @@ export const IstokIdentityService = {
                 return null;
             }
 
+            // Handle Cross-Origin-Opener-Policy blocking
+            if (errCode === 'auth/popup-blocked' || errMsg.includes('Cross-Origin-Opener-Policy')) {
+                alert("Login blocked by browser policy. Please allow popups or try a different browser.");
+            }
+
             debugService.log('ERROR', 'ISTOK_AUTH', 'LOGIN_FAIL', `${errCode}: ${errMsg}`);
             
             // Handle Unauthorized Domain (Common Dev Error)

@@ -35,12 +35,8 @@
           "value": "camera=*, microphone=*, geolocation=self, display-capture=*, autoplay=*"
         },
         {
-          "key": "Cross-Origin-Embedder-Policy",
-          "value": "credentialless"
-        },
-        {
           "key": "Cross-Origin-Opener-Policy",
-          "value": "unsafe-none"
+          "value": "same-origin-allow-popups"
         }
       ]
     }

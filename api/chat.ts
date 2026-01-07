@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 
 // Konfigurasi Edge Runtime (Wajib untuk Vercel agar streaming cepat & murah)
@@ -6,20 +5,34 @@ export const config = {
   runtime: 'edge',
 };
 
+// --- HELPER: ROTASI KEY (LOAD BALANCER) ---
+// Fungsi ini penting karena di .env Anda ada banyak key (Key1,Key2,Key3...)
+// Kode ini memilih satu secara acak agar tidak kena Rate Limit.
+function getActiveKey(envVar: string | undefined): string | undefined {
+  if (!envVar) return undefined;
+  // Hapus spasi, split berdasarkan koma
+  const keys = envVar.split(',').map(k => k.trim()).filter(k => k.length > 0);
+  if (keys.length === 0) return undefined;
+  // Ambil acak
+  return keys[Math.floor(Math.random() * keys.length)];
+}
+
 // --- CONFIGURATION & KEYS ---
-const KEYS = {
-  GEMINI: process.env.GEMINI_API_KEY,
-  OPENAI: process.env.OPENAI_API_KEY,
-  GROQ: process.env.GROQ_API_KEY,
-  DEEPSEEK: process.env.DEEPSEEK_API_KEY,
-  MISTRAL: process.env.MISTRAL_API_KEY,
-  OPENROUTER: process.env.OPENROUTER_API_KEY,
-};
+// Kita ambil key saat request masuk (runtime) agar rotasi random berjalan
+const getKeys = () => ({
+  GEMINI: getActiveKey(process.env.GEMINI_API_KEY),
+  OPENAI: getActiveKey(process.env.OPENAI_API_KEY),
+  GROQ: getActiveKey(process.env.GROQ_API_KEY),
+  DEEPSEEK: getActiveKey(process.env.DEEPSEEK_API_KEY),
+  MISTRAL: getActiveKey(process.env.MISTRAL_API_KEY),
+  OPENROUTER: getActiveKey(process.env.OPENROUTER_API_KEY),
+});
 
 // --- MAIN HANDLER ---
 export async function POST(request: Request) {
   try {
     const { message, modelId, provider, context } = await request.json();
+    const KEYS = getKeys(); // Generate keys acak untuk request ini
 
     if (!message) return new Response("Message required", { status: 400 });
 
@@ -33,7 +46,7 @@ export async function POST(request: Request) {
     // --- ROUTING LOGIC ---
     switch (activeProvider) {
       case 'GEMINI':
-        return await streamGemini(finalPrompt, activeModel);
+        return await streamGemini(finalPrompt, activeModel, KEYS.GEMINI);
       
       case 'OPENAI':
         return await streamOpenAICompatible(
@@ -91,37 +104,43 @@ export async function POST(request: Request) {
 }
 
 // --- HELPER 1: GEMINI STREAMING (New @google/genai SDK) ---
-async function streamGemini(prompt: string, modelId: string) {
-  if (!KEYS.GEMINI) throw new Error("GEMINI_API_KEY missing");
+async function streamGemini(prompt: string, modelId: string, apiKey: string | undefined) {
+  if (!apiKey) throw new Error("GEMINI_API_KEY exhaustion or missing");
   
-  const ai = new GoogleGenAI({ apiKey: KEYS.GEMINI });
+  const ai = new GoogleGenAI({ apiKey: apiKey });
   
   // Menggunakan SDK terbaru untuk streaming
-  const result = await ai.models.generateContentStream({
-    model: modelId,
-    contents: prompt // SDK baru cukup kirim string jika simple
-  });
+  // Menggunakan try-catch khusus untuk model agar fallback aman
+  try {
+    const result = await ai.models.generateContentStream({
+        model: modelId,
+        contents: [{ role: 'user', parts: [{ text: prompt }] }] // Format standard content
+    });
 
-  const stream = new ReadableStream({
-    async start(controller) {
-      const encoder = new TextEncoder();
-      try {
-          for await (const chunk of result) {
-            const text = chunk.text;
-            if (text) controller.enqueue(encoder.encode(text));
-          }
-          controller.close();
-      } catch (e) {
-          controller.error(e);
-      }
-    },
-  });
+    const stream = new ReadableStream({
+        async start(controller) {
+        const encoder = new TextEncoder();
+        try {
+            for await (const chunk of result) {
+                const text = chunk.text(); // Di SDK baru, .text() adalah method
+                if (text) controller.enqueue(encoder.encode(text));
+            }
+            controller.close();
+        } catch (e) {
+            console.error("Gemini Stream Error:", e);
+            controller.error(e);
+        }
+        },
+    });
 
-  return new Response(stream, { headers: { "Content-Type": "text/plain" } });
+    return new Response(stream, { headers: { "Content-Type": "text/plain" } });
+
+  } catch(e: any) {
+      throw new Error(`Gemini Error: ${e.message}`);
+  }
 }
 
 // --- HELPER 2: OPENAI-COMPATIBLE STREAMING (Raw Fetch) ---
-// Fungsi ini menangani OpenAI, Groq, DeepSeek, Mistral, dll karena formatnya sama (SSE)
 async function streamOpenAICompatible(
   endpoint: string, 
   apiKey: string | undefined, 
@@ -129,7 +148,7 @@ async function streamOpenAICompatible(
   prompt: string,
   extraHeaders: Record<string, string> = {}
 ) {
-  if (!apiKey) throw new Error(`API Key for endpoint ${endpoint} is missing`);
+  if (!apiKey) throw new Error(`API Key for endpoint ${endpoint} is missing (Check server .env)`);
 
   const response = await fetch(endpoint, {
     method: 'POST',
@@ -141,7 +160,7 @@ async function streamOpenAICompatible(
     body: JSON.stringify({
       model: model,
       messages: [{ role: "user", content: prompt }],
-      stream: true, // Wajib True untuk efek mengetik
+      stream: true, 
       temperature: 0.7
     })
   });
@@ -152,7 +171,6 @@ async function streamOpenAICompatible(
   }
 
   // Transform Stream: Mengubah format "data: JSON" menjadi "text biasa"
-  // Agar frontend tidak pusing parsing SSE
   const stream = new ReadableStream({
     async start(controller) {
       const reader = response.body?.getReader();
@@ -176,7 +194,6 @@ async function streamOpenAICompatible(
               if (trimmed.startsWith('data: ')) {
                 try {
                   const json = JSON.parse(trimmed.replace('data: ', ''));
-                  // Ambil content dari delta (standard OpenAI format)
                   const content = json.choices?.[0]?.delta?.content || "";
                   if (content) {
                     controller.enqueue(encoder.encode(content));
@@ -200,9 +217,9 @@ async function streamOpenAICompatible(
 // --- UTILS ---
 function getFallbackModel(provider: string): string {
   switch (provider) {
-    case 'GEMINI': return 'gemini-3-flash-preview';
+    case 'GEMINI': return 'gemini-1.5-flash'; // Fallback aman
     case 'OPENAI': return 'gpt-4o-mini';
-    case 'GROQ': return 'llama-3.3-70b-versatile'; // Sangat cepat
+    case 'GROQ': return 'llama-3.3-70b-versatile';
     case 'DEEPSEEK': return 'deepseek-chat';
     case 'MISTRAL': return 'mistral-medium';
     default: return 'gpt-3.5-turbo';

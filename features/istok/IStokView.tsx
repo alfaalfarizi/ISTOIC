@@ -9,7 +9,7 @@ import {
     Radio, Server, X, PhoneCall, 
     Lock, ShieldCheck, ArrowRight, Loader2,
     User, Sparkles, Languages, BrainCircuit,
-    Power, Activity, ScanLine, QrCode, Users, Signal, RefreshCw
+    Power, Activity, ScanLine, QrCode, Users, Signal, RefreshCw, AlertTriangle
 } from 'lucide-react';
 
 // --- HOOKS & SERVICES ---
@@ -92,8 +92,9 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
     // Connection Data
     const [targetPeerId, setTargetPeerId] = useState('');
     const [accessPin, setAccessPin] = useState('');
-    const [isConnected, setIsConnected] = useState(false);
-    const [isPeerAlive, setIsPeerAlive] = useState(false); // Local check for UI
+    const [isConnected, setIsConnected] = useState(false); // Means "Chat UI Active"
+    const [isPeerAlive, setIsPeerAlive] = useState(false); // Global Peer Status
+    const [isDataConnectionAlive, setIsDataConnectionAlive] = useState(false); // Specific Chat Connection Status
     
     // Chat Data
     const [messages, setMessages] = useState<Message[]>([]);
@@ -117,6 +118,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
     const msgEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const chunkBuffer = useRef<{[key:string]: {chunks:string[], count:number, total:number}}>({});
+    const reconnectTimeoutRef = useRef<any>(null);
 
     // --- INITIALIZATION ---
     useEffect(() => {
@@ -167,6 +169,18 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
         return () => clearInterval(interval);
     }, [identity, globalPeer]);
 
+    // AUTO RECONNECT LOGIC FOR CHAT SESSION
+    useEffect(() => {
+        if (isConnected && !isDataConnectionAlive && isPeerAlive && targetPeerId) {
+            console.log("Attempting to restore chat connection...");
+            // Only attempt if we have a target and peer is back online
+            if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+            reconnectTimeoutRef.current = setTimeout(() => {
+                connectToPeer(targetPeerId, accessPin, true); // True = Reconnect Mode (Silent)
+            }, 2000);
+        }
+    }, [isConnected, isDataConnectionAlive, isPeerAlive, targetPeerId]);
+
     useEffect(() => {
         msgEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isAiThinking]);
@@ -176,15 +190,14 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
         connRef.current = conn;
         setTargetPeerId(conn.peer);
         
-        // Setup listener explicitly
-        conn.on('data', (d: any) => handleIncomingData(d, conn));
-        conn.on('close', handleDisconnect);
+        setupDataConnection(conn);
 
         const ack = JSON.stringify({ type: 'HANDSHAKE_ACK' });
         const enc = await encryptData(ack, '000000'); 
         if (enc) conn.send({ type: 'SYS', payload: enc });
         
         setIsConnected(true);
+        setIsDataConnectionAlive(true);
         setStage('SECURE');
         playSound('CONNECT');
     };
@@ -200,24 +213,48 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
         peer.off('connection');
         peer.on('connection', (conn: any) => {
              conn.on('data', (data: any) => {
+                 // Check if it's a handshake for a NEW chat or data for EXISTING chat
                  if (data.type === 'SYS' && !isConnected) {
-                    // Logic handled by App.tsx for notification, but we can also react locally
+                    // Logic handled by App.tsx for notification usually, but handle overlap here
                  }
                  if (isConnected && conn.peer === targetPeerId) {
+                     // Re-bind connection if it's the same peer (Handling reconnection from their side)
+                     if (connRef.current !== conn) {
+                         console.log("Re-binding connection from peer");
+                         connRef.current = conn;
+                         setupDataConnection(conn);
+                         setIsDataConnectionAlive(true);
+                     }
                      handleIncomingData(data, conn);
                  }
              });
         });
     };
+    
+    const setupDataConnection = (conn: any) => {
+        conn.off('data');
+        conn.off('close');
+        conn.off('error');
+
+        conn.on('data', (d: any) => handleIncomingData(d, conn));
+        conn.on('close', () => {
+            console.warn("Data connection closed");
+            setIsDataConnectionAlive(false);
+        });
+        conn.on('error', (e: any) => {
+            console.error("Data connection error", e);
+            setIsDataConnectionAlive(false);
+        });
+    };
 
     // --- CONNECTION LOGIC ---
-    const connectToPeer = (id: string, pin: string) => {
+    const connectToPeer = (id: string, pin: string, isReconnect: boolean = false) => {
         if(!globalPeer || !identity) {
-            alert("Sistem Hydra belum siap. Tunggu sebentar...");
+            if(!isReconnect) alert("Sistem Hydra belum siap. Tunggu sebentar...");
             return;
         }
         
-        setStage('LOCATING');
+        if (!isReconnect) setStage('LOCATING');
         
         try {
             const conn = globalPeer.connect(id, { 
@@ -226,13 +263,15 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
             });
             
             if (!conn) {
-                setStage('IDLE');
-                alert("Gagal membuat koneksi (PeerJS Error). Coba refresh.");
+                if(!isReconnect) {
+                    setStage('IDLE');
+                    alert("Gagal membuat koneksi (PeerJS Error). Coba refresh.");
+                }
                 return;
             }
             
             conn.on('open', async () => {
-                setStage('HANDSHAKE');
+                if (!isReconnect) setStage('HANDSHAKE');
                 const handshake = JSON.stringify({ 
                     type: 'HANDSHAKE_SYN', 
                     identity: identity.displayName,
@@ -243,15 +282,12 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
                 if(encrypted) conn.send({ type: 'SYS', payload: encrypted });
                 
                 connRef.current = conn;
+                setupDataConnection(conn);
+                setIsDataConnectionAlive(true);
+                if (isReconnect) console.log("Reconnection successful!");
             });
-
-            conn.on('data', (d: any) => handleIncomingData(d, conn));
             
-            conn.on('close', handleDisconnect);
-            conn.on('error', (e: any) => { 
-                console.error("Conn Error", e);
-                setStage('IDLE'); 
-            });
+            // Note: Data listeners are set in setupDataConnection inside open event
 
         } catch (e) {
             console.error("Connect Exception", e);
@@ -259,11 +295,13 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
         }
     };
 
-    const handleDisconnect = () => {
-        if (isConnected) {
-            setIsConnected(false);
-            setStage('RECONNECTING');
-        }
+    const handleDisconnectChat = () => {
+        if (connRef.current) connRef.current.close();
+        setIsConnected(false);
+        setIsDataConnectionAlive(false);
+        setStage('IDLE');
+        setMessages([]);
+        setTargetPeerId('');
     };
 
     const handleForceReconnect = () => {
@@ -324,6 +362,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
                 playSound('MSG_IN');
             } else if (json.type === 'HANDSHAKE_ACK') {
                 setIsConnected(true);
+                setIsDataConnectionAlive(true);
                 setStage('SECURE');
                 playSound('CONNECT');
                 heartbeatRef.current = setInterval(() => {
@@ -342,7 +381,10 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
     };
 
     const sendMessage = async (type: string, content: string, extraData: any = {}) => {
-        if (!connRef.current || !isConnected) return;
+        if (!connRef.current || !isDataConnectionAlive) {
+            alert("Koneksi terputus. Mencoba menghubungkan kembali...");
+            return;
+        }
         const msgPayload = { id: crypto.randomUUID(), type, content, timestamp: Date.now(), ttl: ttlMode, ...extraData };
         const strPayload = JSON.stringify(msgPayload);
         const encrypted = await encryptData(strPayload, accessPin);
@@ -526,7 +568,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
                     currentPeerId={null}
                 />
 
-                {/* INCOMING CONNECTION NOTIFICATION (Fixed High Z-Index) - Managed via App.tsx but also locally if needed */}
+                {/* INCOMING CONNECTION NOTIFICATION */}
                 {incomingRequest && (
                     <ConnectionNotification 
                         identity={incomingRequest.identity} 
@@ -534,11 +576,14 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
                         onAccept={async () => {
                             const { conn } = incomingRequest;
                             connRef.current = conn;
+                            setupDataConnection(conn); // Bind listeners
                             const ack = JSON.stringify({ type: 'HANDSHAKE_ACK' });
                             const pin = accessPin || '000000';
                             const enc = await encryptData(ack, pin);
                             if(enc) conn.send({ type: 'SYS', payload: enc });
+                            
                             setIsConnected(true);
+                            setIsDataConnectionAlive(true);
                             setStage('SECURE');
                             setIncomingRequest(null);
                         }}
@@ -564,25 +609,41 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
                         <div className="w-10 h-10 rounded-full bg-emerald-900/20 border border-emerald-500/30 flex items-center justify-center text-emerald-500 overflow-hidden shadow-[0_0_15px_rgba(16,185,129,0.2)]">
                             <User size={20}/>
                         </div>
-                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#09090b] animate-pulse"></div>
+                        <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#09090b] ${isDataConnectionAlive ? 'bg-emerald-500 animate-pulse' : 'bg-red-500 animate-pulse'}`}></div>
                     </div>
                     <div>
                         <h3 className="text-white font-black text-sm uppercase tracking-wide flex items-center gap-2">
                             SECURE_CHANNEL <Lock size={10} className="text-emerald-500"/>
                         </h3>
                         <div className="flex items-center gap-2 text-[9px] font-mono text-emerald-500/70">
-                            <span>{targetPeerId.slice(0,8)}...</span>
-                            <span className="w-1 h-1 rounded-full bg-emerald-500/50"></span>
-                            <span>AES-256</span>
+                            {isDataConnectionAlive ? (
+                                <>
+                                    <span>{targetPeerId.slice(0,8)}...</span>
+                                    <span className="w-1 h-1 rounded-full bg-emerald-500/50"></span>
+                                    <span>AES-256</span>
+                                </>
+                            ) : (
+                                <span className="text-red-400 flex items-center gap-1"><AlertTriangle size={10}/> SIGNAL LOST. RECONNECTING...</span>
+                            )}
                         </div>
                     </div>
                 </div>
                 
                 <div className="flex gap-2">
                     <button onClick={()=>setShowCall(true)} className="p-2.5 hover:bg-emerald-500/10 rounded-xl text-neutral-400 hover:text-emerald-500 transition border border-transparent hover:border-emerald-500/20"><PhoneCall size={18}/></button>
-                    <button onClick={handleDisconnect} className="p-2.5 hover:bg-red-500/10 rounded-xl text-neutral-400 hover:text-red-500 transition border border-transparent hover:border-red-500/20"><X size={18}/></button>
+                    <button onClick={handleDisconnectChat} className="p-2.5 hover:bg-red-500/10 rounded-xl text-neutral-400 hover:text-red-500 transition border border-transparent hover:border-red-500/20"><X size={18}/></button>
                 </div>
              </div>
+
+             {/* Connection Lost Overlay (Non-Blocking) */}
+             {!isDataConnectionAlive && (
+                 <div className="absolute top-20 left-0 right-0 z-10 flex justify-center pointer-events-none">
+                     <div className="bg-red-500/10 backdrop-blur-md border border-red-500/20 px-4 py-2 rounded-full flex items-center gap-2 text-red-400 text-xs font-bold shadow-lg animate-pulse">
+                         <RefreshCw size={12} className="animate-spin"/>
+                         ATTEMPTING RE-UPLINK...
+                     </div>
+                 </div>
+             )}
 
              {/* Messages */}
              <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scroll">
@@ -602,7 +663,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
                 onSend={(txt: string) => sendMessage('TEXT', txt)}
                 onSendFile={() => fileInputRef.current?.click()}
                 onSendAudio={(b64: string, dur: number) => sendMessage('AUDIO', b64, { duration: dur })}
-                disabled={!isConnected}
+                disabled={!isDataConnectionAlive}
                 ttlMode={ttlMode}
                 onToggleTtl={() => setTtlMode(p => p === 0 ? 30 : 0)}
                 onAiAssist={handleAiSmartCompose} 

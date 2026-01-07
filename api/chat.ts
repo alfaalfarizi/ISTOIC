@@ -122,7 +122,8 @@ async function streamGemini(prompt: string, modelId: string, apiKey: string | un
         const encoder = new TextEncoder();
         try {
             for await (const chunk of result) {
-                const text = chunk.text(); // Di SDK baru, .text() adalah method
+                // Access text as a property, not a method
+                const text = chunk.text;
                 if (text) controller.enqueue(encoder.encode(text));
             }
             controller.close();

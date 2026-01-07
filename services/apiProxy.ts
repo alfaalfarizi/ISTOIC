@@ -19,7 +19,7 @@ export const AIResponseSchema = z.object({
   text: z.string(),
   modelUsed: z.string(),
   tokenCount: z.number().optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export type AIResponse = z.infer<typeof AIResponseSchema>;

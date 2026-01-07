@@ -32,7 +32,9 @@ export class HydraVault {
 
   public refreshPools() {
     // Vite exposes env vars on import.meta.env
-    const env = (import.meta as any).env;
+    const viteEnv = (import.meta as any).env || {};
+    // Process env injected via vite.config.ts define
+    const procEnv = (typeof process !== 'undefined' && process.env) ? process.env : {};
 
     const providers: Provider[] = ['GEMINI', 'GROQ', 'OPENAI', 'DEEPSEEK', 'MISTRAL', 'OPENROUTER', 'ELEVENLABS', 'HUGGINGFACE'];
 
@@ -47,14 +49,21 @@ export class HydraVault {
             });
         };
 
-        // Aggressive Scan for VITE_ Prefixed Keys
-        addKey(env[`VITE_${provider}_API_KEY`]);
-        addKey(env[`${provider}_API_KEY`]); // Fallback if manually defined elsewhere
-
+        // 1. Check VITE_ prefix (Standard Vite)
+        addKey(viteEnv[`VITE_${provider}_API_KEY`]);
+        
+        // 2. Check Direct Name (Injected via define or Server-Side)
+        addKey(viteEnv[`${provider}_API_KEY`]);
+        addKey(procEnv[`${provider}_API_KEY`]);
+        
+        // Special mappings
         if (provider === 'GEMINI') {
-            addKey(env['VITE_GOOGLE_API_KEY']);
+            addKey(viteEnv['VITE_GOOGLE_API_KEY']);
         }
-        if (provider === 'HUGGINGFACE') addKey(env['VITE_HF_TOKEN']);
+        if (provider === 'HUGGINGFACE') {
+            addKey(viteEnv['VITE_HF_TOKEN']);
+            addKey(procEnv['HF_TOKEN']);
+        }
 
         this.vault[provider] = Array.from(keys).map((k, index) => ({
             cloakedKey: SECURITY_MATRIX.cloak(k), 
@@ -81,7 +90,12 @@ export class HydraVault {
    */
   public getKey(provider: Provider): string | null {
     const pool = this.vault[provider];
-    if (!pool || pool.length === 0) return null;
+    if (!pool || pool.length === 0) {
+        // Try one last refresh attempt if empty
+        // this.refreshPools(); 
+        // return null;
+        return null;
+    }
 
     const now = Date.now();
     

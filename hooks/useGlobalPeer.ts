@@ -51,7 +51,7 @@ export const useGlobalPeer = (identity: IStokUserIdentity | null) => {
             retryCount.current++;
             initGlobalPeer();
         }, delay);
-    }, []); // No deps, stable
+    }, []); // No deps, stable to avoid recreation
 
     const initGlobalPeer = useCallback(async () => {
         const currentUser = identityRef.current;
@@ -62,9 +62,8 @@ export const useGlobalPeer = (identity: IStokUserIdentity | null) => {
             return;
         }
 
-        // Clean up previous instance
-        if (peerRef.current) {
-            if (!peerRef.current.destroyed) peerRef.current.destroy();
+        // Clean up previous instance only if completely dead
+        if (peerRef.current && peerRef.current.destroyed) {
             peerRef.current = null;
         }
 
@@ -100,8 +99,8 @@ export const useGlobalPeer = (identity: IStokUserIdentity | null) => {
                 debug: 0, // Disable verbose logs to reduce noise
                 config: { 
                     iceServers: iceServers,
-                    // Use 'all' to allow P2P when TURN fails or isn't needed. 
-                    // 'relay' is strictly for privacy/firewalls but can cause connection failures if TURN is down.
+                    // CRITICAL FIX: Use 'all' to allow P2P when TURN fails or isn't needed. 
+                    // 'relay' strictly blocks direct connection causing failures on standard networks.
                     iceTransportPolicy: 'all', 
                     iceCandidatePoolSize: 10
                 },
@@ -198,12 +197,9 @@ export const useGlobalPeer = (identity: IStokUserIdentity | null) => {
         
         // Cleanup only on unmount
         return () => {
-            // Optional: destroyPeer(); 
-            // We usually want the peer to survive re-renders if possible, but StrictMode kills effects.
-            // For now, let's allow destruction on unmount to be clean.
             destroyPeer();
         };
-    }, [identity?.istokId]); // Only re-run if ID changes
+    }, [identity?.istokId]); 
 
     // Watchdog for Zombie Connections
     useEffect(() => {

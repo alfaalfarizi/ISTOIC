@@ -116,7 +116,20 @@ export const useChatLogic = (notes: Note[], setNotes: (notes: Note[]) => void) =
             metadata: { status: 'success' }
         };
 
-        // 1. Update State & DB (User Message)
+        // 1. IMMEDIATE UI UPDATE (Optimistic)
+        // Ensure message appears instantly even if DB sync lags
+        setThreads(prev => prev.map(t => {
+            if (t.id === currentThreadId) {
+                return {
+                    ...t,
+                    messages: [...t.messages, newUserMsg],
+                    updated: new Date().toISOString()
+                };
+            }
+            return t;
+        }));
+
+        // 2. Persist to DB
         addMessage(currentThreadId!, newUserMsg);
         
         // Auto rename check
@@ -127,11 +140,7 @@ export const useChatLogic = (notes: Note[], setNotes: (notes: Note[]) => void) =
 
         setInput('');
         
-        // 2. Trigger Stream (Stream logic now uses storage.updateMessage safely)
-        // Note: activeThread ref in useAIStream will update on next render, 
-        // but streamMessage uses props passed to hook. 
-        // Since addMessage triggers re-render, useAIStream will get new activeThread.
-        // We put a small delay to ensure state propagation if needed, though usually unnecessary in React 18 batching.
+        // 3. Trigger Stream
         await streamMessage(userMsg, activeModel, attachment);
     };
 

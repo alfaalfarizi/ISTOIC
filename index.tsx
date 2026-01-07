@@ -9,8 +9,6 @@ try {
     const _window = window as any;
     if (_window.ethereum) {
         // If it exists, we try to ensure we don't crash when libraries try to re-define it
-        // Some libraries check for 'ethereum' in window and try to assign it.
-        // We can't easily 'freeze' it if it's already non-configurable, so we just wrap access in try-catch blocks elsewhere.
     }
   }
 } catch (e) {

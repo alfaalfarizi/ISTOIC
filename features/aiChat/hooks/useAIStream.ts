@@ -67,6 +67,7 @@ export const useAIStream = ({
         abortControllerRef.current = controller;
         const signal = controller.signal;
 
+        // CRITICAL FIX: Define variables OUTSIDE try block so they are accessible in catch
         let accumulatedText = "";
         let chunkCount = 0;
 

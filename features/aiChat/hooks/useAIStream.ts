@@ -6,7 +6,7 @@ import { MODEL_CATALOG, HANISAH_KERNEL as HK } from '../../../services/melsaKern
 import { executeNeuralTool } from '../services/toolHandler';
 import { speakWithHanisah } from '../../../services/elevenLabsService';
 import { debugService } from '../../../services/debugService';
-import { Note, ChatThread, ChatMessage } from '../../../types';
+import { Note, ChatThread } from '../../../types';
 import { MemoryService } from '../../../services/memoryService';
 
 interface AIStreamProps {
@@ -17,6 +17,7 @@ interface AIStreamProps {
     isVaultUnlocked: boolean;
     vaultEnabled: boolean;
     isAutoSpeak: boolean;
+    imageModelId: string;
 }
 
 export const useAIStream = ({
@@ -26,7 +27,8 @@ export const useAIStream = ({
     storage,
     isVaultUnlocked,
     vaultEnabled,
-    isAutoSpeak
+    isAutoSpeak,
+    imageModelId
 }: AIStreamProps) => {
     const [isLoading, setIsLoading] = useState(false);
     const abortControllerRef = useRef<AbortController | null>(null);
@@ -54,7 +56,7 @@ export const useAIStream = ({
         
         console.group(`🧠 NEURAL_LINK_TRANSMISSION: ${transmissionId}`);
 
-        // Add placeholder
+        // Add placeholder for model response
         storage.addMessage(targetId, { 
             id: modelMessageId, 
             role: 'model', 
@@ -67,26 +69,10 @@ export const useAIStream = ({
         const signal = controller.signal;
 
         try {
-            // Context Building
-            let noteContext = "";
-            let memoryContext = "";
-
-            if (isVaultUnlocked && vaultEnabled) {
-                if (userMsg.length > 3) {
-                    memoryContext = await MemoryService.recall(userMsg, notes);
-                }
-                const recentNotes = notes
-                    .filter(n => !n.is_archived)
-                    .slice(0, 30)
-                    .map(n => `${n.title} [${n.tags?.join(',') || ''}] (ID:${n.id})`);
-                
-                noteContext = `${memoryContext}\n\n[VAULT_INDEX_SNAPSHOT]\n${recentNotes.join(' | ')}`;
-            }
-
             const persona = activeThread.persona || 'stoic';
             const kernel = persona === 'hanisah' ? HK : SK;
             
-            // Fix: Pass original 'notes' array instead of string 'noteContext'
+            // Pass original 'notes' array instead of string 'noteContext'
             const stream = kernel.streamExecute(
                 userMsg || "Proceed with attachment analysis.", 
                 activeModel.id, 
@@ -114,7 +100,7 @@ export const useAIStream = ({
                     storage.updateMessage(targetId, modelMessageId, { text: accumulatedText });
 
                     try {
-                        const toolResult = await executeNeuralTool(chunk.functionCall, notes, setNotes);
+                        const toolResult = await executeNeuralTool(chunk.functionCall, notes, setNotes, imageModelId);
                          if (toolResult.includes('![Generated Visual]') || toolResult.trim().startsWith('![')) {
                              accumulatedText += `\n\n${toolResult}\n\n`;
                         } else {
@@ -136,7 +122,7 @@ export const useAIStream = ({
                 });
             }
 
-            // Fallback for empty
+            // Fallback for empty response
             if (!accumulatedText.trim() && chunkCount === 0) {
                 accumulatedText = persona === 'hanisah' 
                     ? "_ (tersenyum) _\n\n*Hmm, aku blank bentar. Coba tanya lagi?*" 
@@ -170,7 +156,7 @@ export const useAIStream = ({
             abortControllerRef.current = null;
             console.groupEnd();
         }
-    }, [activeThread, notes, isVaultUnlocked, vaultEnabled, isAutoSpeak, setNotes, storage]);
+    }, [activeThread, notes, isVaultUnlocked, vaultEnabled, isAutoSpeak, setNotes, storage, imageModelId]);
 
     return {
         isLoading,

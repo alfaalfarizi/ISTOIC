@@ -44,7 +44,8 @@ export const useChatLogic = (notes: Note[], setNotes: (notes: Note[]) => void) =
         storage,
         isVaultUnlocked,
         vaultEnabled,
-        isAutoSpeak
+        isAutoSpeak,
+        imageModelId
     });
 
     // --- HANDLERS ---

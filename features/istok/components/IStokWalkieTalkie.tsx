@@ -102,6 +102,7 @@ export const IStokWalkieTalkie: React.FC<IStokWalkieTalkieProps> = ({ onClose, o
     const playIncomingAudio = (base64: string): Promise<void> => {
         return new Promise(async (resolve) => {
             const ctx = getGlobalAudioContext();
+            // IMPORTANT for iOS: Resume context on user interaction triggered playback
             await resumeGlobalAudio();
             
             setStatus('RX');
@@ -137,6 +138,7 @@ export const IStokWalkieTalkie: React.FC<IStokWalkieTalkieProps> = ({ onClose, o
         if (status !== 'IDLE') return;
         
         const ctx = getGlobalAudioContext();
+        // IMPORTANT for iOS: Resume context on button press
         await resumeGlobalAudio();
 
         try {

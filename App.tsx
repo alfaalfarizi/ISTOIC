@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { MobileNav } from './components/MobileNav';
@@ -22,6 +23,10 @@ import { AuthView } from './features/auth/AuthView';
 import { AppSelector } from './features/auth/AppSelector';
 import { GenerativeSessionProvider } from './contexts/GenerativeSessionContext';
 import { activatePrivacyShield } from './utils/privacyShield';
+import { useGlobalPeer } from './hooks/useGlobalPeer';
+import { ConnectionNotification } from './features/istok/components/ConnectionNotification';
+import { decryptData, encryptData } from './utils/crypto';
+import { IStokUserIdentity } from './features/istok/services/istokIdentity';
 
 // --- LAZY LOAD HEAVY MODULES ---
 const SmartNotesView = lazy(() => import('./features/smartNotes/SmartNotesView').then(module => ({ default: module.SmartNotesView })));
@@ -57,9 +62,17 @@ interface AppContentProps {
     notes: Note[];
     setNotes: (notes: Note[]) => void;
     onOpenTeleponan: () => void;
+    // New Props for Global IStok
+    globalPeer: any;
+    incomingRequest: any;
+    onAcceptRequest: (req: any) => void;
+    onDeclineRequest: () => void;
 }
 
-const AppContent: React.FC<AppContentProps> = ({ notes, setNotes, onOpenTeleponan }) => {
+const AppContent: React.FC<AppContentProps> = ({ 
+    notes, setNotes, onOpenTeleponan,
+    globalPeer, incomingRequest, onAcceptRequest, onDeclineRequest
+}) => {
   const [activeFeature, setActiveFeature] = useState<FeatureID>('dashboard');
   const [isTutorialComplete, setIsTutorialComplete] = useLocalStorage<boolean>('app_tutorial_complete', false);
   
@@ -185,9 +198,44 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes, onOpenTelepona
     );
   };
 
+  // --- HANDLE INCOMING REQUEST DATA ---
+  const [requestIdentity, setRequestIdentity] = useState<string>('');
+  
+  useEffect(() => {
+      if (incomingRequest) {
+          const process = async () => {
+              const { firstData } = incomingRequest;
+              // Try basic pins + default '000000'
+              const payload = await decryptData(firstData.payload, '000000') || await decryptData(firstData.payload, '123456');
+              
+              if (payload) {
+                  try {
+                    const json = JSON.parse(payload);
+                    setRequestIdentity(json.identity || 'Unknown Agent');
+                  } catch(e) { setRequestIdentity('Encrypted Signal'); }
+              } else {
+                  setRequestIdentity('Encrypted Signal (PIN Required)');
+              }
+          };
+          process();
+      } else {
+          setRequestIdentity('');
+      }
+  }, [incomingRequest]);
+
   return (
     <div className="flex h-[100dvh] w-full text-skin-text font-sans bg-skin-main theme-transition overflow-hidden selection:bg-accent/30 selection:text-accent relative pl-safe pr-safe">
       
+      {/* GLOBAL CONNECTION ALERT */}
+      {incomingRequest && (
+          <ConnectionNotification 
+              identity={requestIdentity}
+              peerId={incomingRequest.conn.peer}
+              onAccept={() => onAcceptRequest(incomingRequest)}
+              onDecline={onDeclineRequest}
+          />
+      )}
+
       {/* 1. Global Ambient Background Layer */}
       <div className="absolute inset-0 pointer-events-none z-0">
           <div className="absolute inset-0 bg-gradient-to-br from-skin-main via-skin-main to-skin-main opacity-100"></div>
@@ -239,8 +287,21 @@ type SessionMode = 'AUTH' | 'SELECT' | 'ISTOIC' | 'ISTOK' | 'TELEPONAN';
 const App: React.FC = () => {
     const [notes, setNotes] = useIDB<Note[]>('notes', []);
     const [sessionMode, setSessionMode] = useState<SessionMode>('AUTH');
+    const [identity] = useLocalStorage<IStokUserIdentity | null>('istok_user_identity', null);
     
     useIndexedDBSync(notes);
+
+    // --- GLOBAL PEER ENGINE ---
+    const { peer, incomingConnection, clearIncoming } = useGlobalPeer(identity);
+    
+    // --- GLOBAL CONNECTION HANDLER ---
+    const [acceptedConnection, setAcceptedConnection] = useState<any>(null);
+
+    const handleAcceptConnection = async (request: any) => {
+        setAcceptedConnection(request);
+        setSessionMode('ISTOK'); // Switch to IStok View
+        clearIncoming(); // Clear notification
+    };
 
     // ACTIVATE PRIVACY SHIELD GLOBALLY
     useEffect(() => {
@@ -289,7 +350,11 @@ const App: React.FC = () => {
         return (
             <Suspense fallback={<div className="h-screen w-screen bg-black flex items-center justify-center text-red-500 font-mono">INITIALIZING_SECURE_LAYER...</div>}>
                 <ErrorBoundary viewName="ISTOK_SECURE_CHANNEL">
-                    <IStokView onLogout={() => setSessionMode('AUTH')} />
+                    <IStokView 
+                        onLogout={() => setSessionMode('AUTH')} 
+                        globalPeer={peer} 
+                        initialAcceptedConnection={acceptedConnection}
+                    />
                 </ErrorBoundary>
             </Suspense>
         );
@@ -312,6 +377,13 @@ const App: React.FC = () => {
                     notes={notes} 
                     setNotes={setNotes} 
                     onOpenTeleponan={() => setSessionMode('TELEPONAN')} 
+                    globalPeer={peer}
+                    incomingRequest={incomingConnection}
+                    onAcceptRequest={handleAcceptConnection}
+                    onDeclineRequest={() => { 
+                        incomingConnection?.conn?.close(); 
+                        clearIncoming(); 
+                    }}
                 />
             </LiveSessionProvider>
         </GenerativeSessionProvider>

@@ -23,7 +23,7 @@ import { QRScanner } from './components/QRScanner';
 import { compressImage } from './components/gambar';
 import { IstokIdentityService, IStokUserIdentity } from './services/istokIdentity';
 import { IStokInput } from './components/IStokInput'; 
-import { OMNI_KERNEL } from '../../services/omniRace'; // UPDATED: Use Omni Race
+import { OMNI_KERNEL } from '../../services/omniRace'; 
 
 // --- HYDRA CONSTANTS ---
 const CHUNK_SIZE = 1024 * 64; // 64KB
@@ -48,6 +48,8 @@ type ConnectionStage = 'IDLE' | 'LOCATING' | 'HANDSHAKE' | 'SECURE' | 'RECONNECT
 
 interface IStokViewProps {
     onLogout: () => void;
+    globalPeer?: any; // New Prop
+    initialAcceptedConnection?: any; // New Prop
 }
 
 // --- UTILS ---
@@ -76,7 +78,7 @@ const playSound = (type: 'MSG_IN' | 'MSG_OUT' | 'CONNECT' | 'ERROR') => {
 };
 
 // --- MAIN VIEW CONTROLLER ---
-export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
+export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, initialAcceptedConnection }) => {
     // --- STATE MANAGEMENT ---
     const [stage, setStage] = useState<ConnectionStage>('IDLE');
     
@@ -109,7 +111,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
     const [incomingCall, setIncomingCall] = useState<any>(null);
 
     // REFS
-    const peerRef = useRef<any>(null);
+    const peerRef = useRef<any>(globalPeer || null);
     const connRef = useRef<any>(null);
     const heartbeatRef = useRef<any>(null);
     const msgEndRef = useRef<HTMLDivElement>(null);
@@ -134,7 +136,37 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
             created: Date.now()
         });
         
-        initPeer(identity.istokId);
+        // If not global peer provided, try to init (Fallback)
+        if (!globalPeer) {
+            initPeer(identity.istokId);
+        } else {
+            // Attach listeners to existing peer if not already
+            setupPeerListeners(globalPeer);
+        }
+
+        // Check if we entered via a notification click (Accepted Request)
+        if (initialAcceptedConnection) {
+            const { conn } = initialAcceptedConnection;
+            connRef.current = conn;
+            setTargetPeerId(conn.peer);
+            
+            // Send ACK immediately since user already clicked Accept
+            const sendAck = async () => {
+                 const ack = JSON.stringify({ type: 'HANDSHAKE_ACK' });
+                 // Try default pin or prompt? For now assuming 000000 if not set
+                 const enc = await encryptData(ack, '000000'); 
+                 if (enc) conn.send({ type: 'SYS', payload: enc });
+                 
+                 setIsConnected(true);
+                 setStage('SECURE');
+                 playSound('CONNECT');
+                 
+                 // Attach listener
+                 conn.on('data', (d: any) => handleIncomingData(d, conn));
+                 conn.on('close', handleDisconnect);
+            };
+            sendAck();
+        }
 
         const urlParams = new URLSearchParams(window.location.search);
         if(urlParams.get('connect') && urlParams.get('key')) {
@@ -149,22 +181,46 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
     }, [messages, isAiThinking]);
 
     // --- HYDRA OMNI-RACE NETWORK LAYER (PeerJS + TURN) ---
+    
+    const setupPeerListeners = (peer: any) => {
+        // Clear old listeners to avoid dupes
+        peer.off('connection');
+        peer.off('call');
+        
+        peer.on('connection', (conn: any) => {
+             // Handle new connection while inside IStokView
+             conn.on('data', (data: any) => {
+                 // If we are already connected to someone else, we might want to alert?
+                 // For now, allow incoming handshake requests to override/alert
+                 if (data.type === 'SYS') {
+                     // Check payload type first? No, need decrypt.
+                     // Just pass to handler, handleIncomingData will check type
+                     // But we need to separate Handshake SYN from ongoing chat data
+                     // Assuming new conn object means new session
+                     // Peek data
+                 }
+                 handleIncomingData(data, conn);
+             });
+             conn.on('close', () => handleDisconnect());
+        });
+
+        peer.on('call', (call: any) => {
+             setIncomingCall(call);
+             playSound('MSG_IN');
+        });
+    };
+
     const initPeer = async (myId: string) => {
         if (peerRef.current) return;
 
         try {
             const { Peer } = await import('peerjs');
             
-            // 1. Base Configuration (Google STUN - Fast)
             let iceServers = [
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' },
-                { urls: 'stun:stun3.l.google.com:19302' },
-                { urls: 'stun:stun4.l.google.com:19302' },
             ];
 
-            // 2. Inject TURN (Metered.ca) for 4G/Symmetric NAT traversal
             const meteredKey = process.env.VITE_METERED_API_KEY;
             const meteredDomain = process.env.VITE_METERED_DOMAIN || 'istoic.metered.live';
 
@@ -173,24 +229,20 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
                     const response = await fetch(`https://${meteredDomain}/api/v1/turn/credentials?apiKey=${meteredKey}`);
                     const ice = await response.json();
                     if (Array.isArray(ice)) {
-                        // Priority: TURN first for reliability in Race
                         iceServers = [...ice, ...iceServers]; 
-                        console.log("[ISTOK] HYDRA NETWORK: TURN RELAY ACTIVE (Global Coverage)");
+                        console.log("[ISTOK] HYDRA NETWORK: TURN RELAY ACTIVE");
                     }
                 } catch (e) {
-                    console.warn("[ISTOK] TURN Fetch Failed. Fallback to STUN.", e);
+                    console.warn("[ISTOK] TURN Fetch Failed.", e);
                 }
-            } else {
-                // Fallback Free Relay
-                iceServers.push({ urls: "stun:openrelay.metered.ca:80" });
             }
             
             const peer = new Peer(myId, {
                 debug: 0,
                 config: { 
                     iceServers: iceServers,
-                    iceTransportPolicy: 'all', // OMNI: Try everything (UDP, TCP, Relay)
-                    iceCandidatePoolSize: 10   // RACE: Pre-fetch candidates for instant connection
+                    iceTransportPolicy: 'all', 
+                    iceCandidatePoolSize: 10   
                 },
                 pingInterval: 5000,
             } as any);
@@ -198,17 +250,8 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
             peer.on('open', (id) => {
                 console.log('[ISTOK] Secure ID Active:', id);
             });
-
-            peer.on('connection', (conn) => {
-                conn.on('data', (data) => handleIncomingData(data, conn));
-                conn.on('open', () => { /* Handshake Wait */ });
-                conn.on('close', () => handleDisconnect());
-            });
-
-            peer.on('call', (call) => {
-                setIncomingCall(call);
-                playSound('MSG_IN');
-            });
+            
+            setupPeerListeners(peer);
 
             peer.on('error', (err) => {
                 console.error("[ISTOK] Network Error:", err);
@@ -229,7 +272,6 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
         if(!peerRef.current || !identity) return;
         setStage('LOCATING');
         
-        // Reliable: true ensures TCP fallback if UDP fails
         const conn = peerRef.current.connect(id, { 
             reliable: true,
             serialization: 'json'
@@ -245,63 +287,55 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
             });
             const encrypted = await encryptData(handshake, pin);
             if(encrypted) conn.send({ type: 'SYS', payload: encrypted });
+            
+            // Assign ref immediately so we track this connection
             connRef.current = conn;
         });
 
-        conn.on('data', (d) => handleIncomingData(d, conn));
+        // BIND DATA LISTENER IMMEDIATELY
+        conn.on('data', (d: any) => handleIncomingData(d, conn));
+        
         conn.on('close', handleDisconnect);
-        conn.on('error', (e) => { 
+        conn.on('error', (e: any) => { 
             console.error("Conn Error", e);
             setStage('IDLE'); 
-            // Don't alert immediately on minor network blips, let retry logic handle it
         });
     };
 
     const handleDisconnect = () => {
-        setIsConnected(false);
-        setStage('RECONNECTING');
-        // Simple auto-reconnect logic could go here
+        // Only disconnect if it matches active connection
+        if (isConnected) {
+            setIsConnected(false);
+            setStage('RECONNECTING');
+        }
     };
 
-    // --- META-STYLE AI AGENT (OMNI RACE) ---
-    // Instead of being a participant, it helps the USER compose messages
     const handleAiSmartCompose = async (userDraft: string, mode: 'REPLY' | 'REFINE' = 'REPLY'): Promise<string> => {
         setIsAiThinking(true);
-        
-        // Context: Last 5 messages
         const contextMessages = messages.slice(-5).map(m => 
             `${m.sender === 'ME' ? 'Me' : 'Partner'}: ${m.content}`
         ).join('\n');
 
         const systemInstruction = `
         [ROLE: PERSONAL_COMM_ASSISTANT]
-        You are an AI embedded in a chat app input field (like Meta AI).
-        Your goal is to help the user draft a reply or refine their text.
-        
         [CONTEXT - LAST 5 MESSAGES]
         ${contextMessages}
-
         [TASK]
         ${mode === 'REPLY' 
             ? `Suggest a natural, smart reply to the partner based on the context. Keep it short and human-like.` 
             : `Refine this user draft to be better/clearer/more polite: "${userDraft}". Keep meaning.`}
-        
         OUTPUT ONLY THE SUGGESTED TEXT. NO EXPLANATIONS.
         `;
 
         try {
-            // Using OMNI_KERNEL.raceStream for maximum speed
             const stream = OMNI_KERNEL.raceStream(userDraft || "Suggest reply", systemInstruction);
-            
             let resultText = "";
             for await (const chunk of stream) {
                 if (chunk.text) resultText += chunk.text;
             }
             return resultText.trim();
-
         } catch (e) {
-            console.error("AI Assist Failed", e);
-            return userDraft; // Fallback to original
+            return userDraft;
         } finally {
             setIsAiThinking(false);
         }
@@ -341,9 +375,6 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
             return;
         }
 
-        // DECRYPTION - AUTOMATED (NO PROMPT)
-        // If pin is not set, default to '000000' or try silent fail.
-        // This removes the annoyance of prompts for every message if connection logic is slightly off.
         const pin = accessPin || '000000';
 
         if (data.type === 'SYS') {
@@ -362,6 +393,8 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
                 });
                 playSound('MSG_IN');
             } else if (json.type === 'HANDSHAKE_ACK') {
+                // CALLER LOGIC: CONNECTED!
+                console.log("[ISTOK] Handshake ACK Received. Secure Channel Open.");
                 setIsConnected(true);
                 setStage('SECURE');
                 playSound('CONNECT');
@@ -443,11 +476,8 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
     };
 
     const handleContactCall = (contact: IStokContact) => {
-        // Explicit call to connect from Contacts list
         setTargetPeerId(contact.id);
         setShowSidebar(false);
-        // Prompt for PIN if not stored, otherwise use logic to retrieve it (usually stored in session history, here we might need user input if fresh contact)
-        // For MVP, we pre-fill ID and focus the PIN input
         setTimeout(() => {
             const pinInput = document.querySelector('input[placeholder="PIN (6)"]') as HTMLInputElement;
             if(pinInput) pinInput.focus();
@@ -572,7 +602,6 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
                  {/* Modals */}
                  {showScanner && <QRScanner onScan={(val: string) => { 
                     try {
-                        // Support full URL or just the payload
                         const urlStr = val.startsWith('http') ? val : `https://dummy.com?${val}`;
                         const url = new URL(urlStr);
                         const c = url.searchParams.get('connect');
@@ -581,10 +610,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
                         if(c && k) { 
                             setTargetPeerId(c); 
                             setAccessPin(k); 
-                            // Auto connect? maybe too aggressive, better to fill and let user click connect
-                            // connectToPeer(c, k); 
                         } else { 
-                            // Raw ID scan
                             setTargetPeerId(val); 
                         }
                     } catch { 
@@ -617,8 +643,10 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
                             const { conn } = incomingRequest;
                             connRef.current = conn;
                             const ack = JSON.stringify({ type: 'HANDSHAKE_ACK' });
-                            const enc = await encryptData(ack, accessPin);
-                            conn.send({ type: 'SYS', payload: enc });
+                            // Force default PIN if not set to unblock flow?
+                            const pin = accessPin || '000000';
+                            const enc = await encryptData(ack, pin);
+                            if(enc) conn.send({ type: 'SYS', payload: enc });
                             setIsConnected(true);
                             setStage('SECURE');
                             setIncomingRequest(null);
@@ -678,7 +706,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
                 <div ref={msgEndRef}/>
              </div>
 
-             {/* Input Area (New Smart AI Version) */}
+             {/* Input Area */}
              <IStokInput 
                 onSend={(txt: string) => sendMessage('TEXT', txt)}
                 onSendFile={() => fileInputRef.current?.click()}

@@ -1,5 +1,4 @@
-
-import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { NeuralLinkService } from '../services/neuralLink';
 import type { NeuralLinkStatus, MicMode, AmbientMode } from '../services/neuralLink';
 import { executeNeuralTool } from '../features/aiChat/services/toolHandler';
@@ -70,7 +69,8 @@ export const LiveSessionProvider: React.FC<LiveSessionProviderProps> = ({ childr
 
         try {
             const noteContext = notesRef.current.map(n => `- ${n.title} (ID: ${n.id})`).join('\n');
-            const systemInstruction = HANISAH_BRAIN.getSystemInstruction(persona, noteContext);
+            // Fix: Await getSystemInstruction and pass correct Note[] arg
+            const systemInstruction = await HANISAH_BRAIN.getSystemInstruction(persona, '', notesRef.current);
             const storedVoice = localStorage.getItem(`${persona}_voice`);
             const voice = storedVoice ? JSON.parse(storedVoice) : (persona === 'hanisah' ? 'Zephyr' : 'Fenrir');
 
@@ -122,7 +122,7 @@ export const LiveSessionProvider: React.FC<LiveSessionProviderProps> = ({ childr
             setIsLive(false);
             setStatus('ERROR');
         }
-    }, [isLive, micMode, ambientMode]); // notes removed from dependency array, using ref
+    }, [isLive, micMode, ambientMode, setNotes]); 
 
     const stopSession = useCallback(() => {
         neuralLink.current.disconnect();
@@ -146,23 +146,29 @@ export const LiveSessionProvider: React.FC<LiveSessionProviderProps> = ({ childr
         if (isLive) neuralLink.current.setAmbientMode(mode);
     }, [isLive]);
 
+    // Memoize the value to prevent consumer re-renders unless essential state changes
+    const contextValue = useMemo(() => ({
+        isLive,
+        isMinimized,
+        status,
+        transcript,
+        interimTranscript,
+        activeTool,
+        analyser: neuralLink.current.analyser,
+        micMode,
+        ambientMode,
+        startSession,
+        stopSession,
+        toggleMinimize,
+        setMicMode,
+        setAmbientMode
+    }), [
+        isLive, isMinimized, status, transcript, interimTranscript, activeTool, micMode, ambientMode,
+        startSession, stopSession, toggleMinimize, setMicMode, setAmbientMode
+    ]);
+
     return (
-        <LiveSessionContext.Provider value={{
-            isLive,
-            isMinimized,
-            status,
-            transcript,
-            interimTranscript,
-            activeTool,
-            analyser: neuralLink.current.analyser,
-            micMode,
-            ambientMode,
-            startSession,
-            stopSession,
-            toggleMinimize,
-            setMicMode,
-            setAmbientMode
-        }}>
+        <LiveSessionContext.Provider value={contextValue}>
             {children}
         </LiveSessionContext.Provider>
     );

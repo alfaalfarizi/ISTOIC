@@ -12,6 +12,7 @@ import { UI_REGISTRY, FN_REGISTRY } from '../../../constants/registry';
 import { debugService } from '../../../services/debugService';
 import { speakWithHanisah } from '../../../services/elevenLabsService';
 import { useGenerativeSession } from '../../../contexts/GenerativeSessionContext';
+import { optimizeImageForAI } from '../../../utils/imageOptimizer'; // IMPORT OPTIMIZER
 
 interface NeuralVisionProps {
     isOpen: boolean;
@@ -142,7 +143,9 @@ export const NeuralVision: React.FC<NeuralVisionProps> = ({ isOpen, onToggle, ic
         const ctx = canvas.getContext('2d');
         if (ctx) {
             ctx.drawImage(videoRef.current, 0, 0);
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Optimization: Export directly as compressed JPEG
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
             const base64 = dataUrl.split(',')[1];
             
             setInputBase64(base64);
@@ -192,38 +195,36 @@ export const NeuralVision: React.FC<NeuralVisionProps> = ({ isOpen, onToggle, ic
             return;
         }
 
-        const reader = new FileReader();
-        reader.onload = async () => {
-            const base64 = (reader.result as string).split(',')[1];
+        try {
+            // STEP 1: CLIENT-SIDE OPTIMIZATION
+            // Compresses image to prevent 413 Payload Too Large
+            const { base64, mimeType } = await optimizeImageForAI(file);
             
-            // SAVE TO CONTEXT
+            // SAVE TO CONTEXT (Optimized version)
             setInputBase64(base64);
-            setInputType(file.type);
+            setInputType(mimeType);
             
             setLoading(task);
             setEditResult(null);
             setAnalysisResult(null);
 
-            try {
-                if (task === 'ANALYZE') {
-                    await processAnalysis(base64, file.type);
-                } else {
-                    if (selectedProvider !== 'GEMINI') {
-                         setEditResult(null);
-                         setAnalysisResult("Image Editing (In-painting) is currently optimized for Gemini Native only.");
-                         setLoading(null);
-                         return;
-                    }
-                    const result = await editImage(base64, file.type, prompt || "Enhance this image.");
-                    setEditResult(result);
-                    setLoading(null);
+            if (task === 'ANALYZE') {
+                await processAnalysis(base64, mimeType);
+            } else {
+                if (selectedProvider !== 'GEMINI') {
+                        setEditResult(null);
+                        setAnalysisResult("Image Editing (In-painting) is currently optimized for Gemini Native only.");
+                        setLoading(null);
+                        return;
                 }
-            } catch (err: any) { 
-                setAnalysisResult(`Processing failed: ${err.message}`); 
+                const result = await editImage(base64, mimeType, prompt || "Enhance this image.");
+                setEditResult(result);
                 setLoading(null);
             }
-        };
-        reader.readAsDataURL(file);
+        } catch (err: any) { 
+            setAnalysisResult(`Processing failed: ${err.message}`); 
+            setLoading(null);
+        }
     };
 
     const handleSpeak = () => {

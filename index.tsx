@@ -2,6 +2,9 @@
 // IMPORT WAJIB: Penyeimbang WebRTC untuk semua browser (Safari/Android lama)
 import 'webrtc-adapter'; 
 
+// NOTE: Global Error Handlers for Web3 conflicts are now injected in index.html <head>
+// to ensure they run before any extension code.
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';

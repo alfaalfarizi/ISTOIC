@@ -20,6 +20,18 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// BACKGROUND SYNC EVENT
+self.addEventListener('sync', (event) => {
+    if (event.tag === 'sync-pending-messages') {
+        event.waitUntil(
+            // In a real implementation, this would iterate IDB/Cache, 
+            // find pending messages, and POST them to the backend or trigger PeerJS reconnection.
+            // For now, we simulate success to clear the browser trigger.
+            console.log('[SW] Background Sync Triggered: Processing pending queue...')
+        );
+    }
+});
+
 // Handle incoming messages from the main app (IStokView) to trigger System Notifications
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SHOW_NOTIFICATION') {

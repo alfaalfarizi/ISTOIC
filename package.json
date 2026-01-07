@@ -1,7 +1,8 @@
+
 {
   "name": "personaflow-ai",
   "private": true,
-  "version": "13.5.0",
+  "version": "101.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -27,6 +28,7 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-markdown": "^9.0.0",
+    "react-virtuoso": "^4.7.0",
     "tailwind-merge": "^3.0.1",
     "uuid": "^11.0.3",
     "webrtc-adapter": "^9.0.1"

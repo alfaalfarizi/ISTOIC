@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback } from 'react';
 import { NeuralLinkService, type NeuralLinkStatus } from '../../../services/neuralLink';
 import { HANISAH_BRAIN } from '../../../services/melsaBrain';
@@ -25,8 +24,8 @@ export const useNeuralLinkSession = (personaMode: 'hanisah' | 'stoic', notes: No
             setTranscriptHistory([]);
             setInterimTranscript(null);
             
-            const noteContext = notes.map(n => `- ${n.title}`).join('\n');
-            const systemInstruction = HANISAH_BRAIN.getSystemInstruction(personaMode, noteContext);
+            // Fix: Await getSystemInstruction and pass correct Note[] arg
+            const systemInstruction = await HANISAH_BRAIN.getSystemInstruction(personaMode, '', notes);
             
             setIsLiveMode(true);
             try {

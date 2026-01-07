@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useRef, useCallback } from 'react';
 import { NeuralLinkService, type NeuralLinkStatus, type TranscriptionEvent } from '../services/neuralLink';
 import { HANISAH_BRAIN } from '../services/melsaBrain';
@@ -50,7 +49,8 @@ export const NeuralLinkProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             setIsMinimized(false);
             
             const noteContext = notes.map(n => `- ${n.title}`).join('\n');
-            const systemInstruction = HANISAH_BRAIN.getSystemInstruction(personaMode, noteContext);
+            // Fix: Await async getSystemInstruction and pass Note[] correctly
+            const systemInstruction = await HANISAH_BRAIN.getSystemInstruction(personaMode, noteContext, notes);
             
             setIsLiveMode(true);
             try {

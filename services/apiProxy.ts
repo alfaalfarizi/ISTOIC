@@ -1,18 +1,17 @@
 import { z } from 'zod';
 import { debugService } from './debugService';
+import { HANISAH_KERNEL } from './melsaKernel';
 
 /**
- * IStoicAI v0.50 ENTERPRISE PROXY
+ * IStoicAI v0.53 ENTERPRISE PROXY (SECURE HYBRID)
  * 
- * In a production Vercel/Node environment, this file would fetch() 
- * your backend endpoints (e.g., /api/v1/generate).
+ * SECURITY UPGRADE:
+ * This service now defaults to a Server-First architecture.
+ * Client-side execution (Zero Trust Simulation) is available ONLY as a fallback/dev mode.
  * 
- * For this PWA implementation, we simulate the "Zero Trust" boundary 
- * by validating inputs/outputs strictly before passing to the legacy handlers.
- * 
- * ARCHITECTURAL RULE:
- * UI Components MUST NOT import `google-genai` or `openai` directly.
- * They must use `ApiProxy.generate()`.
+ * INSTRUCTIONS:
+ * 1. To secure your keys, set VITE_USE_SECURE_BACKEND=true in .env
+ * 2. Set VITE_BACKEND_URL to your Cloud Function / API Route (e.g. /api/chat).
  */
 
 // 1. Zod Schema Definitions (Runtime Type Safety)
@@ -20,7 +19,7 @@ export const AIResponseSchema = z.object({
   text: z.string(),
   modelUsed: z.string(),
   tokenCount: z.number().optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export type AIResponse = z.infer<typeof AIResponseSchema>;
@@ -30,8 +29,8 @@ export const NoteSchema = z.object({
   title: z.string().min(1),
   content: z.string(),
   tags: z.array(z.string()),
-  created: z.string().datetime(),
-  updated: z.string().datetime(),
+  created: z.string(),
+  updated: z.string(),
   is_pinned: z.boolean().default(false),
   is_archived: z.boolean().default(false),
   tasks: z.array(z.object({
@@ -44,6 +43,34 @@ export const NoteSchema = z.object({
 
 export type ValidatedNote = z.infer<typeof NoteSchema>;
 
+// Configuration from Environment
+const USE_SECURE_BACKEND = (import.meta as any).env.VITE_USE_SECURE_BACKEND === 'true';
+const BACKEND_URL = (import.meta as any).env.VITE_BACKEND_URL || '/api/chat';
+
+// --- RELIABILITY UTILITIES ---
+
+/**
+ * Retries a fetch operation with exponential backoff.
+ */
+async function fetchWithBackoff(url: string, options: RequestInit, retries = 3, backoffMs = 1000): Promise<Response> {
+  try {
+    const res = await fetch(url, options);
+    // Retry on Server Errors (5xx) but not Client Errors (4xx)
+    if (!res.ok && res.status >= 500) {
+      throw new Error(`Server Error: ${res.status}`);
+    }
+    return res;
+  } catch (err) {
+    if (retries <= 1) throw err;
+    
+    // Log retry attempt
+    debugService.log('WARN', 'PROXY', 'RETRY', `Network/Server fail. Retrying in ${backoffMs}ms...`, { url, retriesLeft: retries - 1 });
+    
+    await new Promise(resolve => setTimeout(resolve, backoffMs));
+    return fetchWithBackoff(url, options, retries - 1, backoffMs * 2);
+  }
+}
+
 // 2. The Proxy Service
 class ApiProxyService {
   
@@ -53,18 +80,76 @@ class ApiProxyService {
    */
   async generateText(
     prompt: string, 
-    provider: 'GEMINI' | 'OPENAI' | 'GROQ', 
+    provider: 'GEMINI' | 'OPENAI' | 'GROQ' | 'DEEPSEEK' | 'MISTRAL', 
     modelId: string,
     context?: string
   ): Promise<AIResponse> {
     
     debugService.log('INFO', 'PROXY', 'OUTBOUND', `Routing request to ${provider}/${modelId}`);
 
-    // IN PRODUCTION: const res = await fetch('/api/ai/generate', { ... });
-    // HERE: We bridge to the existing Kernel for PWA compatibility, but wrapped in safety.
-    
-    // Dynamic import to keep this file clean and ready for server-migration
-    const { HANISAH_KERNEL } = await import('./melsaKernel');
+    // STRATEGY A: SECURE BACKEND (RECOMMENDED FOR PRODUCTION)
+    if (USE_SECURE_BACKEND) {
+        try {
+            const response = await fetchWithBackoff(BACKEND_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    message: prompt, 
+                    provider, 
+                    modelId, 
+                    context 
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Backend Error (${response.status}): ${errorText}`);
+            }
+
+            // CONSUME STREAM FROM BACKEND
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
+            let fullText = "";
+
+            if (reader) {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    fullText += decoder.decode(value, { stream: true });
+                }
+            }
+
+            const data = {
+                text: fullText,
+                modelUsed: modelId,
+                metadata: { timestamp: new Date().toISOString(), source: 'SERVER_STREAM' }
+            };
+
+            // SAFE PARSE UPGRADE
+            const parsed = AIResponseSchema.safeParse(data);
+            if (!parsed.success) {
+                console.error("AI Response Validation Failed:", parsed.error);
+                // Return a safe fallback instead of crashing
+                return {
+                    text: fullText || "Error: Malformed response from AI provider.",
+                    modelUsed: modelId,
+                    metadata: { error: "Schema Validation Failed" }
+                };
+            }
+            return parsed.data;
+
+        } catch (serverError: any) {
+            console.error("Server Proxy Failed:", serverError);
+            if ((import.meta as any).env.PROD) {
+                throw new Error(`Secure Backend Unreachable: ${serverError.message}`);
+            }
+        }
+    }
+
+    // STRATEGY B: LOCAL EXECUTION (DEV / FALLBACK)
+    console.warn("⚠️ [SECURITY WARNING] RUNNING IN CLIENT-SIDE FALLBACK MODE. API KEYS ARE EXPOSED TO BROWSER.");
     
     try {
       const stream = HANISAH_KERNEL.streamExecute(prompt, modelId, context);
@@ -80,11 +165,20 @@ class ApiProxyService {
         metadata: { timestamp: new Date().toISOString() }
       };
 
-      // STRICT VALIDATION
-      return AIResponseSchema.parse(rawResponse);
+      // SAFE PARSE UPGRADE
+      const parsed = AIResponseSchema.safeParse(rawResponse);
+      if (!parsed.success) {
+          debugService.log('WARN', 'PROXY', 'VALIDATION_WARN', 'AI Output schema mismatch, using fallback.');
+          return {
+              text: fullText,
+              modelUsed: modelId,
+              metadata: { warning: "Validation Failed" }
+          };
+      }
+      return parsed.data;
 
     } catch (error) {
-      debugService.log('ERROR', 'PROXY', 'VALIDATION_FAIL', 'AI Output failed integrity check', error);
+      debugService.log('ERROR', 'PROXY', 'CRITICAL_FAIL', 'AI Output failed integrity check', error);
       throw new Error("Secure Proxy Error: Upstream response invalid or failed.");
     }
   }

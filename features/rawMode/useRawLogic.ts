@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { HANISAH_KERNEL, MODEL_CATALOG } from '../../services/melsaKernel';
@@ -79,9 +78,8 @@ export const useRawLogic = (notes: Note[], setNotes: (notes: Note[]) => void) =>
         }]);
 
         try {
-            const noteContext = `[VAULT_INDEX]\n${notes.map(n => `- ${n.title} (ID:${n.id})`).join('\n')}`;
-            
-            const stream = HANISAH_KERNEL.streamExecute(userMsg.content, selectedModelId, noteContext);
+            // Fix: Pass actual Note[] array to streamExecute for internal RAG processing
+            const stream = HANISAH_KERNEL.streamExecute(userMsg.content, selectedModelId, notes);
             
             let fullResponse = "";
             

@@ -327,7 +327,8 @@ export const AdvancedEditor: React.FC<AdvancedEditorProps> = ({
       const contextText = selectedText || editorRef.current?.innerText || "";
       const contextLabel = selectedText ? "SELECTED_TEXT" : "FULL_DOCUMENT";
       const prompt = `[ROLE: HANISAH_WRITER_MODULE] TASK: ${finalInstruction} CONTEXT (${contextLabel}): """${contextText}""" OUTPUT_DIRECTIVE: Return ONLY the revised/generated text. LANGUAGE_TARGET: ${TRANSLATIONS[currentLang].meta.label}`;
-      const response = await HANISAH_KERNEL.execute(prompt, 'gemini-3-flash-preview', "Writer Assistant");
+      // Fix: contextNotes (3rd arg) must be Note[], not string
+      const response = await HANISAH_KERNEL.execute(prompt, 'gemini-3-flash-preview', []);
       setHanisahResult(response.text || "Output generation failed.");
     } catch (error) {
       setHanisahResult("Neural processing error.");

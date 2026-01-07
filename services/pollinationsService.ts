@@ -9,7 +9,7 @@ import { debugService } from "./debugService";
 import { KEY_MANAGER } from "./geminiService";
 
 export const HYDRA_MODELS = {
-    // --- Jalur PREMIUM (Hugging Face API - Butuh Token) ---
+    // --- Jalur PREMIUM (Hugging Face API - Secure Proxy) ---
     absoluteReality: "DigiTech/AbsoluteReality_v1.8.1",         
     playground: "playgroundai/playground-v2.5-1024px-aesthetic",
     sdxlBase: "stabilityai/stable-diffusion-xl-base-1.0",       
@@ -68,34 +68,34 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
     return window.btoa(binary);
 }
 
-// Eksekutor A: Hugging Face
+// Eksekutor A: Hugging Face (Secure Proxy)
 async function runHuggingFace(modelId: string, prompt: string): Promise<{ url: string, model: string, provider: string }> {
-    debugService.log('INFO', 'HYDRA', 'HF_REQ', `Contacting Model: ${modelId}...`);
+    debugService.log('INFO', 'HYDRA', 'HF_REQ', `Contacting Secure Proxy for: ${modelId}...`);
     
-    const token = KEY_MANAGER.getKey('HUGGINGFACE');
-    if (!token) throw new Error("HF_TOKEN missing in Vault (Hugging Face)");
+    // Check if key exists in vault just to confirm capability (optional now that server handles it, but good for UI state)
+    // Note: We don't use the key here anymore, just check if user 'thinks' they have it enabled if we want logic consistency.
+    // For now, let the server handle authentication failure.
 
     try {
-        const response = await fetch(`https://api-inference.huggingface.co/models/${modelId}`, {
-            headers: { 
-                Authorization: `Bearer ${token}`, 
-                "Content-Type": "application/json" 
-            },
+        const response = await fetch(`/api/image`, {
             method: "POST",
-            body: JSON.stringify({ inputs: prompt }),
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt, modelId }),
         });
 
         if (!response.ok) {
-            throw new Error(`HF API Error: ${response.status}`);
+            const err = await response.json();
+            throw new Error(`HF Proxy Error: ${err.error || response.statusText}`);
         }
 
         const arrayBuffer = await response.arrayBuffer();
         const base64String = `data:image/jpeg;base64,${arrayBufferToBase64(arrayBuffer)}`;
         
-        KEY_MANAGER.reportSuccess('HUGGINGFACE');
-        return { url: base64String, model: modelId, provider: 'HuggingFace Inference' };
+        KEY_MANAGER.reportSuccess('HUGGINGFACE'); // Virtual success
+        return { url: base64String, model: modelId, provider: 'HuggingFace Inference (Secure)' };
     } catch (e: any) {
-        KEY_MANAGER.reportFailure('HUGGINGFACE', token, e);
+        // Report failure to UI debugger even though key isn't here
+        debugService.log('ERROR', 'HYDRA', 'HF_FAIL', e.message);
         throw e;
     }
 }
@@ -138,8 +138,7 @@ export const PollinationsService = {
         debugService.log('INFO', 'HYDRA', 'ROUTER', `Strategy: ${strategy.type} -> ${strategy.model}`);
 
         try {
-            // Priority Check: If we had HF tokens and wanted realism, we might prefer HF.
-            // But for reliability, we default to the router's choice (usually Pollinations Flux variants).
+            // Priority Check: Default to Pollinations for reliability unless configured otherwise
             return await runPollinations(strategy.model, prompt);
         } catch (error: any) {
             console.warn(`⚠️ PRIMARY FAILED: ${error.message}`);

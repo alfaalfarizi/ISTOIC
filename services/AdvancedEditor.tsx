@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { 
   Bold, Italic, Underline, Maximize2, Minimize2, 
@@ -324,7 +323,8 @@ export const AdvancedEditor: React.FC<AdvancedEditorProps> = ({
       const contextText = selectedText || editorRef.current?.innerText || "";
       const contextLabel = selectedText ? "SELECTED_TEXT" : "FULL_DOCUMENT";
       const prompt = `[ROLE: HANISAH_WRITER_MODULE] TASK: ${finalInstruction} CONTEXT (${contextLabel}): """${contextText}""" OUTPUT_DIRECTIVE: Return ONLY the revised/generated text. LANGUAGE_TARGET: ${TRANSLATIONS[currentLang].meta.label}`;
-      const response = await HANISAH_KERNEL.execute(prompt, 'gemini-3-flash-preview', "Writer Assistant");
+      // Fix: 3rd arg contextNotes must be Note[], not string
+      const response = await HANISAH_KERNEL.execute(prompt, 'gemini-3-flash-preview', []);
       setHanisahResult(response.text || "Output generation failed.");
     } catch (error) {
       setHanisahResult("Neural processing error.");
@@ -482,7 +482,7 @@ export const AdvancedEditor: React.FC<AdvancedEditorProps> = ({
                             <ToolbarButton onClick={() => executeCommand('redo')} icon={<Redo size={16} />} ariaLabel="Redo" className="w-9 h-9 rounded-xl" />
                         </div>
 
-                        {/* Formatting Groups ... (Kept same as before) */}
+                        {/* Formatting Groups */}
                         <div className="flex items-center gap-0.5 px-1 border-r border-black/5 dark:border-white/5 pr-2 mr-1 shrink-0">
                             <ToolbarButton onClick={() => executeCommand('bold')} icon={<Bold size={16} />} isActive={formats.bold} ariaLabel="Bold" className="w-9 h-9 rounded-xl" />
                             <ToolbarButton onClick={() => executeCommand('italic')} icon={<Italic size={16} />} isActive={formats.italic} ariaLabel="Italic" className="w-9 h-9 rounded-xl" />

@@ -143,6 +143,35 @@ class DebugService {
         this.notify();
     }
 
+    /**
+     * PRODUCTION ERROR REPORTING BRIDGE
+     * Connects to Sentry/Firebase Crashlytics without tight coupling.
+     */
+    reportToExternal(error: Error, context: Record<string, any> = {}) {
+        const errorData = {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+            context: {
+                ...context,
+                lastInteraction: this.lastInteractionId,
+                timestamp: new Date().toISOString()
+            }
+        };
+
+        // 1. Log to Internal Debugger
+        this.log('ERROR', 'CRASH_REPORT', 'EXCEPTION', error.message, errorData);
+
+        // 2. Integration Point for Sentry / Firebase
+        // Since we cannot install Sentry in this demo environment, we mock the call.
+        // In production: Sentry.captureException(error, { extra: context });
+        // In production: logEvent(analytics, 'app_exception', errorData);
+        
+        console.group('%c[EXTERNAL REPORTING MOCK]', 'background: red; color: white; padding: 2px 5px; border-radius: 4px;');
+        console.log('Sending to Sentry/Firebase:', errorData);
+        console.groupEnd();
+    }
+
     trackNetwork(endpoint: string, startTime: number) {
         const latency = Date.now() - startTime;
         this.metrics.push({ endpoint, latency, timestamp: Date.now() });

@@ -1,11 +1,10 @@
 
-import { KEY_MANAGER } from './geminiService';
 import { debugService } from './debugService';
 import { AudioCache } from './db';
 
 // --- VOICE MAPPING SYSTEM ---
 export const VOICE_MAPPING: Record<string, string> = {
-    'Hanisah': 'JBFqnCBsd6RMkjVDRZzb', // Using standard voice ID
+    'Hanisah': 'JBFqnCBsd6RMkjVDRZzb', 
     'Zephyr': '21m00Tcm4TlvDq8ikWAM',
     'Kore': 'EXAVITQu4vr4xnSDxMaL',  
     'Fenrir': 'TxGEqnHWrfWFTfGW9XjX',
@@ -21,17 +20,9 @@ async function generateHash(text: string, voiceId: string): Promise<string> {
 }
 
 /**
- * Production-ready TTS Service
- * Menggunakan Native Fetch untuk kompatibilitas maksimal di browser/Vercel
+ * Production-ready TTS Service (Secure Proxy Version)
  */
 export async function speakWithHanisah(text: string, voiceNameOverride?: string): Promise<void> {
-    const apiKey = KEY_MANAGER.getKey('ELEVENLABS');
-
-    if (!apiKey) {
-        debugService.log('WARN', 'HANISAH_VOICE', 'NO_KEY', 'ElevenLabs API Key is missing.');
-        return;
-    }
-
     try {
         let selectedName = voiceNameOverride;
         if (!selectedName) {
@@ -52,23 +43,19 @@ export async function speakWithHanisah(text: string, voiceNameOverride?: string)
             return;
         }
         
-        debugService.log('INFO', 'HANISAH_VOICE', 'INIT', `Synthesizing via API: ${selectedName}`);
+        debugService.log('INFO', 'HANISAH_VOICE', 'INIT', `Synthesizing via Secure Proxy: ${selectedName}`);
 
-        // 2. FETCH FROM API
-        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`, {
+        // 2. FETCH FROM SECURE PROXY (No API Key on Client)
+        const response = await fetch(`/api/tts`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'xi-api-key': apiKey
-            },
-            body: JSON.stringify({
-                text: text,
-                model_id: "eleven_multilingual_v2",
-                voice_settings: { stability: 0.5, similarity_boost: 0.75 }
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, voiceId })
         });
 
-        if (!response.ok) throw new Error(`Status: ${response.status}`);
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(`TTS Error: ${err.error || response.statusText}`);
+        }
 
         const audioBlob = await response.blob();
         
@@ -83,6 +70,6 @@ export async function speakWithHanisah(text: string, voiceNameOverride?: string)
 
     } catch (error: any) {
         debugService.log('ERROR', 'HANISAH_VOICE', 'FAIL', error.message);
-        console.error("ElevenLabs Critical Fail:", error);
+        console.error("ElevenLabs Proxy Fail:", error);
     }
 }

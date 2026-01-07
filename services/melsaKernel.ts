@@ -6,61 +6,10 @@ import { noteTools, visualTools, searchTools, universalTools } from "./geminiSer
 import { GLOBAL_VAULT, Provider } from "./hydraVault"; 
 import { mechanicTools } from "../features/mechanic/mechanicTools";
 import { streamOpenAICompatible } from "./providerEngine";
-import { type ModelMetadata } from "../types";
-import { FREE_TIER_MODELS } from "./freeModels";
+import { MASTER_MODEL_CATALOG, MODEL_IDS } from "./modelRegistry";
+import { Note } from "../types";
 
-export const MODEL_CATALOG: ModelMetadata[] = [
-  { 
-    id: 'gemini-3-flash-preview', 
-    name: 'Gemini 3 Flash', 
-    category: 'GEMINI_3', 
-    provider: 'GEMINI', 
-    description: 'Titanium V25 Standard: Ultra-fast reasoning with 1M context.', 
-    specs: { context: '1M', contextLimit: 1000000, speed: 'INSTANT', intelligence: 9.5 } 
-  },
-  { 
-    id: 'gemini-3-pro-preview', 
-    name: 'Gemini 3 Pro', 
-    category: 'GEMINI_3', 
-    provider: 'GEMINI', 
-    description: 'Titanium V25 Deep: Complex reasoning and STEM solver.', 
-    specs: { context: '2M', contextLimit: 2000000, speed: 'THINKING', intelligence: 10.0 } 
-  },
-  {
-    id: 'auto-best',
-    name: 'Hydra Omni V25',
-    category: 'GEMINI_2_5', 
-    provider: 'GEMINI', 
-    description: 'Parallel Execution Engine. Fastest node wins.',
-    specs: { context: 'AUTO', contextLimit: 128000, speed: 'INSTANT', intelligence: 9.9 } 
-  },
-  { 
-    id: 'llama-3.3-70b-versatile', 
-    name: 'Llama 3.3 70B', 
-    category: 'GROQ_VELOCITY', 
-    provider: 'GROQ', 
-    description: 'Open Source standard running on LPU hardware.', 
-    specs: { context: '128K', contextLimit: 128000, speed: 'INSTANT', intelligence: 9.3 } 
-  },
-  // MISTRAL MODELS ADDITION
-  {
-      id: 'mistral-large-latest',
-      name: 'Mistral Large',
-      category: 'MISTRAL_NATIVE',
-      provider: 'MISTRAL',
-      description: 'Mistral flagship model. Top-tier reasoning capabilities.',
-      specs: { context: '32K', contextLimit: 32000, speed: 'FAST', intelligence: 9.7 }
-  },
-  {
-      id: 'mistral-medium-latest',
-      name: 'Mistral Medium',
-      category: 'MISTRAL_NATIVE',
-      provider: 'MISTRAL',
-      description: 'Balanced performance and latency.',
-      specs: { context: '32K', contextLimit: 32000, speed: 'FAST', intelligence: 9.2 }
-  },
-  ...FREE_TIER_MODELS
-];
+export const MODEL_CATALOG = MASTER_MODEL_CATALOG;
 
 export interface StreamChunk {
   text?: string;
@@ -78,42 +27,20 @@ export class HanisahKernel {
       if (provider === 'GEMINI') {
           const configStr = localStorage.getItem('hanisah_tools_config');
           const config = configStr ? JSON.parse(configStr) : { search: true, vault: true, visual: true };
-          
           const tools: any[] = [];
-          
-          // V25 Logic: Keyword detection to save tokens. Only attach tools if relevant.
           const lowerMsg = currentMsg.toLowerCase();
           
-          // Note/Vault Intent
-          const noteKeywords = ['catat', 'simpan', 'ingat', 'tulis', 'save', 'note', 'task', 'tugas', 'hapus', 'cari', 'search', 'list'];
-          if (config.vault && noteTools && noteKeywords.some(k => lowerMsg.includes(k))) {
-              tools.push(noteTools);
-          }
-          
-          // Visual Intent
-          const visualKeywords = ['gambar', 'foto', 'image', 'picture', 'lukis', 'generate', 'visual', 'imagine', 'buatkan'];
-          if (config.visual && visualTools && visualKeywords.some(k => lowerMsg.includes(k))) {
-              tools.push(visualTools);
-          }
-          
-          // Search Intent
-          const searchKeywords = ['cari', 'siapa', 'apa', 'dimana', 'kapan', 'berita', 'news', 'update', 'harga', 'cuaca'];
-          if (config.search && searchKeywords.some(k => lowerMsg.includes(k))) {
-              tools.push(searchTools); 
-          }
-          
-          // Always include mechanic for self-healing
+          if (config.vault && noteTools && ['catat', 'simpan', 'ingat', 'note', 'task', 'list'].some(k => lowerMsg.includes(k))) tools.push(noteTools);
+          if (config.visual && visualTools && ['gambar', 'foto', 'visual', 'imagine'].some(k => lowerMsg.includes(k))) tools.push(visualTools);
+          if (config.search && searchTools && ['cari', 'berita', 'update', 'harga', 'cuaca'].some(k => lowerMsg.includes(k))) tools.push(searchTools); 
           if (mechanicTools) tools.push(mechanicTools);
-          
           return tools;
       } 
-      // Universal tools for other providers (Groq, Mistral, OpenAI, etc.)
       return universalTools.functionDeclarations ? [universalTools] : [];
   }
 
   private buildContext(history: any[], currentMsg: string, systemPrompt: string, limit: number): any[] {
-      const SAFETY_BUFFER = 4000; 
-      const maxInputTokens = Math.max(4000, limit - SAFETY_BUFFER);
+      const maxInputTokens = Math.max(4000, limit - 4000);
       let usedTokens = estimateTokens(systemPrompt) + estimateTokens(currentMsg);
       const messagesToSend: any[] = [];
       for (let i = history.length - 1; i >= 0; i--) {
@@ -128,42 +55,77 @@ export class HanisahKernel {
       return messagesToSend;
   }
 
-  private updateHistory(user: string, assistant: string) {
-    this.history.push({ role: 'user', parts: [{ text: user }] }, { role: 'model', parts: [{ text: assistant }] });
-    if (this.history.length > 50) this.history = this.history.slice(-50);
-  }
-
-  async *streamExecute(msg: string, initialModelId: string, context?: string, imageData?: { data: string, mimeType: string }, configOverride?: any): AsyncGenerator<StreamChunk> {
-    const systemPrompt = configOverride?.systemInstruction || HANISAH_BRAIN.getSystemInstruction('hanisah', context);
+  async *streamExecute(msg: string, initialModelId: string, contextNotes: Note[] | string = [], imageData?: { data: string, mimeType: string }, configOverride?: any): AsyncGenerator<StreamChunk> {
+    const systemPrompt = configOverride?.systemInstruction || await HANISAH_BRAIN.getSystemInstruction('hanisah', msg, contextNotes);
     const signal = configOverride?.signal; 
-    let currentModelId = initialModelId === 'auto-best' ? 'gemini-3-flash-preview' : initialModelId;
+    let currentModelId = initialModelId === 'auto-best' ? MODEL_IDS.GEMINI_FLASH : initialModelId;
 
-    // V25 ROBUST FAILOVER CHAIN
-    const plan = [
-        currentModelId, 
-        'gemini-3-flash-preview', 
-        'gemini-3-pro-preview', 
-        'llama-3.3-70b-versatile',
-        'mistral-medium-latest', // Fallback to Mistral
-        'gemini-2.0-flash-exp'
-    ];
-    const uniquePlan = [...new Set(plan)];
+    const plan = [...new Set([currentModelId, MODEL_IDS.GEMINI_FLASH, MODEL_IDS.GEMINI_PRO, MODEL_IDS.LLAMA_70B])];
+    
+    let attempts = 0;
+    let hasYielded = false;
 
-    for (let i = 0; i < uniquePlan.length; i++) {
+    for (let i = 0; i < plan.length; i++) {
         if (signal?.aborted) break;
-        const modelId = uniquePlan[i];
-        const model = MODEL_CATALOG.find(m => m.id === modelId) || MODEL_CATALOG[0];
-        
+        const modelId = plan[i];
+        const model = MASTER_MODEL_CATALOG.find(m => m.id === modelId) || MASTER_MODEL_CATALOG[0];
         const key = GLOBAL_VAULT.getKey(model.provider as Provider);
 
-        if (!key) {
-            debugService.log('WARN', 'KERNEL', 'NO_KEY', `No key for ${model.provider}, skipping...`);
-            continue;
-        }
+        if (!key) continue;
+        attempts++;
 
         try {
-            debugService.log('INFO', 'KERNEL', 'EXECUTE', `Attempting ${modelId} (Plan ${i+1}/${uniquePlan.length})`);
-            
+            // --- SECURITY INTERCEPTION FOR SERVER-SIDE MANAGED KEYS ---
+            if (key === 'server-side-managed') {
+                debugService.log('INFO', 'KERNEL', 'PROXY', `Offloading ${model.id} to Secure Backend...`);
+                
+                // Convert History to Standard format for Proxy
+                const standardHistory = this.history.map(h => ({ 
+                    role: h.role === 'model' ? 'assistant' : 'user', 
+                    content: h.parts ? h.parts[0].text : h.content 
+                }));
+                const fullMessages = [...standardHistory, { role: 'user', content: msg }];
+
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: msg, // Actually unused if we send context, but kept for compatibility
+                        modelId: model.id,
+                        provider: model.provider,
+                        context: systemPrompt // Sending system prompt as context
+                        // Note: Full history handling might need adjustment in api/chat.ts if it only takes 'message'
+                        // But api/chat.ts as written mostly handles single prompt or basic context. 
+                        // For full convo, we'd need to update api/chat.ts to accept 'messages' array. 
+                        // For this fix, we send the aggregated system prompt + msg.
+                    }),
+                    signal
+                });
+
+                if (!response.ok) throw new Error(`Backend Error: ${response.statusText}`);
+                if (!response.body) throw new Error("No response body");
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullText = "";
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    const chunkText = decoder.decode(value, { stream: true });
+                    fullText += chunkText;
+                    yield { text: chunkText };
+                    hasYielded = true;
+                }
+
+                if (hasYielded) {
+                    this.updateHistory(msg, fullText);
+                    return; 
+                }
+            } 
+            // --- END PROXY LOGIC ---
+
+            // CLIENT SIDE LOGIC (DEV ONLY)
             const isThinking = model.specs.speed === 'THINKING';
             const activeTools = configOverride?.tools || this.getActiveTools(model.provider, isThinking, msg);
             const contextLimit = model.specs.contextLimit || 128000;
@@ -171,92 +133,79 @@ export class HanisahKernel {
 
             if (model.provider === 'GEMINI') {
                 const ai = new GoogleGenAI({ apiKey: key });
-                const config: any = { 
-                    systemInstruction: systemPrompt, 
-                    temperature: 0.7 
-                };
-                
-                if (activeTools.length > 0) config.tools = activeTools;
-
                 const contents = [
                     ...optimizedHistory.map(h => ({ role: h.role, parts: h.parts })), 
                     { role: 'user', parts: imageData ? [{ inlineData: imageData }, { text: msg }] : [{ text: msg }] }
                 ];
-
-                const stream = await ai.models.generateContentStream({ model: model.id, contents, config });
+                const stream = await ai.models.generateContentStream({ model: model.id, contents, config: { systemInstruction: systemPrompt, temperature: 0.7, tools: activeTools } });
                 let fullText = "";
-                let hasStarted = false;
-
                 for await (const chunk of stream) {
                     if (signal?.aborted) break;
                     if (chunk.text) { 
                         fullText += chunk.text; 
                         yield { text: chunk.text }; 
-                        hasStarted = true;
+                        hasYielded = true;
                     }
-                    if (chunk.functionCalls?.length) { 
-                        yield { functionCall: chunk.functionCalls[0] }; 
-                        hasStarted = true;
+                    if (chunk.functionCalls?.length) {
+                        yield { functionCall: chunk.functionCalls[0] };
+                        hasYielded = true;
                     }
-                    if (chunk.candidates?.[0]?.groundingMetadata?.groundingChunks) {
-                        yield { groundingChunks: chunk.candidates[0].groundingMetadata.groundingChunks };
-                    }
+                    if (chunk.candidates?.[0]?.groundingMetadata?.groundingChunks) yield { groundingChunks: chunk.candidates[0].groundingMetadata.groundingChunks };
                 }
-                
-                if (!hasStarted) throw new Error("Empty Response");
-                this.updateHistory(msg, fullText);
-                return;
-
+                if (hasYielded) {
+                    this.updateHistory(msg, fullText);
+                    return;
+                }
             } else {
-                // Non-Gemini Providers (Groq, Mistral, OpenAI, etc.)
-                const standardHistory = optimizedHistory.map(h => ({
-                    role: h.role === 'model' ? 'assistant' : 'user',
-                    content: h.parts[0]?.text || ''
-                }));
+                // OpenAI Compatible Client-Side (Dev Key)
+                const standardHistory = optimizedHistory.map(h => ({ role: h.role === 'model' ? 'assistant' : 'user', content: h.parts[0]?.text || '' }));
                 const stream = streamOpenAICompatible(model.provider as any, model.id, [...standardHistory, { role: 'user', content: msg }], systemPrompt, activeTools, signal);
                 let fullText = "";
-                let hasStarted = false;
                 for await (const chunk of stream) {
                     if (signal?.aborted) break;
-                    if (chunk.text) { fullText += chunk.text; yield { text: chunk.text }; hasStarted = true; }
-                    if (chunk.functionCall) { yield { functionCall: chunk.functionCall }; hasStarted = true; }
+                    if (chunk.text) { 
+                        fullText += chunk.text; 
+                        yield { text: chunk.text }; 
+                        hasYielded = true;
+                    }
+                    if (chunk.functionCall) {
+                        yield { functionCall: chunk.functionCall };
+                        hasYielded = true;
+                    }
                 }
-                if (!hasStarted) throw new Error("Empty Response");
-                this.updateHistory(msg, fullText);
-                return;
+                if (hasYielded) {
+                    this.updateHistory(msg, fullText);
+                    return;
+                }
             }
         } catch (err: any) {
-            const errStr = err.message.toLowerCase();
-            
             GLOBAL_VAULT.reportFailure(model.provider as Provider, key, err);
-            
-            debugService.log('WARN', 'KERNEL', 'FAILOVER', `${modelId} failed: ${err.message}. Switching...`);
+            if (i < plan.length - 1) yield { metadata: { systemStatus: `Rerouting to ${plan[i+1]}...`, isRerouting: true } };
+        }
+    }
 
-            if (i < uniquePlan.length - 1) {
-                yield { metadata: { systemStatus: `Rerouting logic to ${uniquePlan[i+1]}...`, isRerouting: true } };
-                await new Promise(resolve => setTimeout(resolve, 800));
-                continue; 
-            } else {
-                const naturalError = msg.toLowerCase().includes('gambar') 
-                    ? "Waduh, imajinasiku lagi buntu nih (Server Overload). Coba minta lagi bentar lagi ya?"
-                    : "Aduh, kepalaku pusing (Network Error). Tunggu sebentar ya sayang, aku istirahat 5 detik dulu...";
-                
-                yield { text: naturalError };
-                this.updateHistory(msg, naturalError);
-                return;
-            }
+    // FALLBACK IF ALL FAILED
+    if (!hasYielded) {
+         if (attempts === 0) {
+             yield { text: `\n\n> ⚠️ **SYSTEM HALT: NO API KEYS DETECTED**\n\nSistem tidak menemukan kunci API lokal dan Backend Proxy gagal dihubungi.` };
+        } else {
+             yield { text: `\n\n> ⚠️ **CONNECTION FAILURE**\n\nSemua provider AI (${attempts}) gagal merespons. Periksa koneksi internet.` };
         }
     }
   }
 
-  async execute(msg: string, modelId: string, context?: string): Promise<StreamChunk> {
-    const it = this.streamExecute(msg, modelId, context);
+  private updateHistory(user: string, assistant: string) {
+    this.history.push({ role: 'user', parts: [{ text: user }] }, { role: 'model', parts: [{ text: assistant }] });
+    if (this.history.length > 50) this.history = this.history.slice(-50);
+  }
+
+  async execute(msg: string, modelId: string, contextNotes?: Note[] | string): Promise<StreamChunk> {
+    const it = this.streamExecute(msg, modelId, contextNotes || []);
     let fullText = "";
     let finalChunk: StreamChunk = {};
     for await (const chunk of it) {
         if (chunk.text) fullText += chunk.text;
         if (chunk.functionCall) finalChunk.functionCall = chunk.functionCall;
-        if (chunk.metadata) finalChunk.metadata = chunk.metadata;
     }
     finalChunk.text = fullText;
     return finalChunk;

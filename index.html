@@ -6,7 +6,42 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <link rel="manifest" href="/manifest.json" />
     
-    <!-- CSP: Security Policy (Hardened) -->
+    <!-- CRITICAL ERROR SUPPRESSION (Must run before any other script) -->
+    <script>
+      (function() {
+        // Suppress "Cannot redefine property: ethereum" from aggressive Wallet Extensions
+        var _error = console.error;
+        console.error = function(msg) {
+           if (typeof msg === 'string' && (
+             msg.includes('redefine property: ethereum') || 
+             msg.includes('ethereum')
+           )) return;
+           _error.apply(console, arguments);
+        };
+        
+        window.addEventListener('error', function(e) {
+          if (e.message && (
+             e.message.includes('redefine property: ethereum') || 
+             e.message.includes('ethereum.isMetaMask') ||
+             e.filename?.includes('inpage.js')
+          )) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+          }
+        }, true);
+
+        window.addEventListener('unhandledrejection', function(e) {
+          if (e.reason && e.reason.message && (
+             e.reason.message.includes('redefine property: ethereum') ||
+             e.reason.message.includes('ethereum')
+          )) {
+            e.preventDefault();
+          }
+        });
+      })();
+    </script>
+
+    <!-- CSP: Security Policy (Hardened & Updated) -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://webrtc.github.io https://apis.google.com https://accounts.google.com https://*.firebaseapp.com https://www.googletagmanager.com;
@@ -33,7 +68,8 @@
             wss://*.metered.live
             https://*.peerjs.com
             wss://*.peerjs.com
-            wss://generativelanguage.googleapis.com;
+            wss://generativelanguage.googleapis.com
+            https://grainy-gradients.vercel.app;
         frame-src 'self' https://*.firebaseapp.com https://apis.google.com https://accounts.google.com;
         media-src 'self' blob: data: mediastream:;
         worker-src 'self' blob:;

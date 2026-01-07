@@ -41,23 +41,38 @@ export class HydraVault {
         const keys = new Set<string>(); 
         
         const addKey = (val: string | undefined) => {
-            if (!val || typeof val !== 'string' || val.includes("GANTI_DENGAN")) return;
-            val.split(/[\n,;]+/).forEach(part => {
-                const clean = part.replace(/['"\s]/g, '').trim();
-                if (clean.length > 8) keys.add(clean);
-            });
+            if (!val || typeof val !== 'string') return;
+            
+            // STRICT VALIDATION FILTER
+            // Remove whitespace and quotes
+            const clean = val.replace(/['"\s]/g, '').trim();
+
+            // Check for common placeholders
+            const invalidPatterns = [
+                "INSERT", "KEY", "YOUR_API", "TODO", "CHANGE_ME", "EXAMPLE"
+            ];
+            
+            // Heuristic: Valid keys are usually reasonably long (> 15 chars)
+            // and should NOT contain the invalid patterns
+            const isInvalid = invalidPatterns.some(p => clean.toUpperCase().includes(p));
+            const isTooShort = clean.length < 15;
+
+            if (!isInvalid && !isTooShort) {
+                keys.add(clean);
+            } else if (clean.length > 0) {
+                 // Log warning but don't crash
+                 console.warn(`[HYDRA_VAULT] Skipped malformed key for ${provider}`);
+            }
         };
 
         // 1. Check Local Dev Keys (VITE_ prefix only)
         addKey(viteEnv[`VITE_${provider}_API_KEY`]);
         
         // 2. Fallback: If no local keys, inject Virtual Key for Proxy
+        // But only if Secure Mode is enabled, otherwise service is unavailable
         if (keys.size === 0) {
             if (isSecureMode) {
                 keys.add('server-side-managed');
-            } else {
-               // Only warn in dev console if absolutely no keys and not in secure mode
-               // console.warn(`[Hydra] No keys for ${provider}`);
             }
         }
 
@@ -111,27 +126,30 @@ export class HydraVault {
   }
 
   public reportFailure(provider: Provider, plainKeyString: string, error: any): void {
-    // If it's a server-side managed key, log it but be lenient
+    // If it's a server-side managed key, log it but don't cooldown permanently (let server recover)
     if (plainKeyString === 'server-side-managed') {
          debugService.log('ERROR', 'BACKEND_PROXY', 'FAIL', `${provider} proxy request failed.`, error);
+         // Optional: Cooldown proxy for 5s to prevent spamming failed server
          return;
     }
 
     const pool = this.vault[provider];
+    if (!pool) return;
+
     const searchHash = SECURITY_MATRIX.cloak(plainKeyString);
-    const record = pool?.find((k) => k.cloakedKey === searchHash);
+    const record = pool.find((k) => k.cloakedKey === searchHash);
     if (!record) return;
 
     record.fails++;
     record.status = 'COOLDOWN';
     
     const errStr = JSON.stringify(error).toLowerCase();
-    let penaltyMs = 30000;
+    let penaltyMs = 30000; // Default 30s
 
     if (errStr.includes('429') || errStr.includes('quota') || errStr.includes('limit')) {
-        penaltyMs = 300000; 
+        penaltyMs = 300000; // 5 mins for Quota
     } else if (errStr.includes('503') || errStr.includes('overloaded')) {
-        penaltyMs = 60000;
+        penaltyMs = 60000; // 1 min for Overload
     }
     
     record.cooldownUntil = Date.now() + penaltyMs;

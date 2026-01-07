@@ -2,28 +2,8 @@
 // IMPORT WAJIB: Penyeimbang WebRTC untuk semua browser (Safari/Android lama)
 import 'webrtc-adapter'; 
 
-// Patch untuk mencegah crash karena Extension Wallet (Metamask/Phantom)
-// Defensive coding against immutable window.ethereum injections
-try {
-  if (typeof window !== 'undefined') {
-    const _window = window as any;
-    if (_window.ethereum) {
-        // If it exists, we try to ensure we don't crash when libraries try to re-define it
-    }
-  }
-} catch (e) {
-  // Suppress specific extension errors
-  console.warn("Web3 Provider Conflict Ignored");
-}
-
-// Global Error Handler for Extension interference
-window.addEventListener('error', (event) => {
-    if (event.message?.includes('ethereum') || event.filename?.includes('inpage.js')) {
-        event.stopImmediatePropagation();
-        event.preventDefault();
-        console.debug('Suppressed Web3 Extension Error:', event.message);
-    }
-});
+// NOTE: Global Error Handlers for Web3 conflicts are now injected in index.html <head>
+// to ensure they run before any extension code.
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';

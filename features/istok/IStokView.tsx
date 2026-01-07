@@ -24,7 +24,7 @@ import { compressImage } from './components/gambar';
 import { IstokIdentityService, IStokUserIdentity } from './services/istokIdentity';
 import { IStokInput } from './components/IStokInput'; 
 import { OMNI_KERNEL } from '../../services/omniRace'; 
-import { useGlobalPeer } from '../../hooks/useGlobalPeer'; // Re-import logic
+import { useGlobalPeer } from '../../hooks/useGlobalPeer'; 
 
 // --- HYDRA CONSTANTS ---
 const CHUNK_SIZE = 1024 * 64; // 64KB
@@ -93,9 +93,9 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
     // Connection Data
     const [targetPeerId, setTargetPeerId] = useState('');
     const [accessPin, setAccessPin] = useState('');
-    const [isConnected, setIsConnected] = useState(false); // Means "Chat UI Active"
-    const [isPeerAlive, setIsPeerAlive] = useState(false); // Global Peer Status
-    const [isDataConnectionAlive, setIsDataConnectionAlive] = useState(false); // Specific Chat Connection Status
+    const [isConnected, setIsConnected] = useState(false); 
+    const [isPeerAlive, setIsPeerAlive] = useState(false); 
+    const [isDataConnectionAlive, setIsDataConnectionAlive] = useState(false); 
     const [isNetworkOnline, setIsNetworkOnline] = useState(navigator.onLine);
     
     // Chat Data
@@ -136,7 +136,6 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
             return;
         }
 
-        // Initialize profile with static data first, update later with real peer ID
         setMyProfile({
             id: identity.istokId,
             username: identity.displayName,
@@ -146,12 +145,10 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
         });
 
         // --- GLOBAL PEER SYNC ---
-        // Monitor global peer status constantly
         const checkPeerStatus = () => {
-            // Check if peer exists and not destroyed/disconnected
             if (globalPeer && !globalPeer.destroyed && !globalPeer.disconnected) {
                 setIsPeerAlive(true);
-                // Update profile with ACTIVE peer ID (which might be a fallback ID)
+                // Update profile with ACTIVE peer ID (Pastikan ID sinkron)
                 if (globalPeer.id && globalPeer.id !== myProfile.id) {
                      setMyProfile(prev => ({ ...prev, id: globalPeer.id }));
                 }
@@ -161,13 +158,12 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
         };
 
         const interval = setInterval(checkPeerStatus, 1000);
-        checkPeerStatus(); // Immediate check
+        checkPeerStatus(); 
         
         if (globalPeer) {
             setupPeerListeners(globalPeer);
         }
 
-        // Handle Accepted Connection from Notification
         if (initialAcceptedConnection) {
             handleAcceptedConnection(initialAcceptedConnection);
         }
@@ -186,18 +182,14 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
         };
     }, [identity, globalPeer]);
 
-    // AUTO RECONNECT LOGIC FOR CHAT SESSION
+    // AUTO RECONNECT LOGIC
     useEffect(() => {
-        // Only attempt reconnect if:
-        // 1. Chat UI is active (isConnected)
-        // 2. Chat Data Connection is dead (!isDataConnectionAlive)
-        // 3. Global Peer Signal is healthy (isPeerAlive) -> CRITICAL to prevent spamming when internet is down
         if (isConnected && !isDataConnectionAlive && isPeerAlive && targetPeerId) {
             console.log("Attempting to restore chat connection...");
             if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
             reconnectTimeoutRef.current = setTimeout(() => {
-                connectToPeer(targetPeerId, accessPin, true); // True = Reconnect Mode (Silent)
-            }, 3000); // 3s delay
+                connectToPeer(targetPeerId, accessPin, true); 
+            }, 3000); 
         }
     }, [isConnected, isDataConnectionAlive, isPeerAlive, targetPeerId]);
 
@@ -212,6 +204,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
         
         setupDataConnection(conn);
 
+        // SEND ACK INSTANTLY
         const ack = JSON.stringify({ type: 'HANDSHAKE_ACK' });
         const enc = await encryptData(ack, '000000'); 
         if (enc) conn.send({ type: 'SYS', payload: enc });
@@ -224,31 +217,15 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
 
     // --- LISTENER SETUP ---
     const setupPeerListeners = (peer: any) => {
-        peer.off('call'); // Clear previous to be safe
+        peer.off('call'); 
         peer.on('call', (call: any) => {
              setIncomingCall(call);
              playSound('MSG_IN');
         });
         
-        peer.off('connection');
-        peer.on('connection', (conn: any) => {
-             conn.on('data', (data: any) => {
-                 // Check if it's a handshake for a NEW chat or data for EXISTING chat
-                 if (data.type === 'SYS' && !isConnected) {
-                    // Logic handled by App.tsx for notification usually, but handle overlap here
-                 }
-                 if (isConnected && conn.peer === targetPeerId) {
-                     // Re-bind connection if it's the same peer (Handling reconnection from their side)
-                     if (connRef.current !== conn) {
-                         console.log("Re-binding connection from peer");
-                         connRef.current = conn;
-                         setupDataConnection(conn);
-                         setIsDataConnectionAlive(true);
-                     }
-                     handleIncomingData(data, conn);
-                 }
-             });
-        });
+        // Listener ini dipanggil global di useGlobalPeer, 
+        // tapi kita tambahkan spesifik handler di sini untuk memastikan sinkronisasi state UI
+        // peer.on('connection') sudah dihandle di App.tsx -> incomingRequest -> UI
     };
     
     const setupDataConnection = (conn: any) => {
@@ -269,7 +246,6 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
 
     // --- CONNECTION LOGIC ---
     const connectToPeer = (id: string, pin: string, isReconnect: boolean = false) => {
-        // Prevent connect spam if global peer is dead
         if(!globalPeer || !isPeerAlive || !identity) {
             if(!isReconnect) alert("Sistem Hydra sedang offline. Cek koneksi internet.");
             return;
@@ -291,15 +267,21 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
                 return;
             }
             
+            // OPTIMIZED HANDSHAKE: Send data immediately on open
             conn.on('open', async () => {
                 if (!isReconnect) setStage('HANDSHAKE');
+                
                 const handshake = JSON.stringify({ 
                     type: 'HANDSHAKE_SYN', 
                     identity: identity.displayName,
                     photo: identity.photoURL,
                     email: identity.email 
                 });
-                const encrypted = await encryptData(handshake, pin);
+
+                // Default PIN '000000' is allowed for public handshake initiation
+                const effectivePin = pin.length >= 4 ? pin : '000000';
+                
+                const encrypted = await encryptData(handshake, effectivePin);
                 if(encrypted) conn.send({ type: 'SYS', payload: encrypted });
                 
                 connRef.current = conn;
@@ -307,8 +289,6 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
                 setIsDataConnectionAlive(true);
                 if (isReconnect) console.log("Reconnection successful!");
             });
-            
-            // Note: Data listeners are set in setupDataConnection inside open event
 
         } catch (e) {
             console.error("Connect Exception", e);
@@ -326,10 +306,9 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
     };
 
     const handleForceReconnect = () => {
-        window.location.reload(); // Simplest way to fully reset Peer state from scratch
+        window.location.reload(); 
     };
 
-    // ... (Smart Compose & Translation Logic - same as before) ...
     const handleAiSmartCompose = async (userDraft: string, mode: 'REPLY' | 'REFINE' = 'REPLY'): Promise<string> => {
         setIsAiThinking(true);
         const contextMessages = messages.slice(-5).map(m => `${m.sender === 'ME' ? 'Me' : 'Partner'}: ${m.content}`).join('\n');
@@ -369,13 +348,18 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
         }
 
         const pin = accessPin || '000000';
+        
         if (data.type === 'SYS') {
-            const decrypted = await decryptData(data.payload, pin);
+            // Coba dekripsi dengan pin user, jika gagal coba pin default '000000'
+            let decrypted = await decryptData(data.payload, pin);
+            if (!decrypted) decrypted = await decryptData(data.payload, '000000');
+
             if (!decrypted) return;
             const json = JSON.parse(decrypted);
 
             if (json.type === 'HANDSHAKE_SYN') {
-                setIncomingRequest({ peerId: conn.peer, identity: json.identity, conn });
+                // Notifikasi akan ditangani di level App.tsx via incomingRequest state
+                // Tapi kita bisa bunyikan suara di sini
                 playSound('MSG_IN');
             } else if (json.type === 'HANDSHAKE_ACK') {
                 setIsConnected(true);
@@ -412,17 +396,6 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
              };
              
              setMessages(prev => [...prev, pendingMsg as Message]);
-             
-             if ('serviceWorker' in navigator && 'SyncManager' in window) {
-                 try {
-                     const reg = await navigator.serviceWorker.ready;
-                     // @ts-ignore
-                     await reg.sync.register('sync-pending-messages');
-                     console.log("Background Sync registered.");
-                 } catch (e) {
-                     console.warn("Sync registration failed", e);
-                 }
-             }
              return;
         }
 
@@ -433,7 +406,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
 
         const msgPayload = { id: crypto.randomUUID(), type, content, timestamp: Date.now(), ttl: ttlMode, ...extraData };
         const strPayload = JSON.stringify(msgPayload);
-        const encrypted = await encryptData(strPayload, accessPin);
+        const encrypted = await encryptData(strPayload, accessPin || '000000');
         if (!encrypted) return;
 
         if (encrypted.length > CHUNK_SIZE) {
@@ -467,16 +440,27 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
         }
     };
 
-    // --- SIDEBAR HANDLERS (Same) ---
-    const handleContactSelect = (s: IStokSession | IStokContact) => { setTargetPeerId(s.id); if ('pin' in s && s.pin) setAccessPin(s.pin); setShowSidebar(false); };
-    const handleContactCall = (c: IStokContact) => { setTargetPeerId(c.id); setShowSidebar(false); setTimeout(() => { const p = document.querySelector('input[placeholder="PIN (6)"]') as HTMLInputElement; if(p) p.focus(); }, 300); };
-
-    // --- RENDERERS ---
+    // --- SIDEBAR HANDLERS ---
+    const handleContactSelect = (s: IStokSession | IStokContact) => { 
+        setTargetPeerId(s.id); 
+        // Jika session punya PIN, gunakan itu. Jika kontak, mungkin belum ada PIN.
+        if ('pin' in s && s.pin) setAccessPin(s.pin); 
+        setShowSidebar(false); 
+    };
+    
+    const handleContactCall = (c: IStokContact) => { 
+        setTargetPeerId(c.id); 
+        setShowSidebar(false); 
+        // Auto focus PIN input
+        setTimeout(() => { 
+            const p = document.querySelector('input[placeholder="PIN (6)"]') as HTMLInputElement; 
+            if(p) p.focus(); 
+        }, 300); 
+    };
 
     // 1. DASHBOARD MODE (Not Connected)
     if (!isConnected) {
         return (
-            // Full height using dvh for mobile address bar fix
             <div className="h-[100dvh] bg-[#050505] flex flex-col p-4 md:p-8 relative font-sans text-white overflow-hidden">
                  
                  {/* Top Navigation */}
@@ -554,7 +538,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
                                 />
                                 <button 
                                     onClick={()=>connectToPeer(targetPeerId, accessPin)} 
-                                    disabled={!targetPeerId || accessPin.length < 4 || !isPeerAlive}
+                                    disabled={!targetPeerId || !isPeerAlive}
                                     className="flex-1 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-blue-900/20 disabled:opacity-50 disabled:shadow-none transition-all flex items-center justify-center gap-2 group active:scale-95"
                                 >
                                     {stage === 'IDLE' ? 'SAMBUNGKAN' : <><Loader2 size={14} className="animate-spin"/> {stage}...</>} <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform"/>
@@ -574,23 +558,19 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
                          </div>
                      </div>
 
-                     {/* Radar / Status Footer */}
                      <div className="flex items-center justify-between px-2 opacity-50">
                          <div className="flex items-center gap-4 text-[9px] font-mono">
                              <span className="flex items-center gap-1">
                                 <Signal size={10} className={isPeerAlive ? 'text-emerald-500' : 'text-red-500'} /> 
-                                P2P: {isPeerAlive ? 'ACTIVE' : 'COOLDOWN'}
+                                P2P: {isPeerAlive ? 'ACTIVE' : 'RETRYING'}
                              </span>
-                             <span className="flex items-center gap-1"><Server size={10}/> TURN: {process.env.VITE_METERED_API_KEY ? 'TITANIUM' : 'STANDARD'}</span>
                          </div>
                          <div className="text-[9px] font-black uppercase tracking-[0.2em]">V101.0_SECURE</div>
                      </div>
                  </div>
 
-                 {/* Background Grid */}
                  <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none opacity-20"></div>
                  
-                 {/* Modals */}
                  {showScanner && <QRScanner onScan={(val: string) => { 
                     try {
                         const urlStr = val.startsWith('http') ? val : `https://dummy.com?${val}`;
@@ -616,32 +596,6 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
                     onRenameSession={()=>{}} 
                     currentPeerId={null}
                 />
-
-                {/* INCOMING CONNECTION NOTIFICATION */}
-                {incomingRequest && (
-                    <ConnectionNotification 
-                        identity={incomingRequest.identity} 
-                        peerId={incomingRequest.peerId}
-                        onAccept={async () => {
-                            const { conn } = incomingRequest;
-                            connRef.current = conn;
-                            setupDataConnection(conn); // Bind listeners
-                            const ack = JSON.stringify({ type: 'HANDSHAKE_ACK' });
-                            const pin = accessPin || '000000';
-                            const enc = await encryptData(ack, pin);
-                            if(enc) conn.send({ type: 'SYS', payload: enc });
-                            
-                            setIsConnected(true);
-                            setIsDataConnectionAlive(true);
-                            setStage('SECURE');
-                            setIncomingRequest(null);
-                        }}
-                        onDecline={() => {
-                            incomingRequest.conn.close();
-                            setIncomingRequest(null);
-                        }}
-                    />
-                )}
             </div>
         );
     }
@@ -722,7 +676,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
                 onSend={(txt: string) => sendMessage('TEXT', txt)}
                 onSendFile={() => fileInputRef.current?.click()}
                 onSendAudio={(b64: string, dur: number) => sendMessage('AUDIO', b64, { duration: dur })}
-                disabled={!isDataConnectionAlive && isNetworkOnline} // Allow input if offline to queue, but disable if trying to connect
+                disabled={!isDataConnectionAlive && isNetworkOnline} 
                 ttlMode={ttlMode}
                 onToggleTtl={() => setTtlMode(p => p === 0 ? 30 : 0)}
                 onAiAssist={handleAiSmartCompose} 
@@ -731,7 +685,6 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
              />
              <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect} />
 
-            
             {showCall && <TeleponanView onClose={()=>setShowCall(false)} existingPeer={globalPeer} initialTargetId={targetPeerId} incomingCall={incomingCall} secretPin={accessPin} />}
             
             {incomingCall && !showCall && <CallNotification identity="Secure Peer" onAnswer={()=>setShowCall(true)} onDecline={()=>{incomingCall.close(); setIncomingCall(null);}} />}

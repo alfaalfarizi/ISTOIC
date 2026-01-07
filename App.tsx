@@ -62,16 +62,11 @@ interface AppContentProps {
     notes: Note[];
     setNotes: (notes: Note[]) => void;
     onOpenTeleponan: () => void;
-    // Strictly typed props
-    globalPeer: any; // PeerJS instance remains any to avoid heavy lib import in types, but handled in hooks
-    incomingRequest: IncomingConnection | null;
-    onAcceptRequest: (req: IncomingConnection) => void;
-    onDeclineRequest: () => void;
+    // Removed incomingRequest props as they are handled in App root now
 }
 
 const AppContent: React.FC<AppContentProps> = ({ 
-    notes, setNotes, onOpenTeleponan,
-    globalPeer, incomingRequest, onAcceptRequest, onDeclineRequest
+    notes, setNotes, onOpenTeleponan
 }) => {
   const [activeFeature, setActiveFeature] = useState<FeatureID>('dashboard');
   const [isTutorialComplete, setIsTutorialComplete] = useLocalStorage<boolean>('app_tutorial_complete_v101', false);
@@ -170,37 +165,6 @@ const AppContent: React.FC<AppContentProps> = ({
     };
   }, []);
 
-  // --- HANDLE INCOMING REQUEST DATA ---
-  const [requestIdentity, setRequestIdentity] = useState<string>('');
-  
-  useEffect(() => {
-      if (incomingRequest) {
-          // IMMEDIATE FEEDBACK: If no data yet, show loading
-          if (!incomingRequest.firstData) {
-              setRequestIdentity('ESTABLISHING LINK...');
-              return;
-          }
-
-          const process = async () => {
-              const { firstData } = incomingRequest;
-              // Try basic pins + default '000000'
-              const payload = await decryptData(firstData.payload, '000000') || await decryptData(firstData.payload, '123456');
-              
-              if (payload) {
-                  try {
-                    const json = JSON.parse(payload);
-                    setRequestIdentity(json.identity || 'Unknown Agent');
-                  } catch(e) { setRequestIdentity('Encrypted Signal'); }
-              } else {
-                  setRequestIdentity('Encrypted Signal (PIN Required)');
-              }
-          };
-          process();
-      } else {
-          setRequestIdentity('');
-      }
-  }, [incomingRequest]);
-
   if (!registryValid) {
       return (
           <div className="h-screen w-screen bg-black flex items-center justify-center text-red-600 flex-col gap-4">
@@ -232,17 +196,6 @@ const AppContent: React.FC<AppContentProps> = ({
   return (
     <div className="flex h-[100dvh] w-full text-skin-text font-sans bg-skin-main theme-transition overflow-hidden selection:bg-accent/30 selection:text-accent relative pl-safe pr-safe">
       
-      {/* GLOBAL CONNECTION ALERT - MOVED TO ROOT LEVEL FOR Z-INDEX FIX */}
-      {incomingRequest && (
-          <ConnectionNotification 
-              identity={requestIdentity}
-              peerId={incomingRequest.conn.peer}
-              onAccept={() => onAcceptRequest(incomingRequest)}
-              onDecline={onDeclineRequest}
-              isProcessing={!incomingRequest.firstData} // Show loading state if data not yet arrived
-          />
-      )}
-
       {/* 1. Global Ambient Background Layer */}
       <div className="absolute inset-0 pointer-events-none z-0">
           <div className="absolute inset-0 bg-gradient-to-br from-skin-main via-skin-main to-skin-main opacity-100"></div>
@@ -308,6 +261,37 @@ const App: React.FC = () => {
     
     // --- GLOBAL CONNECTION HANDLER ---
     const [acceptedConnection, setAcceptedConnection] = useState<IncomingConnection | null>(null);
+
+    // --- INCOMING REQUEST DATA PARSING ---
+    const [requestIdentity, setRequestIdentity] = useState<string>('');
+
+    useEffect(() => {
+        if (incomingConnection) {
+            // IMMEDIATE FEEDBACK: If no data yet, show loading
+            if (!incomingConnection.firstData) {
+                setRequestIdentity('ESTABLISHING LINK...');
+                return;
+            }
+  
+            const process = async () => {
+                const { firstData } = incomingConnection;
+                // Try basic pins + default '000000'
+                const payload = await decryptData(firstData.payload, '000000') || await decryptData(firstData.payload, '123456');
+                
+                if (payload) {
+                    try {
+                      const json = JSON.parse(payload);
+                      setRequestIdentity(json.identity || 'Unknown Agent');
+                    } catch(e) { setRequestIdentity('Encrypted Signal'); }
+                } else {
+                    setRequestIdentity('Encrypted Signal (PIN Required)');
+                }
+            };
+            process();
+        } else {
+            setRequestIdentity('');
+        }
+    }, [incomingConnection]);
 
     const handleAcceptConnection = async (request: IncomingConnection) => {
         setAcceptedConnection(request);
@@ -385,17 +369,25 @@ const App: React.FC = () => {
     return (
         <GenerativeSessionProvider>
             <LiveSessionProvider notes={notes} setNotes={setNotes}>
+                
+                {/* GLOBAL CONNECTION NOTIFICATION OVERLAY - ROOT LEVEL */}
+                {incomingConnection && (
+                    <ConnectionNotification 
+                        identity={requestIdentity}
+                        peerId={incomingConnection.conn.peer}
+                        onAccept={() => handleAcceptConnection(incomingConnection)}
+                        onDecline={() => { 
+                            incomingConnection.conn.close(); 
+                            clearIncoming(); 
+                        }}
+                        isProcessing={!incomingConnection.firstData} 
+                    />
+                )}
+
                 <AppContent 
                     notes={notes} 
                     setNotes={setNotes} 
                     onOpenTeleponan={() => setSessionMode('TELEPONAN')} 
-                    globalPeer={peer}
-                    incomingRequest={incomingConnection}
-                    onAcceptRequest={handleAcceptConnection}
-                    onDeclineRequest={() => { 
-                        incomingConnection?.conn?.close(); 
-                        clearIncoming(); 
-                    }}
                 />
             </LiveSessionProvider>
         </GenerativeSessionProvider>

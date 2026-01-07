@@ -44,19 +44,18 @@ export const useAIStream = ({
     const streamMessage = useCallback(async (
         userMsg: string, 
         activeModel: any,
+        targetThreadId: string,
+        targetPersona: 'hanisah' | 'stoic',
         attachment?: { data: string, mimeType: string }
     ) => {
-        if (!activeThread) return;
-        
         setIsLoading(true);
-        const targetId = activeThread.id;
         const modelMessageId = uuidv4();
         const transmissionId = uuidv4().slice(0,8);
         
         console.group(`🧠 NEURAL_LINK_TRANSMISSION: ${transmissionId}`);
 
         // 1. Create Placeholder for AI Response using STORAGE (Safe Update)
-        storage.addMessage(targetId, { 
+        storage.addMessage(targetThreadId, { 
             id: modelMessageId, 
             role: 'model', 
             text: '', 
@@ -67,13 +66,12 @@ export const useAIStream = ({
         abortControllerRef.current = controller;
         const signal = controller.signal;
 
-        // CRITICAL FIX: Define variables OUTSIDE try block so they are accessible in catch
+        // Define variables OUTSIDE try block so they are accessible in catch
         let accumulatedText = "";
         let chunkCount = 0;
 
         try {
-            const persona = activeThread.persona || 'stoic';
-            const kernel = persona === 'hanisah' ? HK : SK;
+            const kernel = targetPersona === 'hanisah' ? HK : SK;
             
             // Pass original 'notes' array
             const stream = kernel.streamExecute(
@@ -97,7 +95,7 @@ export const useAIStream = ({
                     accumulatedText += `\n\n> ⚙️ **EXECUTING:** ${toolName.replace(/_/g, ' ').toUpperCase()}...\n`;
                     
                     // Update UI with progress via STORAGE
-                    storage.updateMessage(targetId, modelMessageId, { text: accumulatedText });
+                    storage.updateMessage(targetThreadId, modelMessageId, { text: accumulatedText });
 
                     try {
                         const toolResult = await executeNeuralTool(chunk.functionCall, notes, setNotes, imageModelId);
@@ -113,11 +111,10 @@ export const useAIStream = ({
                 }
 
                 // Stream Update via STORAGE (Prevents race conditions with user message)
-                storage.updateMessage(targetId, modelMessageId, { 
+                storage.updateMessage(targetThreadId, modelMessageId, { 
                     text: accumulatedText,
                     metadata: { 
-                        // We need to merge metadata carefully, but since we are inside the stream loop, 
-                        // we can pass the partial update. The storage logic handles the merge.
+                        // We need to merge metadata carefully
                         ...(chunk.metadata || {}),
                         groundingChunks: chunk.groundingChunks
                     }
@@ -126,15 +123,15 @@ export const useAIStream = ({
 
             // Fallback for empty response
             if (!accumulatedText.trim() && chunkCount === 0) {
-                accumulatedText = persona === 'hanisah' 
+                accumulatedText = targetPersona === 'hanisah' 
                     ? "_ (tersenyum) _\n\n*Hmm, aku blank bentar. Coba tanya lagi?*" 
                     : "> **NULL OUTPUT DETECTED**\n\nThe logic stream yielded no data. Refine parameters.";
-                storage.updateMessage(targetId, modelMessageId, { text: accumulatedText });
+                storage.updateMessage(targetThreadId, modelMessageId, { text: accumulatedText });
             }
 
             // TTS Trigger
             if (isAutoSpeak && accumulatedText) {
-                speakWithHanisah(accumulatedText.replace(/[*#_`]/g, ''), persona === 'hanisah' ? 'Hanisah' : 'Fenrir');
+                speakWithHanisah(accumulatedText.replace(/[*#_`]/g, ''), targetPersona === 'hanisah' ? 'Hanisah' : 'Fenrir');
             }
 
         } catch (err: any) {
@@ -146,15 +143,14 @@ export const useAIStream = ({
                 errorText = `\n\n> 🛑 **INTERRUPTED**`;
              } else {
                  status = 'error';
-                 const persona = activeThread.persona || 'stoic';
-                 errorText = persona === 'hanisah' 
+                 errorText = targetPersona === 'hanisah' 
                     ? `\n\n_ (Menggaruk kepala) _\n*Aduh, maaf banget sayang. Sinyalnya lagi ngajak berantem nih.*` 
                     : `\n\n> **SYSTEM ANOMALY DETECTED**\n\nProcessing stream interrupted.`;
              }
              
              // Append error to whatever text we got
-             storage.updateMessage(targetId, modelMessageId, { 
-                 text: accumulatedText + errorText, // Use local var to ensure we don't lose stream progress
+             storage.updateMessage(targetThreadId, modelMessageId, { 
+                 text: accumulatedText + errorText, 
                  metadata: { status: status } 
              });
         } finally {
@@ -162,7 +158,7 @@ export const useAIStream = ({
             abortControllerRef.current = null;
             console.groupEnd();
         }
-    }, [activeThread, notes, isVaultUnlocked, vaultEnabled, isAutoSpeak, setNotes, storage, imageModelId]);
+    }, [notes, isVaultUnlocked, vaultEnabled, isAutoSpeak, setNotes, storage, imageModelId]);
 
     return {
         isLoading,

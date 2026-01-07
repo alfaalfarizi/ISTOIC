@@ -209,6 +209,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
         const enc = await encryptData(ack, '000000'); 
         if (enc) conn.send({ type: 'SYS', payload: enc });
         
+        // INSTANTLY SWITCH UI
         setIsConnected(true);
         setIsDataConnectionAlive(true);
         setStage('SECURE');
@@ -286,7 +287,10 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
                 
                 connRef.current = conn;
                 setupDataConnection(conn);
+                
+                // For caller, wait for ACK to fully 'connect', but mark data connection alive
                 setIsDataConnectionAlive(true);
+                
                 if (isReconnect) console.log("Reconnection successful!");
             });
 
@@ -359,10 +363,9 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
 
             if (json.type === 'HANDSHAKE_SYN') {
                 // Notifikasi akan ditangani di level App.tsx via incomingRequest state
-                // Tapi kita bisa bunyikan suara di sini
                 playSound('MSG_IN');
             } else if (json.type === 'HANDSHAKE_ACK') {
-                setIsConnected(true);
+                setIsConnected(true); // SWITCH TO CHAT UI
                 setIsDataConnectionAlive(true);
                 setStage('SECURE');
                 playSound('CONNECT');
@@ -687,6 +690,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
 
             {showCall && <TeleponanView onClose={()=>setShowCall(false)} existingPeer={globalPeer} initialTargetId={targetPeerId} incomingCall={incomingCall} secretPin={accessPin} />}
             
+            {/* INCOMING CALL NOTIFICATION IS HANDLED VIA PeerJS Call Event. We can keep it local here since call is distinct from data connection */}
             {incomingCall && !showCall && <CallNotification identity="Secure Peer" onAnswer={()=>setShowCall(true)} onDecline={()=>{incomingCall.close(); setIncomingCall(null);}} />}
             
             {viewImage && (

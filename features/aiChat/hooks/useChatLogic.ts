@@ -2,7 +2,6 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import useLocalStorage from '../../../hooks/useLocalStorage';
-import { useIDB } from '../../../hooks/useIDB'; 
 import { type ChatThread, type ChatMessage, type Note } from '../../../types';
 import { MODEL_CATALOG, HANISAH_KERNEL } from '../../../services/melsaKernel';
 import { STOIC_KERNEL } from '../../../services/stoicKernel';
@@ -20,7 +19,7 @@ export const useChatLogic = (notes: Note[], setNotes: (notes: Note[]) => void) =
     const storage = useChatStorage();
     const { 
         threads, setThreads, activeThread, activeThreadId, setActiveThreadId,
-        createThread, addMessage, renameThread 
+        createThread, addMessage, renameThread, isThreadsLoaded 
     } = storage;
 
     // 2. Settings & Context
@@ -102,11 +101,17 @@ export const useChatLogic = (notes: Note[], setNotes: (notes: Note[]) => void) =
         if ((!userMsg && !attachment) || isLoading) return;
 
         let currentThreadId = activeThreadId;
+        // If we are about to create a new thread, use that persona. Otherwise use current active thread persona.
+        let currentPersona = personaMode; 
 
-        // Ensure thread exists
-        if (!currentThreadId) {
+        // CRITICAL FIX: Verify thread actually exists in loaded threads.
+        // If activeThreadId is set but not found, we must create a new one.
+        const threadExists = threads.some(t => t.id === currentThreadId);
+
+        if (!currentThreadId || !threadExists) {
             const newThread = await handleNewChat(personaMode);
             currentThreadId = newThread.id;
+            currentPersona = newThread.persona;
         }
 
         const newUserMsg: ChatMessage = {
@@ -117,8 +122,6 @@ export const useChatLogic = (notes: Note[], setNotes: (notes: Note[]) => void) =
         };
 
         // 1. UPDATE STATE & DB (Single Source of Truth)
-        // Note: addMessage updates the local state immediately via useIDB's setter, 
-        // preventing UI lag, while also persisting to IndexedDB.
         addMessage(currentThreadId!, newUserMsg);
         
         // Auto rename check
@@ -129,8 +132,8 @@ export const useChatLogic = (notes: Note[], setNotes: (notes: Note[]) => void) =
 
         setInput('');
         
-        // 2. Trigger Stream
-        await streamMessage(userMsg, activeModel, attachment);
+        // 2. Trigger Stream with explicit ID to avoid race condition
+        await streamMessage(userMsg, activeModel, currentThreadId!, currentPersona, attachment);
     };
 
     const generateWithHydra = async () => {
@@ -139,7 +142,9 @@ export const useChatLogic = (notes: Note[], setNotes: (notes: Note[]) => void) =
         setInput(''); 
         
         let targetId = activeThreadId;
-        if (!targetId) {
+        const threadExists = threads.some(t => t.id === targetId);
+
+        if (!targetId || !threadExists) {
             const newThread = await handleNewChat(personaMode);
             targetId = newThread.id;
         }
@@ -184,6 +189,7 @@ export const useChatLogic = (notes: Note[], setNotes: (notes: Note[]) => void) =
         isVaultSynced: isVaultUnlocked, setIsVaultSynced: (val: boolean) => val ? unlockVault() : lockVault(),
         isVaultConfigEnabled: vaultEnabled, isAutoSpeak, setIsAutoSpeak, isLiveModeActive, setIsLiveModeActive,
         input, setInput, isLoading, activeModel, setGlobalModelId, personaMode,
+        isThreadsLoaded, // EXPORTED FOR LOADER
         handleNewChat, 
         sendMessage: handleSendMessage, 
         stopGeneration,

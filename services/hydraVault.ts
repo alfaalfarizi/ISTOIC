@@ -52,16 +52,16 @@ export class HydraVault {
                 "INSERT", "KEY", "YOUR_API", "TODO", "CHANGE_ME", "EXAMPLE"
             ];
             
-            // Heuristic: Valid keys are usually reasonably long (> 15 chars)
-            // and should NOT contain the invalid patterns
+            // Heuristic: Relaxed validation for dev/testing (min 8 chars)
+            // Was 15, causing issues with short test keys or some provider formats
             const isInvalid = invalidPatterns.some(p => clean.toUpperCase().includes(p));
-            const isTooShort = clean.length < 15;
+            const isTooShort = clean.length < 8; 
 
             if (!isInvalid && !isTooShort) {
                 keys.add(clean);
             } else if (clean.length > 0) {
                  // Log warning but don't crash
-                 console.warn(`[HYDRA_VAULT] Skipped malformed key for ${provider}`);
+                 console.warn(`[HYDRA_VAULT] Skipped malformed key for ${provider}. Too short or invalid pattern.`);
             }
         };
 

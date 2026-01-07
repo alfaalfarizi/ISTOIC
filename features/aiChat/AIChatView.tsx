@@ -5,7 +5,7 @@ import useLocalStorage from '../../hooks/useLocalStorage';
 import { 
   Radio, ChevronDown, Flame, Brain, ArrowRight, Palette, Code, 
   GraduationCap, Lightbulb, History, Layers, Infinity, ArrowDown,
-  Terminal, Sparkles as SparklesIcon, Command, Zap, Image as ImageIcon, Lock
+  Terminal, Sparkles as SparklesIcon, Command, Zap, Image as ImageIcon, Lock, Loader2
 } from 'lucide-react';
 
 import { useLiveSession } from '../../contexts/LiveSessionContext';
@@ -111,7 +111,7 @@ const AIChatView: React.FC<AIChatViewProps> = ({ chatLogic }) => {
         sendMessage,
         stopGeneration, 
         togglePinThread,
-        deleteThread, // UPDATED: Destructure deleteThread
+        deleteThread, 
         renameThread,
         isVaultSynced,
         setIsVaultSynced,
@@ -120,7 +120,8 @@ const AIChatView: React.FC<AIChatViewProps> = ({ chatLogic }) => {
         setGlobalModelId,
         generateWithPollinations,
         imageModelId,
-        setImageModelId
+        setImageModelId,
+        isThreadsLoaded // NEW: Loading state
     } = chatLogic;
 
     // ... (Refs and Effects same as before) ...
@@ -180,6 +181,16 @@ const AIChatView: React.FC<AIChatViewProps> = ({ chatLogic }) => {
             scrollToBottom(isLoading ? 'auto' : 'smooth');
         }
     }, [activeThread?.messages, isLoading, scrollToBottom]);
+
+    // PREVENT INTERACTION UNTIL DB IS LOADED
+    if (!isThreadsLoaded) {
+        return (
+            <div className="h-full w-full flex flex-col items-center justify-center gap-4 bg-white dark:bg-[#0a0a0b] animate-fade-in">
+                <Loader2 size={32} className="animate-spin text-[var(--accent-color)]" />
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-neutral-500 animate-pulse">RESTORING_NEURAL_LOGS...</span>
+            </div>
+        );
+    }
 
     const handleModelPickerOpen = () => {
         debugService.logAction(UI_REGISTRY.CHAT_BTN_MODEL_PICKER, FN_REGISTRY.CHAT_SELECT_MODEL, 'OPEN');

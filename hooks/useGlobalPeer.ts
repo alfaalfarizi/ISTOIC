@@ -76,6 +76,7 @@ export const useGlobalPeer = (identity: IStokUserIdentity | null) => {
         try {
             const { Peer } = await import('peerjs');
             
+            // Default Google STUN servers as fallback
             let iceServers = [
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
@@ -87,21 +88,31 @@ export const useGlobalPeer = (identity: IStokUserIdentity | null) => {
 
             if (meteredKey) {
                 try {
-                    // Short timeout for ICE fetch to prevent hanging handshake
+                    console.log("[HYDRA] Fetching TURN credentials from Metered...");
+                    // Increased timeout for robust fetching on slow mobile networks
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 2000);
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
                     
-                    const response = await fetch(`https://${meteredDomain}/api/v1/turn/credentials?apiKey=${meteredKey}`, { signal: controller.signal });
+                    const response = await fetch(`https://${meteredDomain}/api/v1/turn/credentials?apiKey=${meteredKey}`, { 
+                        signal: controller.signal 
+                    });
                     clearTimeout(timeoutId);
                     
-                    const ice = await response.json();
-                    if (Array.isArray(ice)) {
-                        iceServers = [...ice, ...iceServers];
-                        console.log("[HYDRA] TURN RELAY: ACTIVATED (Enhanced Stability)");
+                    if (response.ok) {
+                        const ice = await response.json();
+                        if (Array.isArray(ice)) {
+                            // Prepend TURN servers so they are tried first if STUN fails/is blocked
+                            iceServers = [...ice, ...iceServers];
+                            console.log("[HYDRA] TURN RELAY: ACTIVATED (Enhanced Stability)");
+                        }
+                    } else {
+                        console.warn(`[HYDRA] TURN Fetch Failed: ${response.status}`);
                     }
                 } catch (e) {
-                    console.warn("[HYDRA] TURN FETCH SKIPPED (Using Standard STUN).");
+                    console.warn("[HYDRA] TURN FETCH SKIPPED (Using Standard STUN). Reason:", e);
                 }
+            } else {
+                console.log("[HYDRA] No Metered API Key found. Using default STUN.");
             }
 
             // FORCE USE ORIGINAL ID - NO RANDOM SUFFIXES
@@ -112,7 +123,8 @@ export const useGlobalPeer = (identity: IStokUserIdentity | null) => {
                 config: { 
                     iceServers: iceServers,
                     iceTransportPolicy: 'all', 
-                    iceCandidatePoolSize: 10
+                    iceCandidatePoolSize: 10,
+                    sdpSemantics: 'unified-plan'
                 },
                 // Ping lebih sering agar server tahu kita masih hidup
                 pingInterval: 5000, 

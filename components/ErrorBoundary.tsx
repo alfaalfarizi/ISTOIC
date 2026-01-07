@@ -1,4 +1,3 @@
-
 import React, { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Terminal, ZapOff, Copy, Check, ShieldAlert } from 'lucide-react';
 import { debugService } from '../services/debugService';

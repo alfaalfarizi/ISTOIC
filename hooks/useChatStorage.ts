@@ -6,7 +6,8 @@ import { ChatThread, ChatMessage } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 export const useChatStorage = () => {
-    const [threads, setThreads] = useIDB<ChatThread[]>('chat_threads', []);
+    // Capture isLoaded from useIDB to prevent writing to state before it's hydrated
+    const [threads, setThreads, isThreadsLoaded] = useIDB<ChatThread[]>('chat_threads', []);
     const [activeThreadId, setActiveThreadId] = useLocalStorage<string | null>('active_thread_id', null);
 
     const activeThread = useMemo(() => {
@@ -65,6 +66,7 @@ export const useChatStorage = () => {
     return {
         threads,
         setThreads,
+        isThreadsLoaded,
         activeThread,
         activeThreadId,
         setActiveThreadId,

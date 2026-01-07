@@ -1,13 +1,13 @@
 import React from 'react';
-import { Check, CheckCheck, Clock, FileText, Download } from 'lucide-react';
+import { Check, CheckCheck, Clock, FileText, Download, Sparkles } from 'lucide-react';
 import { ImageMessage } from './gambar'; // Pastikan file gambar.tsx ada di folder yang sama
 import { AudioMessagePlayer } from './vn'; // Pastikan file vn.tsx ada di folder yang sama
 
 // --- TIPE DATA ---
-interface Message {
+export interface Message {
     id: string;
-    sender: 'ME' | 'THEM';
-    type: 'TEXT' | 'IMAGE' | 'AUDIO' | 'FILE';
+    sender: 'ME' | 'THEM' | 'AI';
+    type: 'TEXT' | 'IMAGE' | 'AUDIO' | 'FILE' | 'AI_RESPONSE';
     content: string; 
     timestamp: number;
     status: 'PENDING' | 'SENT' | 'DELIVERED' | 'READ';
@@ -15,6 +15,7 @@ interface Message {
     size?: number;
     mimeType?: string;
     fileName?: string;
+    ttl?: number;
 }
 
 interface MessageBubbleProps {
@@ -25,6 +26,7 @@ interface MessageBubbleProps {
 // --- KOMPONEN UTAMA ---
 export const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({ msg, setViewImage }) => {
     const isMe = msg.sender === 'ME';
+    const isAI = msg.sender === 'AI';
 
     // Helper untuk merender konten berdasarkan tipe pesan
     const renderContent = () => {
@@ -66,6 +68,18 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({ msg, se
                         </button>
                     </div>
                 );
+            case 'AI_RESPONSE':
+                return (
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2 mb-1 opacity-70">
+                            <Sparkles size={10} className="text-purple-400" />
+                            <span className="text-[9px] font-bold text-purple-400 uppercase tracking-wider">AI ASSISTANT</span>
+                        </div>
+                        <span className="whitespace-pre-wrap leading-relaxed break-words text-sm block min-w-[20px]">
+                            {msg.content}
+                        </span>
+                    </div>
+                );
             default: // TEXT
                 return (
                     <span className="whitespace-pre-wrap leading-relaxed break-words text-sm block min-w-[20px]">
@@ -85,9 +99,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({ msg, se
                         relative rounded-2xl border shadow-sm transition-all duration-200
                         ${isMe 
                             ? 'bg-emerald-900/40 border-emerald-500/30 text-emerald-50 rounded-tr-none' 
-                            : 'bg-[#1a1a1a] text-neutral-200 border-white/10 rounded-tl-none hover:bg-[#252525]'
+                            : isAI
+                                ? 'bg-purple-900/20 border-purple-500/30 text-neutral-200 rounded-tl-none hover:bg-purple-900/30'
+                                : 'bg-[#1a1a1a] text-neutral-200 border-white/10 rounded-tl-none hover:bg-[#252525]'
                         }
-                        ${msg.type !== 'TEXT' ? 'p-1' : 'px-4 py-2'}
+                        ${msg.type !== 'TEXT' && msg.type !== 'AI_RESPONSE' ? 'p-1' : 'px-4 py-2'}
                     `}
                 >
                     {renderContent()}

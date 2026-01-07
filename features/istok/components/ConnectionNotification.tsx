@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { 
     X, Shield, Radio, User, Lock, Loader2, Network, Zap
@@ -28,8 +29,17 @@ export const ConnectionNotification: React.FC<ConnectionNotificationProps> = ({
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
-        setIsVisible(true);
+        // Delay slightly for animation enter
+        setTimeout(() => setIsVisible(true), 50);
         triggerHaptic([50, 50, 200]); // Alert Pattern
+        
+        // Auto-sound if available
+        try {
+            const audio = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YXIGAACEhIQ..."); // Short beep placeholder
+            audio.volume = 0.5;
+            audio.play().catch(() => {});
+        } catch(e) {}
+        
         return () => setIsVisible(false);
     }, []);
 
@@ -49,23 +59,24 @@ export const ConnectionNotification: React.FC<ConnectionNotificationProps> = ({
     };
 
     return (
-        // WRAPPER UTAMA: Z-INDEX TERTINGGI (100000)
-        // Pt-safe-top untuk iPhone Notch
+        // WRAPPER UTAMA: Z-INDEX TERTINGGI (999999) - ABSOLUTE TOP PRIORITY
+        // Uses fixed position to escape any overflow containers
         <div 
             className={`
-                fixed top-0 left-0 right-0 z-[100000] 
+                fixed top-0 left-0 right-0 z-[999999] 
                 flex justify-center items-start 
-                pt-[max(env(safe-area-inset-top),1.5rem)] px-4 pb-4
+                pt-[max(env(safe-area-inset-top),1rem)] px-4 pb-4
                 transition-all duration-500 cubic-bezier(0.34, 1.56, 0.64, 1) transform
                 ${isVisible ? 'translate-y-0 opacity-100 scale-100' : '-translate-y-full opacity-0 scale-95'}
                 pointer-events-none 
             `}
+            style={{ isolation: 'isolate' }} // Creates new stacking context
         >
             {/* Card Content - Pointer Events Auto agar bisa diklik */}
             <div className="
                 pointer-events-auto
                 w-full max-w-[360px]
-                bg-[#09090b]/95 backdrop-blur-3xl 
+                bg-[#09090b] backdrop-blur-3xl 
                 border border-emerald-500/50 
                 rounded-[28px] shadow-[0_25px_80px_-15px_rgba(16,185,129,0.5)] 
                 overflow-hidden relative
@@ -87,7 +98,7 @@ export const ConnectionNotification: React.FC<ConnectionNotificationProps> = ({
                             <div>
                                 <h3 className="text-[10px] font-black text-emerald-400 tracking-[0.2em] uppercase leading-none mb-1">INCOMING UPLINK</h3>
                                 <p className="text-[9px] text-neutral-400 font-mono flex items-center gap-1">
-                                    <Network size={10} /> GLOBAL_MESH_V4
+                                    <Network size={10} /> HYDRA_MESH_V20
                                 </p>
                             </div>
                         </div>

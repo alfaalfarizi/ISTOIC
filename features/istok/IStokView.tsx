@@ -12,7 +12,7 @@ import {
     ShieldAlert, ArrowLeft, BrainCircuit, Sparkles,
     Wifi, Radio, Paperclip, Check,
     User, Image as ImageIcon, FileText, Download, Play, Pause, Trash2, LogIn, Chrome, Loader2,
-    Users, Activity, Signal, LayoutGrid, Settings, Power, ShieldCheck, ArrowRight
+    Users, Activity, Signal, LayoutGrid, Settings, Power, ShieldCheck, ArrowRight, Globe, Languages
 } from 'lucide-react';
 
 // --- HOOKS & SERVICES ---
@@ -24,9 +24,9 @@ import { CallNotification } from './components/CallNotification';
 import { MessageBubble } from './components/MessageBubble'; 
 import { QRScanner } from './components/QRScanner'; 
 import { compressImage } from './components/gambar';
-// FIX: Changed from IStokIdentityService to IstokIdentityService
 import { IstokIdentityService, IStokUserIdentity } from './services/istokIdentity';
 import { IStokInput } from './components/IStokInput'; 
+import { HANISAH_KERNEL } from '../../services/melsaKernel'; // MELSA AI CORE
 
 // --- HYDRA CONSTANTS ---
 const CHUNK_SIZE = 1024 * 64; // 64KB
@@ -35,8 +35,8 @@ const HEARTBEAT_MS = 2000;
 // --- TYPES ---
 interface Message {
     id: string;
-    sender: 'ME' | 'THEM';
-    type: 'TEXT' | 'IMAGE' | 'AUDIO' | 'FILE';
+    sender: 'ME' | 'THEM' | 'AI';
+    type: 'TEXT' | 'IMAGE' | 'AUDIO' | 'FILE' | 'AI_RESPONSE';
     content: string; 
     timestamp: number;
     status: 'PENDING' | 'SENT' | 'DELIVERED' | 'READ';
@@ -83,23 +83,23 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
     // --- STATE MANAGEMENT ---
     const [stage, setStage] = useState<ConnectionStage>('IDLE');
     
-    // Identity State - DIRECTLY FROM GLOBAL STORAGE (NO LOGIN UI)
+    // Identity State
     const [identity] = useLocalStorage<IStokUserIdentity | null>('istok_user_identity', null);
     
-    // Profile (Mapped for UI)
+    // Profile
     const [myProfile, setMyProfile] = useState<IStokProfile>({ id: '', username: '', created: 0 });
-
     const [sessions, setSessions] = useLocalStorage<IStokSession[]>('istok_sessions_v2', []);
     
     // Connection Data
     const [targetPeerId, setTargetPeerId] = useState('');
-    const [accessPin, setAccessPin] = useState(''); // PIN for specific session encryption
+    const [accessPin, setAccessPin] = useState('');
     const [isConnected, setIsConnected] = useState(false);
     
     // Chat Data
     const [messages, setMessages] = useState<Message[]>([]);
     const [ttlMode, setTtlMode] = useState(0);
     const [isAiThinking, setIsAiThinking] = useState(false);
+    const [aiMode, setAiMode] = useState<'OFF' | 'TRANSLATE' | 'ASSIST'>('OFF');
 
     // UI Toggles
     const [showSidebar, setShowSidebar] = useState(false);
@@ -124,16 +124,12 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
     useEffect(() => {
         activatePrivacyShield();
         
-        // CRITICAL: GLOBAL IDENTITY CHECK
-        // If no identity exists from the main App login, kick user back to Auth.
-        // We do NOT ask for Google Login here.
         if (!identity || !identity.istokId) {
             console.warn("IStok Access Denied: No Global Identity Found.");
-            onLogout(); // Redirect to Main Auth
+            onLogout();
             return;
         }
 
-        // Sync Identity to Profile format for UI
         setMyProfile({
             id: identity.istokId,
             username: identity.displayName,
@@ -142,10 +138,8 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
             created: Date.now()
         });
         
-        // Auto Init Peer Network using the Global ID
         initPeer(identity.istokId);
 
-        // URL Deep Link Handler (Auto-fill connection details)
         const urlParams = new URLSearchParams(window.location.search);
         if(urlParams.get('connect') && urlParams.get('key')) {
             setTargetPeerId(urlParams.get('connect')!);
@@ -156,19 +150,25 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
     // Scroll to bottom
     useEffect(() => {
         msgEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+    }, [messages, isAiThinking]);
 
-    // --- HYDRA NETWORK LAYER (PeerJS) ---
+    // --- HYDRA OMNI-RACE NETWORK LAYER (PeerJS + TURN) ---
     const initPeer = async (myId: string) => {
-        if (peerRef.current) return; // Already init
+        if (peerRef.current) return;
 
         try {
             const { Peer } = await import('peerjs');
             
-            // 1. Default STUN (Free)
-            let iceServers = [{ urls: 'stun:stun.l.google.com:19302' }];
+            // 1. Base Configuration (Google STUN - Fast)
+            let iceServers = [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun3.l.google.com:19302' },
+                { urls: 'stun:stun4.l.google.com:19302' },
+            ];
 
-            // 2. Titanium Relay (TURN) - If configured in .env
+            // 2. Inject TURN (Metered.ca) for 4G/Symmetric NAT traversal
             const meteredKey = process.env.VITE_METERED_API_KEY;
             const meteredDomain = process.env.VITE_METERED_DOMAIN || 'istoic.metered.live';
 
@@ -177,36 +177,49 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
                     const response = await fetch(`https://${meteredDomain}/api/v1/turn/credentials?apiKey=${meteredKey}`);
                     const ice = await response.json();
                     if (Array.isArray(ice)) {
-                        iceServers = ice;
-                        console.log("[ISTOK] Titanium Relay (TURN) Configured.");
+                        // Priority: TURN first for reliability in Race
+                        iceServers = [...ice, ...iceServers]; 
+                        console.log("[ISTOK] HYDRA NETWORK: TURN RELAY ACTIVE (Global Coverage)");
                     }
                 } catch (e) {
-                    console.warn("[ISTOK] TURN Config Failed, using STUN fallback.", e);
+                    console.warn("[ISTOK] TURN Fetch Failed. Fallback to STUN.", e);
                 }
+            } else {
+                // Fallback Free Relay
+                iceServers.push({ urls: "stun:openrelay.metered.ca:80" });
             }
             
             const peer = new Peer(myId, {
                 debug: 0,
-                config: { iceServers }
+                config: { 
+                    iceServers: iceServers,
+                    iceTransportPolicy: 'all', // OMNI: Try everything (UDP, TCP, Relay)
+                    iceCandidatePoolSize: 10   // RACE: Pre-fetch candidates for instant connection
+                },
+                pingInterval: 5000,
             } as any);
 
             peer.on('open', (id) => {
                 console.log('[ISTOK] Secure ID Active:', id);
-                if (targetPeerId && accessPin) {
-                    // Optional: Auto-connect if link provided? 
-                    // For security, let user click "Connect"
-                }
             });
 
             peer.on('connection', (conn) => {
                 conn.on('data', (data) => handleIncomingData(data, conn));
-                conn.on('open', () => { /* Wait for Handshake */ });
+                conn.on('open', () => { /* Handshake Wait */ });
                 conn.on('close', () => handleDisconnect());
             });
 
             peer.on('call', (call) => {
                 setIncomingCall(call);
                 playSound('MSG_IN');
+            });
+
+            peer.on('error', (err) => {
+                console.error("[ISTOK] Network Error:", err);
+                if (err.type === 'peer-unavailable') {
+                    setStage('IDLE');
+                    alert("Target tidak ditemukan atau offline.");
+                }
             });
 
             peerRef.current = peer;
@@ -220,11 +233,14 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
         if(!peerRef.current || !identity) return;
         setStage('LOCATING');
         
-        const conn = peerRef.current.connect(id, { reliable: true });
+        // Reliable: true ensures TCP fallback if UDP fails
+        const conn = peerRef.current.connect(id, { 
+            reliable: true,
+            serialization: 'json'
+        });
         
         conn.on('open', async () => {
             setStage('HANDSHAKE');
-            // Send Encrypted Handshake including Display Name and Photo
             const handshake = JSON.stringify({ 
                 type: 'HANDSHAKE_SYN', 
                 identity: identity.displayName,
@@ -238,12 +254,68 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
 
         conn.on('data', (d) => handleIncomingData(d, conn));
         conn.on('close', handleDisconnect);
-        conn.on('error', () => { setStage('IDLE'); alert("Connection Failed / Wrong PIN"); });
+        conn.on('error', (e) => { 
+            console.error("Conn Error", e);
+            setStage('IDLE'); 
+            // Don't alert immediately on minor network blips, let retry logic handle it
+        });
     };
 
     const handleDisconnect = () => {
         setIsConnected(false);
         setStage('RECONNECTING');
+        // Simple auto-reconnect logic could go here
+    };
+
+    // --- MELSA KERNEL AI AGENT ---
+    const processAIRequest = async (userText: string) => {
+        if (aiMode === 'OFF') return;
+
+        setIsAiThinking(true);
+        let systemPrompt = "";
+        
+        if (aiMode === 'TRANSLATE') {
+            systemPrompt = `
+            [ROLE: UNIVERSAL_TRANSLATOR]
+            You are a real-time translation layer.
+            1. Detect input language.
+            2. If English -> Translate to Indonesian.
+            3. If Indonesian -> Translate to English.
+            4. If Other -> Translate to English.
+            OUTPUT ONLY THE TRANSLATED TEXT. NO EXPLANATIONS.
+            `;
+        } else {
+            systemPrompt = `
+            [ROLE: SMART_COMM_AGENT]
+            You are an AI Assistant inside a private P2P chat.
+            1. Be helpful, brief, and natural. Do NOT be robotic.
+            2. If asked a question, answer it concisely.
+            3. If the user is chatting casually, reply with a relevant, short comment.
+            4. Use emojis sparingly.
+            5. Language: Match user's language (Indonesian/English).
+            `;
+        }
+
+        try {
+            // Using MelsaKernel via Gemini 3 Flash for speed
+            const res = await HANISAH_KERNEL.execute(userText, 'gemini-3-flash-preview', systemPrompt);
+            
+            if (res.text) {
+                const aiMsg: Message = {
+                    id: crypto.randomUUID(),
+                    sender: 'AI',
+                    type: 'AI_RESPONSE',
+                    content: res.text,
+                    timestamp: Date.now(),
+                    status: 'READ'
+                };
+                setMessages(prev => [...prev, aiMsg]);
+            }
+        } catch (e) {
+            console.error("AI Fail", e);
+        } finally {
+            setIsAiThinking(false);
+        }
     };
 
     const handleIncomingData = async (data: any, conn: any) => {
@@ -263,8 +335,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
             return;
         }
 
-        // DECRYPTION - Need PIN
-        // For incoming data, we assume the PIN is the Access PIN for this session
+        // DECRYPTION
         const pin = accessPin || prompt("Incoming secure request. Enter decryption PIN:");
         if (!pin) return;
         setAccessPin(pin);
@@ -285,7 +356,6 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
                 setIsConnected(true);
                 setStage('SECURE');
                 playSound('CONNECT');
-                // Heartbeat
                 heartbeatRef.current = setInterval(() => {
                     if(connRef.current?.open) connRef.current.send({ type: 'PING' });
                 }, HEARTBEAT_MS);
@@ -297,6 +367,11 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
                 const msg = JSON.parse(decrypted);
                 setMessages(prev => [...prev, { ...msg, sender: 'THEM', status: 'READ' }]);
                 playSound('MSG_IN');
+                
+                // Trigger AI if active and message is text
+                if (msg.type === 'TEXT' && aiMode !== 'OFF') {
+                    processAIRequest(msg.content);
+                }
             }
         }
     };
@@ -334,12 +409,17 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
 
         setMessages(prev => [...prev, { ...msgPayload, sender: 'ME', status: 'SENT' } as Message]);
         playSound('MSG_OUT');
+
+        // AI trigger for self (optional, mainly for translation flow)
+        if (type === 'TEXT' && aiMode !== 'OFF') {
+            processAIRequest(content);
+        }
     };
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if(e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            if(file.size > 5 * 1024 * 1024) { alert("Max 5MB"); return; }
+            if(file.size > 10 * 1024 * 1024) { alert("Max 10MB (Hydra Limit)"); return; }
             if(file.type.startsWith('image/')) {
                 const compressed = await compressImage(file);
                 sendMessage('IMAGE', compressed.base64, { size: compressed.size, mimeType: compressed.mimeType });
@@ -371,7 +451,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
                              <h1 className="font-black text-xl italic tracking-tighter uppercase">ISTOK <span className="text-emerald-500">SECURE</span></h1>
                              <div className="flex items-center gap-2 text-[9px] font-mono text-neutral-500">
                                 <span className={`w-1.5 h-1.5 rounded-full ${peerRef.current?.id ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></span>
-                                {peerRef.current?.id ? 'UPLINK_READY' : 'OFFLINE'}
+                                {peerRef.current?.id ? 'HYDRA_READY' : 'OFFLINE'}
                              </div>
                          </div>
                      </div>
@@ -410,7 +490,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
                      <div className="bg-[#09090b] border border-white/10 rounded-[32px] p-6 space-y-6 shadow-xl">
                          <div className="flex items-center gap-2 border-b border-white/5 pb-4">
                              <Activity size={18} className="text-blue-500" />
-                             <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white">ESTABLISH_CONNECTION</h3>
+                             <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white">OMNI-RACE UPLINK</h3>
                          </div>
 
                          <div className="space-y-4">
@@ -439,7 +519,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
                                     disabled={!targetPeerId || accessPin.length < 4}
                                     className="flex-1 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-blue-900/20 disabled:opacity-50 disabled:shadow-none transition-all flex items-center justify-center gap-2 group active:scale-95"
                                 >
-                                    {stage === 'IDLE' ? 'CONNECT NOW' : <><Loader2 size={14} className="animate-spin"/> {stage}...</>} <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform"/>
+                                    {stage === 'IDLE' ? 'CONNECT (HYDRA)' : <><Loader2 size={14} className="animate-spin"/> {stage}...</>} <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform"/>
                                 </button>
                              </div>
                          </div>
@@ -460,7 +540,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
                      <div className="flex items-center justify-between px-2 opacity-50">
                          <div className="flex items-center gap-4 text-[9px] font-mono">
                              <span className="flex items-center gap-1"><Signal size={10}/> P2P: {peerRef.current ? 'ACTIVE' : 'INIT'}</span>
-                             <span className="flex items-center gap-1"><Server size={10}/> RELAY: {process.env.VITE_METERED_API_KEY ? 'TITANIUM' : 'STANDARD'}</span>
+                             <span className="flex items-center gap-1"><Server size={10}/> TURN: {process.env.VITE_METERED_API_KEY ? 'TITANIUM' : 'STANDARD'}</span>
                          </div>
                          <div className="text-[9px] font-black uppercase tracking-[0.2em]">V25.0_SECURE</div>
                      </div>
@@ -495,6 +575,28 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
                     onRenameSession={()=>{}} 
                     currentPeerId={null}
                 />
+
+                {/* INCOMING CONNECTION NOTIFICATION (Fixed High Z-Index) */}
+                {incomingRequest && (
+                    <ConnectionNotification 
+                        identity={incomingRequest.identity} 
+                        peerId={incomingRequest.peerId}
+                        onAccept={async () => {
+                            const { conn } = incomingRequest;
+                            connRef.current = conn;
+                            const ack = JSON.stringify({ type: 'HANDSHAKE_ACK' });
+                            const enc = await encryptData(ack, accessPin);
+                            conn.send({ type: 'SYS', payload: enc });
+                            setIsConnected(true);
+                            setStage('SECURE');
+                            setIncomingRequest(null);
+                        }}
+                        onDecline={() => {
+                            incomingRequest.conn.close();
+                            setIncomingRequest(null);
+                        }}
+                    />
+                )}
             </div>
         );
     }
@@ -524,17 +626,45 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
                         </div>
                     </div>
                 </div>
+                
                 <div className="flex gap-2">
+                    {/* AI Toggle */}
+                    <button 
+                        onClick={() => setAiMode(prev => {
+                            if (prev === 'OFF') return 'TRANSLATE';
+                            if (prev === 'TRANSLATE') return 'ASSIST';
+                            return 'OFF';
+                        })}
+                        className={`p-2.5 rounded-xl transition border border-transparent ${
+                            aiMode !== 'OFF' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' : 'hover:bg-white/10 text-neutral-400'
+                        }`}
+                        title="AI Tools"
+                    >
+                        {aiMode === 'TRANSLATE' ? <Languages size={18}/> : aiMode === 'ASSIST' ? <BrainCircuit size={18}/> : <BrainCircuit size={18} className="opacity-50"/>}
+                    </button>
+                    
                     <button onClick={()=>setShowCall(true)} className="p-2.5 hover:bg-emerald-500/10 rounded-xl text-neutral-400 hover:text-emerald-500 transition border border-transparent hover:border-emerald-500/20"><PhoneCall size={18}/></button>
                     <button onClick={handleDisconnect} className="p-2.5 hover:bg-red-500/10 rounded-xl text-neutral-400 hover:text-red-500 transition border border-transparent hover:border-red-500/20"><X size={18}/></button>
                 </div>
              </div>
+
+             {/* AI Mode Indicator */}
+             {aiMode !== 'OFF' && (
+                 <div className="bg-purple-900/20 border-b border-purple-500/20 px-4 py-1 flex items-center justify-center gap-2 text-[10px] font-black text-purple-400 uppercase tracking-widest z-10">
+                     <Sparkles size={10} className="animate-pulse"/> {aiMode === 'TRANSLATE' ? 'AUTO_TRANSLATOR_ACTIVE' : 'AI_ASSISTANT_ACTIVE'}
+                 </div>
+             )}
 
              {/* Messages */}
              <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scroll">
                 {messages.map(msg => (
                     <MessageBubble key={msg.id} msg={msg} setViewImage={setViewImage} />
                 ))}
+                {isAiThinking && (
+                    <div className="flex items-center gap-2 text-purple-500 text-xs px-4 animate-pulse">
+                        <Loader2 size={12} className="animate-spin"/> AI Processing...
+                    </div>
+                )}
                 <div ref={msgEndRef}/>
              </div>
 
@@ -551,29 +681,6 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout }) => {
              />
              <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect} />
 
-            {/* Overlays */}
-            {incomingRequest && (
-                <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur flex items-center justify-center p-6 animate-fade-in">
-                    <ConnectionNotification 
-                        identity={incomingRequest.identity} 
-                        peerId={incomingRequest.peerId}
-                        onAccept={async () => {
-                            const { conn } = incomingRequest;
-                            connRef.current = conn;
-                            const ack = JSON.stringify({ type: 'HANDSHAKE_ACK' });
-                            const enc = await encryptData(ack, accessPin);
-                            conn.send({ type: 'SYS', payload: enc });
-                            setIsConnected(true);
-                            setStage('SECURE');
-                            setIncomingRequest(null);
-                        }}
-                        onDecline={() => {
-                            incomingRequest.conn.close();
-                            setIncomingRequest(null);
-                        }}
-                    />
-                </div>
-            )}
             
             {showCall && <TeleponanView onClose={()=>setShowCall(false)} existingPeer={peerRef.current} initialTargetId={targetPeerId} incomingCall={incomingCall} secretPin={accessPin} />}
             

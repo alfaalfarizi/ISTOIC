@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Loader2, Fingerprint, Lock, ShieldAlert, ScanFace, Chrome, UserPlus, KeyRound, CheckCircle2, RefreshCw, LogIn, Mail } from 'lucide-react';
-import { verifySystemPin, isSystemPinConfigured, setSystemPin } from '../../utils/crypto';
+import { ArrowRight, Loader2, Fingerprint, Lock, ShieldAlert, ScanFace, Chrome, UserPlus, KeyRound, CheckCircle2, RefreshCw, LogIn, Mail, HelpCircle, Terminal } from 'lucide-react';
+import { verifySystemPin, verifyMasterPin, isSystemPinConfigured, setSystemPin } from '../../utils/crypto';
 import { BiometricService } from '../../services/biometricService';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { IstokIdentityService, IStokUserIdentity } from '../istok/services/istokIdentity';
+import { RegisterManual, ForgotPin, ForgotAccount } from './ManualAuth';
 
 // Import Firebase directly for silent check
 import { auth, db } from '../../services/firebaseConfig';
@@ -17,7 +18,8 @@ interface AuthViewProps {
     onAuthSuccess: () => void;
 }
 
-type AuthStage = 'CHECKING' | 'WELCOME' | 'CREATE_ID' | 'SETUP_PIN' | 'LOCKED' | 'BIOMETRIC_SCAN';
+// Updated Auth Stages
+type AuthStage = 'CHECKING' | 'WELCOME' | 'CREATE_ID' | 'SETUP_PIN' | 'LOCKED' | 'BIOMETRIC_SCAN' | 'REGISTER_MANUAL' | 'FORGOT_PIN' | 'FORGOT_ACCOUNT';
 
 export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
     // --- GLOBAL STATE ---
@@ -43,7 +45,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
 
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // --- SMART AUTO FLOW (WHATSAPP STYLE + SILENT RESTORE) ---
+    // --- SMART AUTO FLOW ---
     useEffect(() => {
         let unsubscribe: any;
 
@@ -67,19 +69,17 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
             if (auth) {
                 unsubscribe = onAuthStateChanged(auth, async (user: any) => {
                     if (user) {
-                        // User ditemukan! Restore profile dari Firestore
                         try {
                             const snap = await getDoc(doc(db, "users", user.uid));
                             if (snap.exists()) {
                                 const data = snap.data() as IStokUserIdentity;
-                                setIdentity(data); // Restore ke LocalStorage
+                                setIdentity(data);
                             } else {
-                                // User login tapi belum buat ID (Profil Korup/Baru)
                                 setStage('CREATE_ID');
                                 (window as any).tempGoogleUser = {
                                     uid: user.uid,
                                     email: user.email,
-                                    displayName: user.displayName,
+                                    displayName: user.displayName || user.email.split('@')[0],
                                     photoURL: user.photoURL
                                 };
                             }
@@ -88,7 +88,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                             setStage('WELCOME');
                         }
                     } else {
-                        // Benar-benar belum login
                         setStage('WELCOME');
                     }
                 });
@@ -136,7 +135,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
             if (userProfile) {
                 if (userProfile.istokId) {
                     setIdentity(userProfile);
-                    // Identity set -> Effect hook takes over
                 } else {
                     setStage('CREATE_ID');
                     (window as any).tempGoogleUser = userProfile;
@@ -151,7 +149,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
         }
     };
 
-    // --- CREATE ID (FIRST TIME) ---
+    // --- CREATE ID ---
     const handleCreateIdentity = async () => {
         if (codename.length < 3) {
             setError("MINIMUM 3 CHARS");
@@ -170,7 +168,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
 
         setLoading(true);
         try {
-            // Save to Firestore
             await IstokIdentityService.createProfile(newIdentity);
             setIdentity(newIdentity);
             setStage('SETUP_PIN');
@@ -190,7 +187,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
         await setSystemPin(pinInput);
         setIsPinSet(true);
         
-        // Offer Biometrics after PIN setup
         if (await BiometricService.isAvailable()) {
              if (confirm("Aktifkan Face ID / Fingerprint untuk akses cepat?")) {
                  try {
@@ -203,15 +199,43 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
         onAuthSuccess();
     };
 
-    // --- UNLOCK (PIN FALLBACK) ---
+    // --- UNLOCK (With Developer Master Key Bypass) ---
     const handleUnlock = async (e: React.FormEvent) => {
         e.preventDefault();
         if (isHardLocked) return;
         
         setLoading(true);
-        // Artificial delay for security feel & brute force prevention
-        await new Promise(r => setTimeout(r, 600));
         
+        // Artificial delay for security feel & brute force prevention
+        // Skip delay if it looks like a dev pin (optimization) but kept for "feel"
+        await new Promise(r => setTimeout(r, 600));
+
+        // 1. CHECK MASTER KEY (DEVELOPER BYPASS)
+        const isMaster = await verifyMasterPin(pinInput);
+        if (isMaster) {
+            // Inject Developer Identity if none exists or override existing
+            const devIdentity: IStokUserIdentity = {
+                uid: 'DEV-ROOT-ACCESS',
+                istokId: 'ISTOIC-DEV',
+                codename: 'DEVELOPER',
+                email: 'dev@system.local',
+                displayName: 'SYSTEM ADMIN',
+                photoURL: 'https://ui-avatars.com/api/?name=Dev&background=10b981&color=fff'
+            };
+            
+            // Only overwrite if we don't have a valid identity or user wants to force dev entry
+            // For now, we assume Master Key grants access to current data OR sets up Dev mode if blank.
+            if (!identity || !identity.istokId) {
+                 setIdentity(devIdentity);
+            }
+            
+            // Success
+            onAuthSuccess();
+            setLoading(false);
+            return;
+        }
+        
+        // 2. CHECK USER PIN
         const isValid = await verifySystemPin(pinInput);
         if (isValid) {
             onAuthSuccess();
@@ -271,7 +295,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
         );
     }
 
-    // MAIN AUTH SCREEN
     return (
         <div className="fixed inset-0 z-[9999] bg-[#020202] flex items-center justify-center p-6 overflow-hidden font-sans select-none">
             {/* Background FX */}
@@ -310,30 +333,35 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                                     <div className="h-[1px] bg-white/10 flex-1"></div>
                                 </div>
 
-                                {/* Secondary: Buat Akun Baru */}
+                                {/* Manual Register Button */}
                                 <button 
-                                    onClick={handleGoogleLogin}
+                                    onClick={() => setStage('REGISTER_MANUAL')}
                                     disabled={loading}
                                     className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-2xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 transition-all active:scale-95"
                                 >
-                                    <UserPlus size={18} className="text-emerald-500"/>
-                                    BUAT AKUN BARU
+                                    <Mail size={18} className="text-emerald-500"/>
+                                    DAFTAR DENGAN EMAIL
+                                </button>
+
+                                {/* Forgot Account Link */}
+                                <button 
+                                    onClick={() => setStage('FORGOT_ACCOUNT')}
+                                    className="text-[9px] font-bold text-neutral-500 hover:text-white transition-colors flex items-center gap-2 mx-auto pt-2"
+                                >
+                                    <HelpCircle size={10} /> LUPA AKUN?
                                 </button>
                             </div>
 
                             <div className="space-y-4 pt-2">
+                                {/* Always allow going to PIN screen if Developer PIN is set OR system pin exists */}
                                 {isSystemPinConfigured() && (
                                     <button 
                                         onClick={() => setStage('LOCKED')}
                                         className="text-[10px] font-bold text-neutral-400 hover:text-emerald-500 transition-colors flex items-center justify-center gap-2 mx-auto"
                                     >
-                                        <KeyRound size={12}/> PERANGKAT INI TERKUNCI? MASUK DENGAN PIN
+                                        <KeyRound size={12}/> AKSES PERANGKAT / DEVELOPER
                                     </button>
                                 )}
-                                
-                                <p className="text-[9px] text-neutral-600 leading-relaxed max-w-[250px] mx-auto">
-                                    Dengan melanjutkan, Anda menyetujui Protokol Keamanan & Privasi IStoic AI v25.0.
-                                </p>
                             </div>
 
                             {error && (
@@ -344,7 +372,28 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                         </div>
                     )}
 
-                    {/* 2. CREATE ID (Only New Users) */}
+                    {/* 2. REGISTER MANUAL (NEW) */}
+                    {stage === 'REGISTER_MANUAL' && (
+                        <RegisterManual 
+                            onBack={() => setStage('WELCOME')}
+                            onSuccess={() => setStage('CREATE_ID')} 
+                        />
+                    )}
+
+                    {/* 3. FORGOT PIN (NEW) */}
+                    {stage === 'FORGOT_PIN' && (
+                        <ForgotPin 
+                            onBack={() => setStage('LOCKED')}
+                            onSuccess={() => { setStage('LOCKED'); setIsPinSet(true); }}
+                        />
+                    )}
+
+                    {/* 4. FORGOT ACCOUNT (NEW) */}
+                    {stage === 'FORGOT_ACCOUNT' && (
+                        <ForgotAccount onBack={() => setStage('WELCOME')} />
+                    )}
+
+                    {/* 5. CREATE ID (Only New Users) */}
                     {stage === 'CREATE_ID' && (
                         <div className="space-y-6 animate-slide-up">
                              <div className="text-center">
@@ -370,7 +419,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                         </div>
                     )}
 
-                    {/* 3. SETUP PIN */}
+                    {/* 6. SETUP PIN */}
                     {stage === 'SETUP_PIN' && (
                         <div className="space-y-6 animate-slide-up text-center">
                             <div className="w-16 h-16 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mx-auto border border-amber-500/20 mb-4">
@@ -391,18 +440,18 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                         </div>
                     )}
 
-                    {/* 4. LOCKED / PIN ENTRY */}
+                    {/* 7. LOCKED / PIN ENTRY (Modified for Dev Access) */}
                     {stage === 'LOCKED' && (
                         <form onSubmit={handleUnlock} className="space-y-6 animate-slide-up">
                             <div className="text-center space-y-2 mb-8">
                                 <div className={`w-20 h-20 rounded-3xl mx-auto flex items-center justify-center mb-4 transition-all duration-500 ${isHardLocked ? 'bg-red-500/20 text-red-500' : 'bg-emerald-500/10 text-emerald-500 shadow-[0_0_40px_-10px_rgba(16,185,129,0.3)]'}`}>
-                                    {isHardLocked ? <Lock size={32} /> : <Fingerprint size={32} />}
+                                    {isHardLocked ? <Lock size={32} /> : (identity ? <Fingerprint size={32} /> : <Terminal size={32} />)}
                                 </div>
                                 <h2 className="text-xl font-bold text-white uppercase tracking-tight">
-                                    {identity?.displayName || 'OPERATOR'}
+                                    {identity?.displayName || 'SYSTEM LOCKED'}
                                 </h2>
                                 <p className="text-[10px] font-mono text-emerald-500 tracking-wider">
-                                    {identity?.istokId}
+                                    {identity?.istokId || 'AUTH_REQUIRED'}
                                 </p>
                             </div>
 
@@ -438,19 +487,17 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                                     </button>
                                     
                                     <div className="flex justify-between items-center px-1">
-                                        {bioEnabled && (
-                                            <button 
-                                                type="button" 
-                                                onClick={handleBiometricScan}
-                                                className="text-emerald-500 text-[10px] font-bold tracking-widest hover:text-white transition-colors flex items-center gap-2"
-                                            >
-                                                <ScanFace size={14}/> USE FACE ID
-                                            </button>
-                                        )}
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setStage('FORGOT_PIN')}
+                                            className="text-neutral-500 text-[10px] font-bold tracking-widest hover:text-white transition-colors"
+                                        >
+                                            LUPA PIN?
+                                        </button>
                                         <button 
                                             type="button"
                                             onClick={() => setStage('WELCOME')}
-                                            className="text-neutral-500 text-[10px] font-bold tracking-widest hover:text-white transition-colors ml-auto"
+                                            className="text-neutral-500 text-[10px] font-bold tracking-widest hover:text-white transition-colors"
                                         >
                                             GANTI AKUN
                                         </button>

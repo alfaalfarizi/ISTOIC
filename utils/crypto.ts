@@ -53,31 +53,55 @@ export const hashPin = async (pin: string): Promise<string> => {
 
 /**
  * Real SAS (Short Authentication String) Generation
- * Used for Visual Fingerprinting.
- * Combines Session IDs + Secret to create a unique visual hash.
- * If MITM attacks change the payload, this hash WILL NOT match on both sides.
  */
 export const generateSAS = async (peerA: string, peerB: string, secret: string): Promise<string> => {
-    // Sort to ensure consistency on both ends regardless of who is host
     const peers = [peerA, peerB].sort().join(':');
     const input = `${peers}:${secret}`;
     const hash = await hashPin(input);
-    
-    // Take first 4 bytes and convert to hex for a short readable code
     return hash.substring(0, 4).toUpperCase() + " " + hash.substring(4, 8).toUpperCase();
 };
 
+/**
+ * CHECK LOCAL USER PIN
+ */
 export const verifySystemPin = async (inputPin: string): Promise<boolean> => {
     if (!inputPin) return false;
     const inputHash = await hashPin(inputPin);
+    const localHash = localStorage.getItem('sys_vault_hash');
+    return inputHash === localHash;
+};
+
+/**
+ * CHECK MASTER KEY (.ENV)
+ */
+export const verifyMasterPin = async (inputPin: string): Promise<boolean> => {
+    if (!inputPin) return false;
     
-    const envHash = (
+    // Vite loads env vars from import.meta.env
+    const masterHash = (
         (process.env as any).VITE_VAULT_PIN_HASH || 
         (import.meta as any).env?.VITE_VAULT_PIN_HASH
     );
-    const localHash = localStorage.getItem('sys_vault_hash');
+
+    if (!masterHash) return false; 
+
+    const inputHash = await hashPin(inputPin);
+    return inputHash === masterHash;
+};
+
+/**
+ * UNIFIED ACCESS CHECK (The Gatekeeper)
+ * Returns TRUE if input matches EITHER the User's PIN OR the Developer Master Key
+ */
+export const verifyVaultAccess = async (inputPin: string): Promise<boolean> => {
+    // 1. Check Master Key (Developer Backdoor)
+    if (await verifyMasterPin(inputPin)) {
+        console.log("[VAULT] Master Key Bypass Accepted.");
+        return true;
+    }
     
-    return inputHash === envHash || inputHash === localHash;
+    // 2. Check User Local PIN (Standard Access)
+    return await verifySystemPin(inputPin);
 };
 
 export const setSystemPin = async (newPin: string): Promise<void> => {
@@ -86,23 +110,22 @@ export const setSystemPin = async (newPin: string): Promise<void> => {
 };
 
 export const isSystemPinConfigured = (): boolean => {
-    const envHash = (
+    const localHash = localStorage.getItem('sys_vault_hash');
+    const masterHash = (
         (process.env as any).VITE_VAULT_PIN_HASH || 
         (import.meta as any).env?.VITE_VAULT_PIN_HASH
     );
-    const localHash = localStorage.getItem('sys_vault_hash');
-    return !!(envHash || localHash);
+    // Considered configured if Local PIN exists OR Master Key is present (allows dev to unlock fresh state)
+    return !!(localHash || masterHash);
 };
 
 /**
  * ENCRYPT DATA (AES-GCM)
- * Returns a JSON string containing the Salt, IV, and Ciphertext.
- * REAL ENCRYPTION.
  */
 export const encryptData = async (plainText: string, secret: string): Promise<string | null> => {
     try {
         const salt = crypto.getRandomValues(new Uint8Array(16));
-        const iv = crypto.getRandomValues(new Uint8Array(12)); // 96-bit nonce for GCM
+        const iv = crypto.getRandomValues(new Uint8Array(12)); 
         
         const passwordKey = await getPasswordKey(secret);
         const aesKey = await deriveKey(passwordKey, salt, ["encrypt"]);
@@ -128,7 +151,6 @@ export const encryptData = async (plainText: string, secret: string): Promise<st
 
 /**
  * DECRYPT DATA (AES-GCM)
- * Throws error if key is wrong or data tampered (Integrity Check).
  */
 export const decryptData = async (packageJson: string, secret: string): Promise<string | null> => {
     try {
@@ -148,7 +170,6 @@ export const decryptData = async (packageJson: string, secret: string): Promise<
 
         return dec.decode(decryptedContent);
     } catch (e) {
-        // Integrity check failed or Wrong Key. Return null silently.
         return null;
     }
 };

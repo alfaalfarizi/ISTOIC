@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Shield, Lock, Unlock, X, AlertCircle, Fingerprint, Settings } from 'lucide-react';
-import { verifySystemPin, isSystemPinConfigured } from '../utils/crypto';
+import { verifyVaultAccess, isSystemPinConfigured } from '../utils/crypto';
 
 interface VaultPinModalProps {
     isOpen: boolean;
@@ -34,16 +34,16 @@ export const VaultPinModal: React.FC<VaultPinModalProps> = ({ isOpen, onClose, o
         e?.preventDefault();
         setVerifying(true);
         
-        // If not configured, we might allow bypass or prompt setup (here we auto-succeed for convenience if intended, 
-        // but secure design dictates we should force setup. Let's redirect logic).
-        // For this implementation: If not configured, unlocking effectively sets up nothing, so we just unlock to let them access settings.
+        // If not configured (No Local PIN AND No Master Key), bypass.
+        // In real usage, this prompts setup, but for now we allow access to Settings.
         if (!isConfigured) {
             onSuccess();
             onClose();
             return;
         }
 
-        const isValid = await verifySystemPin(pin);
+        // UNIFIED CHECK: User PIN or Master PIN
+        const isValid = await verifyVaultAccess(pin);
 
         if (isValid) {
             onSuccess();
@@ -79,7 +79,7 @@ export const VaultPinModal: React.FC<VaultPinModalProps> = ({ isOpen, onClose, o
                         {isConfigured ? (error ? 'ACCESS DENIED' : 'SECURITY CLEARANCE') : 'VAULT UNSECURED'}
                     </h3>
                     <p className="text-[10px] tech-mono font-bold text-neutral-500 uppercase tracking-widest">
-                        {isConfigured ? (error ? 'INVALID CREDENTIALS' : 'ENTER VAULT PIN TO DECRYPT') : 'NO PIN CONFIGURED'}
+                        {isConfigured ? (error ? 'INVALID PASSCODE' : 'ENTER VAULT PIN TO DECRYPT') : 'NO PIN CONFIGURED'}
                     </p>
                 </div>
 

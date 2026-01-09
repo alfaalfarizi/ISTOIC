@@ -1,9 +1,10 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Flame, Brain, MicOff, Radio, X, Mic, Activity, Minus, Sparkles, Shield, CloudRain, Music, Volume2, Waves } from 'lucide-react';
+import { Flame, Brain, MicOff, Radio, X, Mic, Activity, Minus, Sparkles, Shield, CloudRain, Music, Volume2, Waves, Settings2 } from 'lucide-react';
 import { type NeuralLinkStatus } from '../../../services/neuralLink';
 import { useFeatures } from '../../../contexts/FeatureContext';
 import { useLiveSession } from '../../../contexts/LiveSessionContext';
+import { VoiceSelector } from './VoiceSelector';
 
 interface NeuralLinkOverlayProps {
   isOpen: boolean;
@@ -33,9 +34,10 @@ export const NeuralLinkOverlay: React.FC<NeuralLinkOverlayProps> = ({
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [showVoiceSelector, setShowVoiceSelector] = useState(false);
 
   // Global Context for Audio Modes
-  const { micMode, setMicMode, ambientMode, setAmbientMode } = useLiveSession();
+  const { micMode, setMicMode, ambientMode, setAmbientMode, currentVoice, changeVoice } = useLiveSession();
 
   // Check Feature Flag
   const { isFeatureEnabled } = useFeatures();
@@ -236,8 +238,19 @@ export const NeuralLinkOverlay: React.FC<NeuralLinkOverlayProps> = ({
           </div>
 
           {/* AUDIO CONTROL DECK */}
-          <div className="px-6 pb-4 pointer-events-auto flex justify-center">
+          <div className="px-6 pb-4 pointer-events-auto flex justify-center flex-col items-center gap-2">
               <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-2 flex items-center gap-1">
+                  {/* Voice Selector Trigger */}
+                  <button 
+                      onClick={() => setShowVoiceSelector(!showVoiceSelector)}
+                      className={`p-3 rounded-xl transition-all flex flex-col items-center gap-1 w-20 ${showVoiceSelector ? 'bg-white/10 text-white' : 'hover:bg-white/5 text-neutral-400'}`}
+                  >
+                      <Settings2 size={18} />
+                      <span className="text-[8px] font-black uppercase">{currentVoice}</span>
+                  </button>
+
+                  <div className="w-[1px] h-8 bg-white/10 mx-1"></div>
+
                   {/* Mic Modes */}
                   <button 
                       onClick={() => setMicMode(micMode === 'ISOLATION' ? 'STANDARD' : 'ISOLATION')}
@@ -250,9 +263,11 @@ export const NeuralLinkOverlay: React.FC<NeuralLinkOverlayProps> = ({
                   <div className="w-[1px] h-8 bg-white/10 mx-1"></div>
 
                   {/* Ambient Modes */}
-                  <button onClick={() => setAmbientMode('OFF')} className={`p-2 rounded-lg ${ambientMode === 'OFF' ? 'bg-white/20 text-white' : 'text-neutral-500 hover:text-white'}`}><Volume2 size={16}/></button>
-                  <button onClick={() => setAmbientMode('CYBER')} className={`p-2 rounded-lg ${ambientMode === 'CYBER' ? 'bg-purple-500/20 text-purple-400' : 'text-neutral-500 hover:text-purple-400'}`}><Waves size={16}/></button>
-                  <button onClick={() => setAmbientMode('RAIN')} className={`p-2 rounded-lg ${ambientMode === 'RAIN' ? 'bg-blue-500/20 text-blue-400' : 'text-neutral-500 hover:text-blue-400'}`}><CloudRain size={16}/></button>
+                  <div className="flex gap-1">
+                      <button onClick={() => setAmbientMode('OFF')} className={`p-2 rounded-lg ${ambientMode === 'OFF' ? 'bg-white/20 text-white' : 'text-neutral-500 hover:text-white'}`}><Volume2 size={16}/></button>
+                      <button onClick={() => setAmbientMode('CYBER')} className={`p-2 rounded-lg ${ambientMode === 'CYBER' ? 'bg-purple-500/20 text-purple-400' : 'text-neutral-500 hover:text-purple-400'}`}><Waves size={16}/></button>
+                      <button onClick={() => setAmbientMode('RAIN')} className={`p-2 rounded-lg ${ambientMode === 'RAIN' ? 'bg-blue-500/20 text-blue-400' : 'text-neutral-500 hover:text-blue-400'}`}><CloudRain size={16}/></button>
+                  </div>
               </div>
           </div>
 
@@ -275,6 +290,16 @@ export const NeuralLinkOverlay: React.FC<NeuralLinkOverlayProps> = ({
                   <Activity size={20} className="animate-pulse" /> TERMINATE
               </button>
           </div>
+
+          {/* Voice Selector Modal */}
+          {showVoiceSelector && (
+              <VoiceSelector 
+                  currentVoice={currentVoice}
+                  onSelect={changeVoice}
+                  onClose={() => setShowVoiceSelector(false)}
+              />
+          )}
+
       </div>
 
       <style>{`

@@ -28,8 +28,6 @@ const GOOGLE_VALID_VOICES = ['Puck', 'Charon', 'Kore', 'Fenrir', 'Aoede', 'Zephy
 
 /**
  * PROCEDURAL AMBIENT ENGINE
- * Generates background soundscapes using Web Audio API nodes (Oscillators/Noise)
- * No external files required. Zero latency.
  */
 class AmbientMixer {
     private ctx: AudioContext;
@@ -50,7 +48,6 @@ class AmbientMixer {
         const t = this.ctx.currentTime;
 
         if (mode === 'CYBER') {
-            // Low droning oscillator for Cyberpunk vibe
             const osc = this.ctx.createOscillator();
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(50, t);
@@ -61,7 +58,7 @@ class AmbientMixer {
             
             const lfo = this.ctx.createOscillator();
             lfo.type = 'sine';
-            lfo.frequency.value = 0.2; // Slow modulation
+            lfo.frequency.value = 0.2; 
             const lfoGain = this.ctx.createGain();
             lfoGain.gain.value = 100;
 
@@ -76,7 +73,6 @@ class AmbientMixer {
             this.activeNodes.push(osc, lfo, filter, lfoGain);
         } 
         else if (mode === 'RAIN') {
-            // White noise generation for Rain
             const bufferSize = 2 * this.ctx.sampleRate;
             const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
             const output = buffer.getChannelData(0);
@@ -151,114 +147,137 @@ export class NeuralLinkService {
         config.onStatusChange('CONNECTING');
 
         try {
-            // 1. Initialize Audio Contexts
-            const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
-            
-            // Input: 16kHz for Gemini (Lower sample rate = less bandwidth/processing)
-            this.inputCtx = new AudioContextClass({ sampleRate: 16000 });
-            
-            // Output: 24kHz for High Quality Response
-            this.outputCtx = new AudioContextClass({ sampleRate: 24000 });
-            
-            // Analyser for visualizer
-            this._analyser = this.outputCtx.createAnalyser();
-            this._analyser.fftSize = 512; // Higher res for smoother visuals
-            this._analyser.smoothingTimeConstant = 0.7;
-
-            // Ambient Mixer
-            this.ambientMixer = new AmbientMixer(this.outputCtx);
-
-            // CRITICAL: Resume contexts immediately
-            if (this.inputCtx.state === 'suspended') await this.inputCtx.resume();
-            if (this.outputCtx.state === 'suspended') await this.outputCtx.resume();
-
-            // 2. Initialize Mic with Standard Mode
-            await this.setupMicrophone('STANDARD');
-
-            // 3. Get API Key
-            const apiKey = KEY_MANAGER.getKey('GEMINI');
-            if (!apiKey) throw new Error("No healthy GEMINI API key available.");
-
-            const ai = new GoogleGenAI({ apiKey });
-            
-            // 4. Voice Selection (Validating)
-            if (!GOOGLE_VALID_VOICES.includes(config.voiceName)) {
-                config.voiceName = config.persona === 'hanisah' ? 'Kore' : 'Fenrir';
-            }
-
-            // 5. Prepare Tools
-            const liveTools = [
-                { 
-                    functionDeclarations: [
-                        ...(noteTools.functionDeclarations || []),
-                        ...(visualTools?.functionDeclarations || [])
-                    ] 
-                }
-            ];
-
-            // 6. Connect to Gemini Live
-            const sessionPromise = ai.live.connect({
-                model: config.modelId || 'gemini-2.5-flash-native-audio-preview-09-2025',
-                callbacks: {
-                    onopen: () => {
-                        this.isConnecting = false;
-                        this.isConnected = true;
-                        config.onStatusChange('ACTIVE');
-                        
-                        // Start streaming data
-                        this.startAudioInputStream(sessionPromise);
-                        
-                        // Keep-alive Logic
-                        this.audioCheckInterval = setInterval(() => {
-                            if (this.outputCtx?.state === 'suspended') this.outputCtx.resume();
-                            if (this.inputCtx?.state === 'suspended') this.inputCtx.resume();
-                        }, 2000);
-
-                        // Initial Handshake (Wait for ready)
-                        sessionPromise.then(session => {
-                            // Only send greeting if this is a fresh start, strictly text to prime context
-                            try {
-                                const greeting = config.persona === 'hanisah' 
-                                ? "System online. Hai, aku siap."
-                                : "Logic core active. Ready.";
-                                session.sendRealtimeInput({ text: greeting });
-                            } catch(err) {
-                                console.error("Handshake failed:", err);
-                            }
-                        });
-                    },
-                    onmessage: async (msg: LiveServerMessage) => {
-                        await this.handleServerMessage(msg, sessionPromise);
-                    },
-                    onerror: (e) => {
-                        console.error("Neural Link Error:", e);
-                        if (this.isConnected || this.isConnecting) {
-                            config.onStatusChange('ERROR', "Neural Connection Unstable");
-                            this.disconnect();
-                        }
-                    },
-                    onclose: () => {
-                        console.log("Neural Link Closed");
-                        this.disconnect();
-                    },
-                },
-                config: {
-                    responseModalities: [Modality.AUDIO],
-                    tools: liveTools,
-                    speechConfig: { 
-                        voiceConfig: { prebuiltVoiceConfig: { voiceName: config.voiceName } } 
-                    },
-                    systemInstruction: config.systemInstruction,
-                    inputAudioTranscription: {}, 
-                    outputAudioTranscription: {},
-                }
-            });
-
-            this.session = await sessionPromise;
-
+            await this.initializeSession(config);
         } catch (e: any) {
             console.error("Setup Failed:", e);
             config.onStatusChange('ERROR', e.name === 'NotAllowedError' ? "Mic Access Denied" : e.message);
+            this.disconnect();
+        }
+    }
+
+    private async initializeSession(config: NeuralLinkConfig) {
+        // 1. Initialize Audio Contexts if not present
+        const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
+        
+        if (!this.inputCtx || this.inputCtx.state === 'closed') {
+            this.inputCtx = new AudioContextClass({ sampleRate: 16000 });
+        }
+        
+        if (!this.outputCtx || this.outputCtx.state === 'closed') {
+            this.outputCtx = new AudioContextClass({ sampleRate: 24000 });
+             // Analyser for visualizer
+            this._analyser = this.outputCtx.createAnalyser();
+            this._analyser.fftSize = 512;
+            this._analyser.smoothingTimeConstant = 0.7;
+            this.ambientMixer = new AmbientMixer(this.outputCtx);
+        }
+
+        // CRITICAL: Resume contexts immediately
+        if (this.inputCtx.state === 'suspended') await this.inputCtx.resume();
+        if (this.outputCtx.state === 'suspended') await this.outputCtx.resume();
+
+        // 2. Initialize Mic
+        if (!this.activeStream) {
+            await this.setupMicrophone(this.currentMicMode);
+        }
+
+        // 3. Get API Key
+        const apiKey = KEY_MANAGER.getKey('GEMINI');
+        if (!apiKey) throw new Error("No healthy GEMINI API key available.");
+
+        const ai = new GoogleGenAI({ apiKey });
+        
+        // 4. Voice Selection
+        if (!GOOGLE_VALID_VOICES.includes(config.voiceName)) {
+            config.voiceName = config.persona === 'hanisah' ? 'Kore' : 'Fenrir';
+        }
+
+        // 5. Prepare Tools
+        const liveTools = [
+            { 
+                functionDeclarations: [
+                    ...(noteTools.functionDeclarations || []),
+                    ...(visualTools?.functionDeclarations || [])
+                ] 
+            }
+        ];
+
+        // 6. Connect to Gemini Live
+        const sessionPromise = ai.live.connect({
+            model: config.modelId || 'gemini-2.5-flash-native-audio-preview-09-2025',
+            callbacks: {
+                onopen: () => {
+                    this.isConnecting = false;
+                    this.isConnected = true;
+                    config.onStatusChange('ACTIVE');
+                    
+                    this.startAudioInputStream(sessionPromise);
+                    
+                    this.audioCheckInterval = setInterval(() => {
+                        if (this.outputCtx?.state === 'suspended') this.outputCtx.resume();
+                        if (this.inputCtx?.state === 'suspended') this.inputCtx.resume();
+                    }, 2000);
+
+                    // Send prime text to establish context
+                    sessionPromise.then(session => {
+                        try {
+                            const greeting = config.persona === 'hanisah' 
+                            ? "System online. Hai, aku siap."
+                            : "Logic core active. Ready.";
+                            session.sendRealtimeInput({ text: greeting });
+                        } catch(err) { console.error(err); }
+                    });
+                },
+                onmessage: async (msg: LiveServerMessage) => {
+                    await this.handleServerMessage(msg, sessionPromise);
+                },
+                onerror: (e) => {
+                    console.error("Neural Link Error:", e);
+                    if (this.isConnected) config.onStatusChange('ERROR', "Neural Connection Unstable");
+                },
+                onclose: () => {
+                    console.log("Neural Link Closed");
+                    this.disconnect();
+                },
+            },
+            config: {
+                responseModalities: [Modality.AUDIO],
+                tools: liveTools,
+                speechConfig: { 
+                    voiceConfig: { prebuiltVoiceConfig: { voiceName: config.voiceName } } 
+                },
+                systemInstruction: config.systemInstruction,
+                inputAudioTranscription: {}, 
+                outputAudioTranscription: {},
+            }
+        });
+
+        this.session = await sessionPromise;
+    }
+
+    async switchVoice(newVoice: string) {
+        if (!this.config || !this.isConnected) return;
+        
+        debugService.log('INFO', 'NEURAL_LINK', 'VOICE_SWAP', `Switching to ${newVoice}...`);
+        
+        // Gemini Live doesn't support hot-swapping config mid-session yet.
+        // We must perform a fast-reconnect.
+        
+        // 1. Close current session gracefully (but keep audio context/stream alive)
+        try {
+            if (this.session && typeof this.session.close === 'function') {
+                this.session.close();
+            }
+        } catch (e) {}
+
+        // 2. Update config
+        this.config.voiceName = newVoice;
+        
+        // 3. Re-initialize (skips mic/context teardown to be fast)
+        try {
+            await this.initializeSession(this.config);
+        } catch (e) {
+            console.error("Voice Switch Failed", e);
             this.disconnect();
         }
     }
@@ -268,10 +287,7 @@ export class NeuralLinkService {
         this.currentMicMode = mode;
         debugService.log('INFO', 'NEURAL_LINK', 'MIC_UPDATE', `Switching to ${mode} mode`);
         await this.setupMicrophone(mode);
-        // Restart stream processor with new stream
-        // Note: scriptProcessor usually stays connected, we just change the source
         if (this.session && this.inputCtx) {
-             // Re-route audio graph
              const sessionPromise = Promise.resolve(this.session);
              this.startAudioInputStream(sessionPromise);
         }
@@ -299,12 +315,10 @@ export class NeuralLinkService {
             constraints.noiseSuppression = { ideal: true };
             constraints.autoGainControl = { ideal: true };
         } else if (mode === 'HIGH_FIDELITY') {
-            // Sometimes disabling processed audio is better for music/singing
             constraints.echoCancellation = false;
             constraints.noiseSuppression = false;
             constraints.autoGainControl = false;
         } else {
-            // Standard: Always default to echo cancellation ON
             constraints.echoCancellation = true;
             constraints.noiseSuppression = true;
             constraints.autoGainControl = true;
@@ -317,30 +331,23 @@ export class NeuralLinkService {
         if (!this.inputCtx || !this.activeStream) return;
         
         try {
-            // Clean up old processor/source if existing to prevent double streams
             if (this.scriptProcessor) {
                 this.scriptProcessor.disconnect();
                 this.scriptProcessor = null;
             }
 
             const source = this.inputCtx.createMediaStreamSource(this.activeStream);
-            // Increased buffer size to 4096 to reduce main thread load and audio glitches
             this.scriptProcessor = this.inputCtx.createScriptProcessor(4096, 1, 1);
             
             this.scriptProcessor.onaudioprocess = (e) => {
-                // Guideline compliance: Removed redundant connection checks inside audio processing callback to avoid stale closures
                 const inputData = e.inputBuffer.getChannelData(0);
                 
-                // VAD (Simple Volume Gate) - Skip silence to save bandwidth
+                // VAD Gate
                 let sum = 0;
                 for (let i = 0; i < inputData.length; i++) sum += inputData[i] * inputData[i];
                 const rms = Math.sqrt(sum / inputData.length);
-                
-                // Tuned threshold: catch whispers/breaths (0.001) for prosody awareness
-                // But don't send absolute noise floor
-                if (rms < 0.001) return; 
+                if (rms < 0.002) return; 
 
-                // Convert Float32 to Int16 PCM
                 const int16 = new Int16Array(inputData.length);
                 for (let i = 0; i < inputData.length; i++) {
                     int16[i] = Math.max(-1, Math.min(1, inputData[i])) * 32767;
@@ -351,11 +358,8 @@ export class NeuralLinkService {
                     mimeType: 'audio/pcm;rate=16000' 
                 };
                 
-                // Guideline compliance: Rely exclusively on sessionPromise for data streaming
                 sessionPromise.then(s => { 
-                    try { 
-                        s.sendRealtimeInput({ media: pcmBlob }); 
-                    } catch (err) {} 
+                    try { s.sendRealtimeInput({ media: pcmBlob }); } catch (err) {} 
                 });
             };
             
@@ -369,7 +373,6 @@ export class NeuralLinkService {
     private async handleServerMessage(msg: LiveServerMessage, sessionPromise: Promise<any>) {
         if (!this.isConnected) return;
 
-        // 1. Transcriptions
         if (this.config?.onTranscription) {
             if (msg.serverContent?.inputTranscription) {
                 this.config.onTranscription({ 
@@ -387,13 +390,11 @@ export class NeuralLinkService {
             }
         }
 
-        // 2. Tool Calls
         if (msg.toolCall) {
             for (const fc of msg.toolCall.functionCalls) {
                 if (this.config?.onToolCall) {
                     try {
                         const result = await this.config.onToolCall(fc);
-                        // Guideline compliance: Execute tool response through the active session from the promise
                         sessionPromise.then(s => s.sendToolResponse({ 
                             functionResponses: [{ id: fc.id, name: fc.name, response: { result: String(result) } }] 
                         }));
@@ -406,23 +407,21 @@ export class NeuralLinkService {
             }
         }
 
-        // 3. Audio Output (Enhanced Queuing)
         const base64Audio = msg.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
         if (base64Audio && this.outputCtx) {
             try {
-                // Gapless Playback Logic
+                // Ensure context is running for playback
+                if (this.outputCtx.state === 'suspended') await this.outputCtx.resume();
+
                 const currentTime = this.outputCtx.currentTime;
-                // If the stream lagged behind, jump forward. 
-                // If it's ahead (buffering), preserve it.
                 if (this.nextStartTime < currentTime) {
-                    this.nextStartTime = currentTime + 0.05; // 50ms min buffer to prevent glitch
+                    this.nextStartTime = currentTime + 0.08; // Slight buffer
                 }
 
                 const audioBuffer = await decodeAudioData(decodeAudio(base64Audio), this.outputCtx, 24000, 1);
                 const source = this.outputCtx.createBufferSource();
                 source.buffer = audioBuffer;
                 
-                // Connect to Analyser AND Destination (Ambient mixer is already connected to dest)
                 if (this._analyser) { 
                     source.connect(this._analyser); 
                     this._analyser.connect(this.outputCtx.destination); 
@@ -434,27 +433,14 @@ export class NeuralLinkService {
                 this.nextStartTime += audioBuffer.duration;
                 this.sources.add(source);
                 
-                source.onended = () => {
-                    this.sources.delete(source);
-                };
-            } catch (e) {
-                console.warn("Audio processing glitch (non-fatal):", e);
-            }
+                source.onended = () => this.sources.delete(source);
+            } catch (e) { }
         }
 
-        // 4. Interruption (Instant Cut)
         if (msg.serverContent?.interrupted) {
-            // Immediate Stop
-            this.sources.forEach(s => { 
-                try { s.stop(); } catch(e){} 
-            });
+            this.sources.forEach(s => { try { s.stop(); } catch(e){} });
             this.sources.clear();
-            
-            // Reset Time Anchor to Now (Prevent skipping or catching up)
-            if (this.outputCtx) {
-                this.nextStartTime = this.outputCtx.currentTime;
-            }
-            debugService.log('INFO', 'NEURAL_LINK', 'INTERRUPT', 'Turn-taking enforced. Audio queue cleared.');
+            if (this.outputCtx) this.nextStartTime = this.outputCtx.currentTime;
         }
     }
 
@@ -486,6 +472,7 @@ export class NeuralLinkService {
             this.ambientMixer.stop();
         }
 
+        // Close contexts to free hardware
         if (this.inputCtx) { try { this.inputCtx.close(); } catch(e){} this.inputCtx = null; }
         if (this.outputCtx) { try { this.outputCtx.close(); } catch(e){} this.outputCtx = null; }
 

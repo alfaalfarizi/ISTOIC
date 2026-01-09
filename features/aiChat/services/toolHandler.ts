@@ -21,7 +21,6 @@ export const executeNeuralTool = async (
 
         // A. CREATE (Smart Inference)
         if (action === 'CREATE') {
-            // Logika Jenius: Jika title/content kosong, generate default yang berguna
             const finalTitle = title || `Quick Note ${new Date().toLocaleTimeString()}`;
             const finalContent = content || "_(Empty note initialized. Ready for input.)_";
             
@@ -37,21 +36,17 @@ export const executeNeuralTool = async (
                 is_archived: false
             };
             
-            // Jika ada task langsung ditambahkan
             if (taskContent) {
                 newNote.tasks?.push({ id: uuidv4(), text: taskContent, isCompleted: false });
             }
 
             setNotes([newNote, ...updatedNotes]);
-            
-            // Background Indexing
             VectorDB.indexNotes([newNote]).catch(console.error);
 
-            // Output Markdown Card (Cantik & Rapi)
             return `> ✅ **NOTE SECURED**\n> **Ref:** ${finalTitle}\n> **ID:** \`${newNote.id.slice(0,6)}\`\n> *Disimpan di Local Vault.*`;
         }
 
-        // B. SEARCH (Hybrid & Deep)
+        // B. SEARCH
         if (action === 'SEARCH') {
             if (!query) return "> ⚠️ **SEARCH ERROR**: Parameter query kosong.";
             
@@ -59,7 +54,6 @@ export const executeNeuralTool = async (
             let matches: Note[] = [];
             let method = "KEYWORD";
 
-            // 1. Semantic Search (Prioritas)
             try {
                 const vectorIds = await VectorDB.search(q, 5);
                 if (vectorIds.length > 0) {
@@ -71,7 +65,6 @@ export const executeNeuralTool = async (
                 }
             } catch (e) {}
 
-            // 2. Keyword Fallback
             if (matches.length === 0) {
                 matches = notes.filter(n => 
                     (n.title && n.title.toLowerCase().includes(q)) || 
@@ -90,9 +83,8 @@ export const executeNeuralTool = async (
             return `> 🔍 **VAULT RESULTS** (${method})\n\n${list}\n\n_Katakan "Lihat catatan ID..." untuk membaca isinya._`;
         }
 
-        // C. READ (Fetch & Display)
+        // C. READ
         if (action === 'READ') {
-            // Coba cari ID, jika gagal cari berdasarkan judul yang mirip
             let target = notes.find(n => n.id === id);
             
             if (!target && title) {
@@ -118,22 +110,17 @@ ${tasksStr ? `**TASKS:**\n${tasksStr}\n` : ''}
 `;
         }
 
-        // D. UPDATE / APPEND (Precise)
+        // D. UPDATE / APPEND / TASK MANAGEMENT (Precise)
         if ((action === 'UPDATE' || action === 'APPEND') && (id || title)) {
             let noteIndex = -1;
             
-            if (id) {
-                noteIndex = updatedNotes.findIndex(n => n.id === id);
-            }
+            if (id) noteIndex = updatedNotes.findIndex(n => n.id === id);
             
-            // Jika ID salah/kosong, coba cari by title (Smart Fallback)
             if (noteIndex === -1 && title) {
                 noteIndex = updatedNotes.findIndex(n => n.title.toLowerCase().includes(title.toLowerCase()));
             }
 
-            if (noteIndex === -1) {
-                return `> ❌ **TARGET MISSING**: Note tidak ditemukan. Mohon spesifik.`;
-            }
+            if (noteIndex === -1) return `> ❌ **TARGET MISSING**: Note tidak ditemukan.`;
 
             const note = updatedNotes[noteIndex];
             let changesLog = [];
@@ -148,11 +135,19 @@ ${tasksStr ? `**TASKS:**\n${tasksStr}\n` : ''}
                 changesLog.push("Rewrite Data");
             }
 
-            // Task Logic
+            // Task Logic (Improved)
             let noteTasks = [...(note.tasks || [])];
-            if (taskAction === 'ADD' && taskContent) {
-                noteTasks.push({ id: uuidv4(), text: taskContent, isCompleted: false, dueDate: taskDueDate });
-                changesLog.push("Add Task");
+            
+            // INTELLIGENT TASK PARSING: If 'taskContent' is provided even in UPDATE action
+            const newTaskStr = taskContent || (args.todo ? args.todo : null);
+
+            if (newTaskStr) {
+                // Split multiple tasks if separated by newlines
+                const items = newTaskStr.split('\n').filter((t: string) => t.trim().length > 0);
+                items.forEach((item: string) => {
+                     noteTasks.push({ id: uuidv4(), text: item.replace(/^- /, '').trim(), isCompleted: false, dueDate: taskDueDate });
+                });
+                changesLog.push(`Added ${items.length} Tasks`);
             }
 
             updatedNotes[noteIndex] = {
@@ -174,33 +169,18 @@ ${tasksStr ? `**TASKS:**\n${tasksStr}\n` : ''}
         if (action === 'DELETE' && id) {
             const target = updatedNotes.find(n => n.id === id);
             if (!target) return `> ❌ **ERROR**: ID Salah.`;
-            
             setNotes(updatedNotes.filter(n => n.id !== id));
             return `> 🗑️ **DELETED**: "${target.title}" dihapus permanen.`;
         }
     }
 
-    // --- 2. LEGACY READ SPECIFIC NOTE HANDLER (Fallback) ---
-    if (name === 'read_note') {
-        const note = notes.find(n => n.id === args.id);
-        if (!note) return "> ❌ **READ ERROR**: Akses ditolak atau ID salah.";
-        return `**📂 FILE: ${note.title}**\n\n${note.content}`;
-    }
-
-    // --- 3. SEARCH NOTES HANDLER (Fallback) ---
-    if (name === 'search_notes') {
-        // Redirect to manage_note logic logic internally or just exec simple search
-        return executeNeuralTool({ name: 'manage_note', args: { action: 'SEARCH', query: args.query } }, notes, setNotes, imageModelPreference);
-    }
-
-    // --- 4. VISUAL GENERATION (Robust) ---
+    // --- 4. VISUAL GENERATION ---
     if (name === 'generate_visual') {
         try {
             const prompt = args.prompt;
             let imgUrl: string | null = null;
             let engineName = "HYDRA";
 
-            // Prioritize Gemini if configured/available
             if (imageModelPreference.includes('gemini')) {
                 try {
                     imgUrl = await generateImage(prompt, imageModelPreference);
@@ -210,7 +190,6 @@ ${tasksStr ? `**TASKS:**\n${tasksStr}\n` : ''}
                 }
             }
             
-            // Fallback / Default Hydra
             if (!imgUrl) {
                 const targetModel = imageModelPreference.includes('gemini') ? 'hydra-smart-route' : imageModelPreference;
                 const result = await PollinationsService.generateHydraImage(prompt, targetModel);

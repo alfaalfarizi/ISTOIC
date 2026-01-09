@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { NeuralLinkService } from '../services/neuralLink';
 import type { NeuralLinkStatus, MicMode, AmbientMode } from '../services/neuralLink';
@@ -16,11 +17,13 @@ interface LiveSessionContextType {
     analyser: AnalyserNode | null;
     micMode: MicMode;
     ambientMode: AmbientMode;
+    currentVoice: string;
     startSession: (persona: 'hanisah' | 'stoic') => void;
     stopSession: () => void;
     toggleMinimize: () => void;
     setMicMode: (mode: MicMode) => void;
     setAmbientMode: (mode: AmbientMode) => void;
+    changeVoice: (voice: string) => void;
 }
 
 const LiveSessionContext = createContext<LiveSessionContextType | undefined>(undefined);
@@ -45,6 +48,7 @@ export const LiveSessionProvider: React.FC<LiveSessionProviderProps> = ({ childr
     const [transcript, setTranscript] = useState<Array<{ role: 'user' | 'model', text: string }>>([]);
     const [interimTranscript, setInterimTranscript] = useState<{ role: 'user' | 'model', text: string } | null>(null);
     const [activeTool, setActiveTool] = useState<string | null>(null);
+    const [currentVoice, setCurrentVoice] = useState('Puck');
     
     // Audio Settings
     const [micMode, setMicModeState] = useState<MicMode>('STANDARD');
@@ -68,11 +72,10 @@ export const LiveSessionProvider: React.FC<LiveSessionProviderProps> = ({ childr
         setStatus('CONNECTING');
 
         try {
-            const noteContext = notesRef.current.map(n => `- ${n.title} (ID: ${n.id})`).join('\n');
-            // Fix: Await getSystemInstruction and pass correct Note[] arg
             const systemInstruction = await HANISAH_BRAIN.getSystemInstruction(persona, '', notesRef.current);
             const storedVoice = localStorage.getItem(`${persona}_voice`);
             const voice = storedVoice ? JSON.parse(storedVoice) : (persona === 'hanisah' ? 'Zephyr' : 'Fenrir');
+            setCurrentVoice(voice);
 
             await neuralLink.current.connect({
                 modelId: 'gemini-2.5-flash-native-audio-preview-09-2025',
@@ -85,7 +88,6 @@ export const LiveSessionProvider: React.FC<LiveSessionProviderProps> = ({ childr
                         setIsLive(false);
                         debugService.log('ERROR', 'LIVE_CTX', 'CONNECT_FAIL', err || 'Unknown');
                     } else if (newStatus === 'ACTIVE') {
-                        // Apply settings once active
                         neuralLink.current.setMicMode(micMode);
                         neuralLink.current.setAmbientMode(ambientMode);
                     }
@@ -102,7 +104,6 @@ export const LiveSessionProvider: React.FC<LiveSessionProviderProps> = ({ childr
                     const toolName = call.name;
                     setActiveTool(toolName);
                     debugService.log('INFO', 'LIVE_CTX', 'TOOL_EXEC', toolName);
-                    
                     try {
                         const currentNotes = notesRef.current;
                         const result = await executeNeuralTool(call, currentNotes, (newNotes) => {
@@ -146,7 +147,11 @@ export const LiveSessionProvider: React.FC<LiveSessionProviderProps> = ({ childr
         if (isLive) neuralLink.current.setAmbientMode(mode);
     }, [isLive]);
 
-    // Memoize the value to prevent consumer re-renders unless essential state changes
+    const changeVoice = useCallback((voice: string) => {
+        setCurrentVoice(voice);
+        if (isLive) neuralLink.current.switchVoice(voice);
+    }, [isLive]);
+
     const contextValue = useMemo(() => ({
         isLive,
         isMinimized,
@@ -157,14 +162,16 @@ export const LiveSessionProvider: React.FC<LiveSessionProviderProps> = ({ childr
         analyser: neuralLink.current.analyser,
         micMode,
         ambientMode,
+        currentVoice,
         startSession,
         stopSession,
         toggleMinimize,
         setMicMode,
-        setAmbientMode
+        setAmbientMode,
+        changeVoice
     }), [
-        isLive, isMinimized, status, transcript, interimTranscript, activeTool, micMode, ambientMode,
-        startSession, stopSession, toggleMinimize, setMicMode, setAmbientMode
+        isLive, isMinimized, status, transcript, interimTranscript, activeTool, micMode, ambientMode, currentVoice,
+        startSession, stopSession, toggleMinimize, setMicMode, setAmbientMode, changeVoice
     ]);
 
     return (

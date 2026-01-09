@@ -16,6 +16,7 @@ interface ErrorBoundaryState {
   copied: boolean;
 }
 
+// Explicitly extending React.Component to resolve type inference issues
 export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   
   public state: ErrorBoundaryState = {
@@ -30,6 +31,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // this.setState and this.props are inherited from React.Component
     this.setState({ errorInfo });
     
     const view = this.props.viewName || 'UNKNOWN_MODULE';
@@ -79,6 +81,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       const { error, errorInfo } = this.state;
       const text = `Error: ${error?.message}\n\nStack:\n${error?.stack}\n\nComponent Stack:\n${errorInfo?.componentStack}`;
       navigator.clipboard.writeText(text);
+      
       this.setState({ copied: true });
       setTimeout(() => this.setState({ copied: false }), 2000);
   };

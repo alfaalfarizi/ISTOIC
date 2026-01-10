@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, memo } from 'react';
 import { Send, Zap, Mic, Flame, Sparkles, Languages, X, Check, BrainCircuit } from 'lucide-react';
+import { TranslationService } from '../../../services/translationService'; // Correct import path
 
 interface IStokInputProps {
     onSend: (text: string) => void;
@@ -12,7 +13,7 @@ interface IStokInputProps {
     onAiAssist: (text: string, mode: 'REPLY' | 'REFINE') => Promise<string>;
     onAiTranslate: (text: string, targetLang: string) => Promise<string>;
     isAiThinking: boolean;
-    onTyping?: () => void; // New optional prop
+    onTyping?: () => void;
 }
 
 const LANGUAGES = [
@@ -53,9 +54,10 @@ export const IStokInput = memo(({
         
         let finalMessage = text;
 
-        // Auto-Translate if active
+        // Auto-Translate if active (Uses Strict Translator Logic)
         if (translateLang) {
-            finalMessage = await onAiTranslate(text, translateLang);
+            // DIRECT CALL TO SERVICE for stronger prompt
+            finalMessage = await TranslationService.translate(text, translateLang);
         }
 
         onSend(finalMessage);
@@ -127,8 +129,8 @@ export const IStokInput = memo(({
     };
 
     return (
-        // Added pb-safe for iPhone home indicator area
-        <div className="bg-[#09090b]/80 backdrop-blur-md border-t border-white/10 p-3 z-20 pb-[max(env(safe-area-inset-bottom),1rem)]">
+        // KEY FIX: Added pb-[max(...)] for iPhone XR notch/safe area
+        <div className="bg-[#09090b]/90 backdrop-blur-md border-t border-white/10 p-3 z-20 pb-[max(env(safe-area-inset-bottom),1rem)] pt-3 shrink-0 shadow-2xl">
             
             {/* AI Control Bar (When active or menu open) */}
             {(showAiMenu || translateLang) && (
@@ -136,7 +138,7 @@ export const IStokInput = memo(({
                     {/* Translate Indicator */}
                     {translateLang && (
                         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/20 border border-purple-500/30 text-purple-400 text-[10px] font-black uppercase tracking-wider shrink-0">
-                            <Languages size={12} /> {translateLang}
+                            <Languages size={12} /> {translateLang} (AUTO)
                             <button onClick={()=>setTranslateLang(null)} className="ml-1 hover:text-white"><X size={10}/></button>
                         </div>
                     )}
@@ -157,7 +159,7 @@ export const IStokInput = memo(({
 
             <div className="flex gap-2 items-end">
                 {/* Tools Toggle */}
-                <button onClick={onSendFile} className="p-3 bg-white/5 rounded-full text-neutral-400 hover:text-white transition-colors border border-transparent hover:border-white/10"><Zap size={20}/></button>
+                <button onClick={onSendFile} className="p-3 bg-white/5 rounded-full text-neutral-400 hover:text-white transition-colors border border-transparent hover:border-white/10 active:scale-95"><Zap size={20}/></button>
                 
                 {/* Input Container */}
                 <div className={`flex-1 bg-white/5 rounded-[24px] px-2 border border-white/5 focus-within:border-emerald-500/30 transition-all relative flex items-center ${isAiThinking ? 'animate-pulse border-purple-500/50' : ''}`}>
@@ -213,7 +215,7 @@ export const IStokInput = memo(({
             </div>
 
             {/* TTL Indicator */}
-            <div className="flex justify-center mt-2">
+            <div className="flex justify-center mt-2 opacity-50 hover:opacity-100 transition-opacity">
                 <button onClick={onToggleTtl} className={`flex items-center gap-1 px-3 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${ttlMode > 0 ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'text-neutral-600 hover:text-neutral-400'}`}>
                     <Flame size={8} className={ttlMode > 0 ? 'fill-current' : ''} />
                     {ttlMode > 0 ? `${ttlMode}S BURN` : 'PERSISTENT'}

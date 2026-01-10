@@ -168,9 +168,11 @@ const MessageBubble = memo(({ msg, personaMode, isLoading, onUpdateMessage }: { 
     const isRerouting = msg.metadata?.isRerouting;
     
     const textContent: string = useMemo(() => {
+        const textVal = msg.text;
         // Robust handling for msg.text which can be string | Blob
-        const rawText = msg.text;
-        if (typeof rawText === 'string') return rawText;
+        if (typeof textVal === 'string') {
+            return textVal;
+        }
         
         // Fallback for potential legacy structure or provider quirks
         const anyMsg = msg as any;
@@ -180,7 +182,7 @@ const MessageBubble = memo(({ msg, personaMode, isLoading, onUpdateMessage }: { 
             return String(anyMsg.parts[0]?.text || '');
         }
         return '';
-    }, [msg]);
+    }, [msg.text]);
 
     const { thought, content, imgPrompt } = useMemo(() => {
         let text = textContent;
@@ -316,7 +318,7 @@ const MessageBubble = memo(({ msg, personaMode, isLoading, onUpdateMessage }: { 
                     {isModel && (
                         <AIProviderInfo 
                             metadata={msg.metadata} 
-                            isHydra={msg.metadata?.model === 'auto-best' || msg.metadata?.model?.includes('HYDRA')} 
+                            isHydra={!!(msg.metadata?.model === 'auto-best' || msg.metadata?.model?.includes('HYDRA'))} 
                             className="mt-0"
                         />
                     )}
@@ -379,34 +381,53 @@ export const ChatWindow: React.FC<ChatWindowProps> = memo(({ messages, personaMo
         return messages;
     }, [messages, isLoading]);
 
+    // Use context to prevent inline function re-creation invalidating memoized items
+    const contextValue = useMemo(() => ({
+        personaMode,
+        isLoading,
+        onUpdateMessage
+    }), [personaMode, isLoading, onUpdateMessage]);
+
+    // Footer containing the ref for parent scroll control
+    const Footer = useMemo(() => {
+        return () => <div className="h-4" ref={messagesEndRef} />;
+    }, [messagesEndRef]);
+
     return (
         <div className="h-full w-full min-h-0 flex-1 flex flex-col relative bg-transparent" style={{ overscrollBehavior: 'contain' }}>
             <Virtuoso
                 ref={virtuosoRef}
                 style={{ height: '100%', width: '100%' }}
                 data={allItems}
+                context={contextValue}
                 initialTopMostItemIndex={Math.max(0, allItems.length - 1)}
                 followOutput="auto"
                 alignToBottom
-                components={{ 
-                    Footer: () => <div className="h-4" /> 
-                }}
                 atBottomThreshold={60}
+                components={{ 
+                    Footer: Footer
+                }}
                 overscan={1000} 
                 computeItemKey={itemKey} 
-                itemContent={(index, msg) => {
+                itemContent={(index, msg, ctx) => {
                     if ((msg as any).isLoader) {
                          return (
-                            <div style={{ willChange: 'transform' }}>
-                                <TypingIndicator personaMode={personaMode} />
+                            <div style={{ willChange: 'transform' }} className="pb-2">
+                                <TypingIndicator personaMode={ctx.personaMode} />
                             </div>
                          );
                     }
-                    const isLast = index === messages.length - 1;
-                    const loadingState = isLoading && isLast && (msg.role === 'model' || (msg.role as string) === 'assistant');
+                    const isLast = index === allItems.length - 1;
+                    
                     return (
-                        <div className="py-2 px-2 md:px-4 w-full" style={{ willChange: 'transform' }}>
-                             <MessageBubble key={msg.id || index} msg={msg} personaMode={personaMode} isLoading={loadingState} onUpdateMessage={onUpdateMessage}/>
+                        <div className="py-2 px-2 md:px-4 w-full transform-gpu" style={{ willChange: 'transform' }}>
+                             <MessageBubble 
+                                key={msg.id || index} 
+                                msg={msg} 
+                                personaMode={ctx.personaMode} 
+                                isLoading={ctx.isLoading && isLast} 
+                                onUpdateMessage={ctx.onUpdateMessage}
+                             />
                         </div>
                     );
                 }}

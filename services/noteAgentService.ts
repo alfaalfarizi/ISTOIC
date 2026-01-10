@@ -102,21 +102,26 @@ export const NOTE_AGENTS = {
         return text.replace(/^> .*$/gm, '').trim(); 
     },
 
-    // 3. ACTION EXTRACTOR
+    // 3. ACTION EXTRACTOR (ENHANCED V2)
     async runActionExtractor(notes: Note[]): Promise<{ text: string, sourceNoteId: string }[]> {
         const recentNotes = notes.sort((a,b) => new Date(b.updated).getTime() - new Date(a.updated).getTime()).slice(0, 10);
         
         const snippet = recentNotes.map(n => ({ id: n.id, content: n.content.slice(0, 500) }));
 
         const prompt = `
-        [TASK: EXTRACT_TASKS]
+        [TASK: EXTRACT_TASKS_AND_PRIORITIZE]
         Scan content for action items, todos, or implied tasks.
         
         DATA:
         ${JSON.stringify(snippet)}
 
+        RULES:
+        1. Identify tasks.
+        2. Assign priority labels: [URGENT], [HIGH], [NORMAL], [LATER].
+        3. Prepend the label to the task text.
+
         OUTPUT JSON ONLY:
-        [ { "text": "Task description", "sourceNoteId": "id" } ]
+        [ { "text": "[URGENT] Fix server bug", "sourceNoteId": "id" } ]
         `;
 
         try {

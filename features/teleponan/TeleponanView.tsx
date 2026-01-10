@@ -367,7 +367,7 @@ export const TeleponanView: React.FC<TeleponanProps> = ({ onClose, existingPeer,
                 </div>
 
                 {/* 3. CONTROLS GRID */}
-                <div className="w-full max-w-sm space-y-8 animate-slide-up">
+                <div className="w-full max-w-sm space-y-8 animate-slide-up pb-[calc(env(safe-area-inset-bottom)+2rem)]">
                     
                     {/* Active Waveform */}
                     <div className="h-20 w-full">

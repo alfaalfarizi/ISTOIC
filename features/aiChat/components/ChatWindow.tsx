@@ -1,3 +1,4 @@
+
 import React, { memo, useState, useMemo, useEffect, useRef } from 'react';
 import Markdown from 'react-markdown';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
@@ -167,20 +168,13 @@ const MessageBubble = memo(({ msg, personaMode, isLoading, onUpdateMessage }: { 
     const isError = msg.metadata?.status === 'error';
     const isRerouting = msg.metadata?.isRerouting;
     
+    // SAFE TEXT EXTRACTION
     const textContent: string = useMemo(() => {
         const textVal = msg.text;
-        // Robust handling for msg.text which can be string | Blob
-        if (typeof textVal === 'string') {
-            return textVal;
-        }
+        if (typeof textVal === 'string') return textVal;
         
-        // Fallback for potential legacy structure or provider quirks
-        const anyMsg = msg as any;
-        if (typeof anyMsg.content === 'string') return anyMsg.content;
-        if (anyMsg.parts && Array.isArray(anyMsg.parts)) {
-            // Explicitly convert to string or empty
-            return String(anyMsg.parts[0]?.text || '');
-        }
+        // Fallback for Blob/Binary or legacy structure
+        // Since we cannot display Blob as text directly, we return empty string
         return '';
     }, [msg.text]);
 
@@ -341,9 +335,8 @@ const MessageBubble = memo(({ msg, personaMode, isLoading, onUpdateMessage }: { 
 }, (prev, next) => {
     // Robust equality check for memo
     const getVal = (m: ChatMessage): string => {
-        if (typeof m.text === 'string') return m.text;
-        // Handle Blob or other types if necessary for equality check, 
-        // but for text content comparison, empty string fallback is safe
+        const textVal = m.text;
+        if (typeof textVal === 'string') return textVal;
         return ''; 
     };
     const prevText = getVal(prev.msg);

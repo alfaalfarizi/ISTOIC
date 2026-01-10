@@ -250,11 +250,11 @@ export const SystemHealthView: React.FC = () => {
     };
 
     return (
-        <div className="min-h-full flex flex-col px-4 pb-40 pt-[calc(env(safe-area-inset-top)+2rem)] md:px-12 md:pt-16 lg:px-16 animate-fade-in custom-scroll bg-noise">
-            <div className="max-w-[1600px] mx-auto w-full space-y-12 md:space-y-16 h-full flex flex-col">
+        <div className="h-full flex flex-col px-4 pt-[calc(env(safe-area-inset-top)+1rem)] md:px-12 md:pt-16 lg:px-16 animate-fade-in bg-noise overflow-hidden relative">
+            <div className="max-w-[1600px] mx-auto w-full h-full flex flex-col gap-6 relative z-10">
                 
                 {/* HEADER */}
-                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-black/5 dark:border-white/5 pb-10 shrink-0">
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-black/5 dark:border-white/5 pb-4 shrink-0">
                     <div className="space-y-2">
                         <div className="flex items-center gap-3">
                             <div className={`w-2 h-2 rounded-full shadow-[0_0_10px_currentColor] ${features.AUTO_DIAGNOSTICS ? 'bg-[var(--accent-color)] animate-pulse' : 'bg-red-500'}`}></div>
@@ -284,220 +284,206 @@ export const SystemHealthView: React.FC = () => {
                     </div>
                 </header>
 
-                {/* --- OVERVIEW TAB --- */}
-                {activeTab === 'OVERVIEW' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 animate-slide-up">
-                        <div className="lg:col-span-8 space-y-6">
-                            
-                            {/* Auto Diagnostics Off Warning */}
-                            {!features.AUTO_DIAGNOSTICS && (
-                                <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center gap-3">
-                                    <Power size={18} />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">
-                                        AUTO_DIAGNOSTICS_DISABLED // TELEMETRY PAUSED
-                                    </span>
-                                </div>
-                            )}
+                {/* CONTENT AREA */}
+                <div className="flex-1 min-h-0 relative">
+                    
+                    {/* --- OVERVIEW TAB --- */}
+                    {activeTab === 'OVERVIEW' && (
+                        <div className="h-full overflow-y-auto custom-scroll pb-24 md:pb-10 animate-slide-up">
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
+                                <div className="lg:col-span-8 space-y-6">
+                                    {!features.AUTO_DIAGNOSTICS && (
+                                        <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center gap-3">
+                                            <Power size={18} />
+                                            <span className="text-[10px] font-black uppercase tracking-widest">
+                                                AUTO_DIAGNOSTICS_DISABLED // TELEMETRY PAUSED
+                                            </span>
+                                        </div>
+                                    )}
 
-                            {/* Vitals */}
-                            <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 transition-opacity duration-500 ${features.AUTO_DIAGNOSTICS ? 'opacity-100' : 'opacity-50 grayscale'}`}>
-                                <VitalsCard label="LATENCY" value={`${health.avgLatency}ms`} icon={<Network size={18} />} status={health.avgLatency > 1000 ? 'danger' : 'good'} subtext="API_RESPONSE" />
-                                <VitalsCard label="HEAP_MEM" value={`${health.memoryMb || 'N/A'}MB`} icon={<HardDrive size={18} />} status={health.memoryMb > 800 ? 'warning' : 'good'} subtext="ALLOCATED_RAM" />
-                                <VitalsCard label="ERROR_LOG" value={`${health.errorCount}`} icon={<Bug size={18} />} status={health.errorCount > 5 ? 'danger' : 'good'} subtext="SESSION_ERRORS" />
-                                <div onClick={runPingTest} className="cursor-pointer group p-6 rounded-[24px] border border-black/5 dark:border-white/5 bg-white dark:bg-[#0a0a0b] hover:border-accent/30 transition-all flex flex-col justify-between">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="p-3 rounded-xl bg-zinc-100 dark:bg-white/5 text-neutral-400 group-hover:text-accent transition-colors"><Wifi size={18}/></div>
-                                        <div className={`w-2 h-2 rounded-full ${realPing === -1 ? 'bg-red-500' : 'bg-emerald-500'} ${!realPing && 'animate-pulse'}`}></div>
-                                    </div>
-                                    <div>
-                                        <p className="text-[9px] font-black uppercase tracking-widest text-neutral-500 mb-1">NET_PING</p>
-                                        <p className="text-3xl font-black italic tracking-tighter dark:text-white">{realPing === null ? 'TEST' : realPing === -1 ? 'ERR' : `${realPing}ms`}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Hydra Status */}
-                            <div className="bg-white dark:bg-[#0a0a0b] rounded-[32px] border border-black/5 dark:border-white/5 overflow-hidden">
-                                <div className="p-6 border-b border-black/5 dark:border-white/5 flex justify-between items-center bg-zinc-50 dark:bg-white/[0.02]">
-                                    <div className="flex items-center gap-3">
-                                        <Server size={18} className="text-[var(--accent-color)]" />
-                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">HYDRA_ENGINE_STATUS</span>
-                                    </div>
-                                    <button 
-                                        onClick={handleHydraRefresh} 
-                                        className={`p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg text-neutral-400 hover:text-[var(--accent-color)] transition-all ${isRotatingKeys ? 'animate-spin text-accent' : ''}`} 
-                                    >
-                                        <RefreshCw size={14} />
-                                    </button>
-                                </div>
-                                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {providers.map(p => (
-                                        <div key={p.id} className="flex items-center justify-between p-4 rounded-2xl bg-zinc-50 dark:bg-white/[0.03] border border-black/5 dark:border-white/5 transition-all">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-2 h-2 rounded-full ${p.status === 'HEALTHY' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
-                                                <div>
-                                                    <p className="text-[10px] font-black uppercase tracking-wider dark:text-white">{p.id}</p>
-                                                    <p className="text-[8px] tech-mono text-neutral-500">{p.status === 'COOLDOWN' ? `RESTORING (${p.cooldownRemaining}m)` : 'OPERATIONAL'}</p>
-                                                </div>
+                                    <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 transition-opacity duration-500 ${features.AUTO_DIAGNOSTICS ? 'opacity-100' : 'opacity-50 grayscale'}`}>
+                                        <VitalsCard label="LATENCY" value={`${health.avgLatency}ms`} icon={<Network size={18} />} status={health.avgLatency > 1000 ? 'danger' : 'good'} subtext="API_RESPONSE" />
+                                        <VitalsCard label="HEAP_MEM" value={`${health.memoryMb || 'N/A'}MB`} icon={<HardDrive size={18} />} status={health.memoryMb > 800 ? 'warning' : 'good'} subtext="ALLOCATED_RAM" />
+                                        <VitalsCard label="ERROR_LOG" value={`${health.errorCount}`} icon={<Bug size={18} />} status={health.errorCount > 5 ? 'danger' : 'good'} subtext="SESSION_ERRORS" />
+                                        <div onClick={runPingTest} className="cursor-pointer group p-6 rounded-[24px] border border-black/5 dark:border-white/5 bg-white dark:bg-[#0a0a0b] hover:border-accent/30 transition-all flex flex-col justify-between">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="p-3 rounded-xl bg-zinc-100 dark:bg-white/5 text-neutral-400 group-hover:text-accent transition-colors"><Wifi size={18}/></div>
+                                                <div className={`w-2 h-2 rounded-full ${realPing === -1 ? 'bg-red-500' : 'bg-emerald-500'} ${!realPing && 'animate-pulse'}`}></div>
                                             </div>
-                                            <div className="text-right">
-                                                <span className="text-lg font-black italic text-[var(--accent-color)]">{p.keyCount}</span>
+                                            <div>
+                                                <p className="text-[9px] font-black uppercase tracking-widest text-neutral-500 mb-1">NET_PING</p>
+                                                <p className="text-3xl font-black italic tracking-tighter dark:text-white">{realPing === null ? 'TEST' : realPing === -1 ? 'ERR' : `${realPing}ms`}</p>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
+                                    </div>
 
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <RepairButton icon={<Trash2 />} label="FLUSH MEMORY" onClick={() => executeRepair('OPTIMIZE_MEMORY')} />
-                                <RepairButton icon={<RefreshCw />} label="ROTATE KEYS" onClick={() => executeRepair('REFRESH_KEYS')} />
-                                <RepairButton icon={<ShieldCheck />} label="CLEAR LOGS" onClick={() => executeRepair('CLEAR_LOGS')} />
-                                <RepairButton icon={<Power />} label="FORCE REBOOT" onClick={() => executeRepair('HARD_RESET')} danger />
+                                    <div className="bg-white dark:bg-[#0a0a0b] rounded-[32px] border border-black/5 dark:border-white/5 overflow-hidden">
+                                        <div className="p-6 border-b border-black/5 dark:border-white/5 flex justify-between items-center bg-zinc-50 dark:bg-white/[0.02]">
+                                            <div className="flex items-center gap-3">
+                                                <Server size={18} className="text-[var(--accent-color)]" />
+                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500">HYDRA_ENGINE_STATUS</span>
+                                            </div>
+                                            <button 
+                                                onClick={handleHydraRefresh} 
+                                                className={`p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg text-neutral-400 hover:text-[var(--accent-color)] transition-all ${isRotatingKeys ? 'animate-spin text-accent' : ''}`} 
+                                            >
+                                                <RefreshCw size={14} />
+                                            </button>
+                                        </div>
+                                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {providers.map(p => (
+                                                <div key={p.id} className="flex items-center justify-between p-4 rounded-2xl bg-zinc-50 dark:bg-white/[0.03] border border-black/5 dark:border-white/5 transition-all">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-2 h-2 rounded-full ${p.status === 'HEALTHY' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                                                        <div>
+                                                            <p className="text-[10px] font-black uppercase tracking-wider dark:text-white">{p.id}</p>
+                                                            <p className="text-[8px] tech-mono text-neutral-500">{p.status === 'COOLDOWN' ? `RESTORING (${p.cooldownRemaining}m)` : 'OPERATIONAL'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="text-lg font-black italic text-[var(--accent-color)]">{p.keyCount}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        <RepairButton icon={<Trash2 />} label="FLUSH MEMORY" onClick={() => executeRepair('OPTIMIZE_MEMORY')} />
+                                        <RepairButton icon={<RefreshCw />} label="ROTATE KEYS" onClick={() => executeRepair('REFRESH_KEYS')} />
+                                        <RepairButton icon={<ShieldCheck />} label="CLEAR LOGS" onClick={() => executeRepair('CLEAR_LOGS')} />
+                                        <RepairButton icon={<Power />} label="FORCE REBOOT" onClick={() => executeRepair('HARD_RESET')} danger />
+                                    </div>
+                                </div>
+
+                                <div className="lg:col-span-4 flex flex-col h-full bg-white dark:bg-[#0a0a0b] rounded-[32px] border border-black/5 dark:border-white/5 overflow-hidden shadow-xl">
+                                    <div className="p-6 border-b border-black/5 dark:border-white/5 bg-[var(--accent-color)]/5 flex justify-between items-center">
+                                        <div className="flex items-center gap-3">
+                                            <Stethoscope size={20} className="text-[var(--accent-color)]" />
+                                            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] dark:text-white">HANISAH_DIAGNOSTICS</h3>
+                                        </div>
+                                        {hanisahDiagnosis && <button onClick={() => speakWithHanisah(hanisahDiagnosis.replace(/[*#_`]/g, ''))} className="p-2 bg-white/10 rounded-full hover:text-[var(--accent-color)] transition-colors text-neutral-500"><Volume2 size={16} /></button>}
+                                    </div>
+                                    <div className="flex-1 p-6 relative overflow-y-auto custom-scroll">
+                                        {hanisahDiagnosis ? (
+                                            <div className="prose dark:prose-invert prose-sm max-w-none animate-slide-up text-xs font-medium leading-relaxed"><Markdown>{hanisahDiagnosis}</Markdown></div>
+                                        ) : (
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center opacity-30 text-center p-8 space-y-4">
+                                                <Activity size={48} className="text-neutral-500" />
+                                                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-neutral-500">SYSTEM_IDLE</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="p-4 border-t border-black/5 dark:border-white/5 bg-zinc-50 dark:bg-white/[0.02]">
+                                        <button onClick={runHanisahDiagnosis} disabled={isScanning} className={`w-full py-4 rounded-xl font-black uppercase text-[10px] tracking-[0.3em] flex items-center justify-center gap-3 transition-all ${isScanning ? 'bg-zinc-200 dark:bg-white/10 text-neutral-500' : 'bg-[var(--accent-color)] text-on-accent shadow-lg'}`}>
+                                            {isScanning ? <RefreshCw size={16} className="animate-spin" /> : <Search size={16} />} {isScanning ? 'RUNNING_ANALYSIS...' : 'START_DIAGNOSIS'}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                    )}
 
-                        {/* Diagnostics Panel */}
-                        <div className="lg:col-span-4 flex flex-col h-full bg-white dark:bg-[#0a0a0b] rounded-[32px] border border-black/5 dark:border-white/5 overflow-hidden shadow-xl">
-                            <div className="p-6 border-b border-black/5 dark:border-white/5 bg-[var(--accent-color)]/5 flex justify-between items-center">
-                                <div className="flex items-center gap-3">
-                                    <Stethoscope size={20} className="text-[var(--accent-color)]" />
-                                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] dark:text-white">HANISAH_DIAGNOSTICS</h3>
+                    {/* --- KERNEL STREAM (TERMINAL) TAB --- */}
+                    {activeTab === 'KERNEL_STREAM' && (
+                        <div className={`h-full bg-terminal-void rounded-[32px] border flex flex-col shadow-2xl relative overflow-hidden font-mono animate-slide-up terminal-scanlines transition-colors duration-500 ${isStreamFrozen ? 'border-amber-500/30' : 'border-white/10'}`}>
+                            <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r z-10 transition-colors duration-500 ${isStreamFrozen ? 'from-amber-500 to-red-500' : 'from-emerald-500 to-cyan-500'}`}></div>
+                            
+                            <div className="p-3 border-b border-white/10 flex items-center justify-between bg-white/5 backdrop-blur-md relative z-20 shrink-0">
+                                <div className="flex items-center gap-4">
+                                    <span className={`text-[9px] font-black uppercase tracking-[0.3em] flex items-center gap-2 ${isStreamFrozen ? 'text-amber-500' : 'text-neutral-400'}`}>
+                                        <Terminal size={12} /> {isStreamFrozen ? 'STREAM_FROZEN' : 'KERNEL_STREAM'}
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <input value={logSearch} onChange={e => setLogSearch(e.target.value)} placeholder="GREP..." className="bg-transparent border-none text-[10px] text-white focus:outline-none uppercase w-24 placeholder:text-neutral-700"/>
+                                    </div>
                                 </div>
-                                {hanisahDiagnosis && <button onClick={() => speakWithHanisah(hanisahDiagnosis.replace(/[*#_`]/g, ''))} className="p-2 bg-white/10 rounded-full hover:text-[var(--accent-color)] transition-colors text-neutral-500"><Volume2 size={16} /></button>}
+                                <div className="flex items-center gap-2">
+                                    <button 
+                                        onClick={toggleStreamFreeze} 
+                                        className={`p-1.5 rounded-lg border transition-all ${isStreamFrozen ? 'bg-amber-500/20 border-amber-500 text-amber-500' : 'border-white/10 text-neutral-500 hover:text-white'}`}
+                                        title={isStreamFrozen ? "Resume Stream" : "Pause Stream"}
+                                    >
+                                        {isStreamFrozen ? <Play size={10} fill="currentColor"/> : <Pause size={10} />}
+                                    </button>
+                                    <button onClick={() => executeRepair('CLEAR_LOGS')} className="p-1.5 rounded border border-white/10 text-neutral-500 hover:text-red-500 transition-all"><Trash2 size={10}/></button>
+                                </div>
                             </div>
-                            <div className="flex-1 p-6 relative overflow-y-auto custom-scroll">
-                                {hanisahDiagnosis ? (
-                                    <div className="prose dark:prose-invert prose-sm max-w-none animate-slide-up text-xs font-medium leading-relaxed"><Markdown>{hanisahDiagnosis}</Markdown></div>
+                            
+                            <div className="flex-1 overflow-y-auto p-4 space-y-1.5 custom-scroll text-[10px] relative z-10">
+                                {filteredLogs.map(log => (
+                                    <div key={log.id} className="flex flex-col gap-1 p-1.5 hover:bg-white/5 rounded transition-colors group">
+                                        <div className={`flex gap-3 ${log.level === 'ERROR' ? 'text-red-400' : log.level === 'WARN' ? 'text-amber-400' : 'text-emerald-400'}`}>
+                                            <span className="opacity-50 shrink-0 font-mono">[{log.timestamp.split('T')[1].replace('Z','')}]</span>
+                                            <div className={getLevelBadge(log.level)}>{log.level}</div>
+                                            <span className="font-bold shrink-0 w-24 text-right opacity-70 uppercase">{log.layer}</span>
+                                            <span className="break-all flex-1 text-neutral-300 font-mono">{log.message}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                                {isStreamFrozen && (
+                                    <div className="sticky bottom-0 left-0 right-0 p-2 text-center bg-amber-900/40 text-amber-500 text-[9px] font-black uppercase tracking-widest backdrop-blur-md">
+                                        /// STREAM PAUSED - BUFFERING BACKGROUND LOGS ///
+                                    </div>
+                                )}
+                                <div ref={logEndRef} />
+                            </div>
+                            
+                            <div className="p-3 bg-[#0a0a0b] border-t border-white/10 relative z-20 shrink-0 pb-[max(env(safe-area-inset-bottom),1rem)]">
+                                <div className="relative flex items-end group">
+                                    <span className="absolute left-3 top-3.5 text-[var(--accent-color)] font-black text-xs animate-pulse">{'>'}</span>
+                                    <textarea ref={inputRef} value={cliInput} onChange={e => setCliInput(e.target.value)} onKeyDown={(e) => { if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); handleCLI(e as any); } }} placeholder="ENTER_COMMAND..." rows={1} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-8 pr-12 text-[11px] text-white focus:outline-none focus:border-[var(--accent-color)]/50 focus:bg-white/10 transition-all font-mono resize-none overflow-hidden min-h-[42px]"/>
+                                    <button onClick={(e) => handleCLI(e as any)} disabled={!cliInput} className="absolute right-2 bottom-2 p-1.5 bg-white/10 rounded-lg text-neutral-400 hover:text-white hover:bg-[var(--accent-color)]/20 transition-all disabled:opacity-0"><ArrowRight size={14} /></button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* --- UI MATRIX TAB --- */}
+                    {activeTab === 'UI_MATRIX' && (
+                         <div className="h-full overflow-y-auto custom-scroll pb-20">
+                            <IntegrityMatrix />
+                        </div>
+                    )}
+
+                    {/* --- MEMORY TAB (LOCAL STORAGE) --- */}
+                    {activeTab === 'MEMORY' && (
+                        <div className="h-full bg-white dark:bg-[#0a0a0b] rounded-[32px] border border-black/5 dark:border-white/5 flex overflow-hidden shadow-lg animate-slide-up pb-safe">
+                            <div className="w-1/3 border-r border-black/5 dark:border-white/5 overflow-y-auto custom-scroll p-2 bg-zinc-50 dark:bg-black/20">
+                                <div className="flex justify-between items-center p-3 mb-2">
+                                    <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-neutral-500">STORAGE_KEYS</h3>
+                                    <button onClick={updateStorageList} className="text-neutral-400 hover:text-accent"><RefreshCw size={12} /></button>
+                                </div>
+                                {storageKeys.map(k => (
+                                    <button key={k} onClick={() => loadStorageValue(k)} className={`w-full text-left px-3 py-3 rounded-lg text-[9px] font-mono truncate transition-all mb-1 ${selectedStorageKey === k ? 'bg-[var(--accent-color)]/10 text-[var(--accent-color)] border border-[var(--accent-color)]/20' : 'text-neutral-500 hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white'}`}>
+                                        {k}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="flex-1 flex flex-col overflow-hidden bg-white dark:bg-[#0d0d0e]">
+                                {selectedStorageKey ? (
+                                    <>
+                                        <div className="p-4 border-b border-black/5 dark:border-white/5 flex justify-between items-center bg-zinc-50 dark:bg-white/[0.01]">
+                                            <div className="flex items-center gap-3">
+                                                <Key size={14} className="text-accent" />
+                                                <span className="text-[10px] font-bold text-black dark:text-white uppercase tracking-wider truncate mr-2">{selectedStorageKey}</span>
+                                            </div>
+                                            <button onClick={() => { localStorage.removeItem(selectedStorageKey); updateStorageList(); setSelectedStorageKey(null); }} className="text-red-500 hover:bg-red-500/10 p-2 rounded-lg transition-colors border border-transparent hover:border-red-500/20" title="Delete Key"><Trash2 size={16} /></button>
+                                        </div>
+                                        <div className="flex-1 overflow-y-auto p-6 custom-scroll">
+                                            <JsonTree data={storageValue} />
+                                        </div>
+                                    </>
                                 ) : (
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center opacity-30 text-center p-8 space-y-4">
-                                        <Activity size={48} className="text-neutral-500" />
-                                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-neutral-500">SYSTEM_IDLE</p>
+                                    <div className="flex-1 flex flex-col items-center justify-center text-neutral-400 opacity-50 gap-4">
+                                        <Database size={48} strokeWidth={1} />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">SELECT_DATA_NODE</span>
                                     </div>
                                 )}
                             </div>
-                            <div className="p-4 border-t border-black/5 dark:border-white/5 bg-zinc-50 dark:bg-white/[0.02]">
-                                <button onClick={runHanisahDiagnosis} disabled={isScanning} className={`w-full py-4 rounded-xl font-black uppercase text-[10px] tracking-[0.3em] flex items-center justify-center gap-3 transition-all ${isScanning ? 'bg-zinc-200 dark:bg-white/10 text-neutral-500' : 'bg-[var(--accent-color)] text-on-accent shadow-lg'}`}>
-                                    {isScanning ? <RefreshCw size={16} className="animate-spin" /> : <Search size={16} />} {isScanning ? 'RUNNING_ANALYSIS...' : 'START_DIAGNOSIS'}
-                                </button>
-                            </div>
                         </div>
-                    </div>
-                )}
-
-                {/* --- KERNEL STREAM (TERMINAL) TAB --- */}
-                {activeTab === 'KERNEL_STREAM' && (
-                    <div className={`flex-1 bg-terminal-void rounded-[32px] border flex flex-col shadow-2xl relative overflow-hidden font-mono animate-slide-up terminal-scanlines transition-colors duration-500 ${isStreamFrozen ? 'border-amber-500/30' : 'border-white/10'}`}>
-                        <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r z-10 transition-colors duration-500 ${isStreamFrozen ? 'from-amber-500 to-red-500' : 'from-emerald-500 to-cyan-500'}`}></div>
-                        
-                        <div className="p-3 border-b border-white/10 flex items-center justify-between bg-white/5 backdrop-blur-md relative z-20">
-                            <div className="flex items-center gap-4">
-                                <span className={`text-[9px] font-black uppercase tracking-[0.3em] flex items-center gap-2 ${isStreamFrozen ? 'text-amber-500' : 'text-neutral-400'}`}>
-                                    <Terminal size={12} /> {isStreamFrozen ? 'STREAM_FROZEN' : 'KERNEL_STREAM'}
-                                </span>
-                                <div className="flex items-center gap-2">
-                                    <input value={logSearch} onChange={e => setLogSearch(e.target.value)} placeholder="GREP..." className="bg-transparent border-none text-[10px] text-white focus:outline-none uppercase w-24 placeholder:text-neutral-700"/>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button 
-                                    onClick={toggleStreamFreeze} 
-                                    className={`p-1.5 rounded-lg border transition-all ${isStreamFrozen ? 'bg-amber-500/20 border-amber-500 text-amber-500' : 'border-white/10 text-neutral-500 hover:text-white'}`}
-                                    title={isStreamFrozen ? "Resume Stream" : "Pause Stream"}
-                                >
-                                    {isStreamFrozen ? <Play size={10} fill="currentColor"/> : <Pause size={10} />}
-                                </button>
-                                <button onClick={() => executeRepair('CLEAR_LOGS')} className="p-1.5 rounded border border-white/10 text-neutral-500 hover:text-red-500 transition-all"><Trash2 size={10}/></button>
-                            </div>
-                        </div>
-                        
-                        <div className="flex-1 overflow-y-auto p-4 space-y-1.5 custom-scroll text-[10px] relative z-10">
-                            {filteredLogs.map(log => (
-                                <div key={log.id} className="flex flex-col gap-1 p-1.5 hover:bg-white/5 rounded transition-colors group">
-                                    <div className={`flex gap-3 ${log.level === 'ERROR' ? 'text-red-400' : log.level === 'WARN' ? 'text-amber-400' : 'text-emerald-400'}`}>
-                                        <span className="opacity-50 shrink-0 font-mono">[{log.timestamp.split('T')[1].replace('Z','')}]</span>
-                                        <div className={getLevelBadge(log.level)}>{log.level}</div>
-                                        <span className="font-bold shrink-0 w-24 text-right opacity-70 uppercase">{log.layer}</span>
-                                        <span className="break-all flex-1 text-neutral-300 font-mono">{log.message}</span>
-                                    </div>
-                                </div>
-                            ))}
-                            {isStreamFrozen && (
-                                <div className="sticky bottom-0 left-0 right-0 p-2 text-center bg-amber-900/40 text-amber-500 text-[9px] font-black uppercase tracking-widest backdrop-blur-md">
-                                    /// STREAM PAUSED - BUFFERING BACKGROUND LOGS ///
-                                </div>
-                            )}
-                            <div ref={logEndRef} />
-                        </div>
-                        
-                        <div className="p-3 bg-[#0a0a0b] border-t border-white/10 relative z-20">
-                            <div className="relative flex items-end group">
-                                <span className="absolute left-3 top-3.5 text-[var(--accent-color)] font-black text-xs animate-pulse">{'>'}</span>
-                                <textarea ref={inputRef} value={cliInput} onChange={e => setCliInput(e.target.value)} onKeyDown={(e) => { if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); handleCLI(e as any); } }} placeholder="ENTER_COMMAND..." rows={1} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-8 pr-12 text-[11px] text-white focus:outline-none focus:border-[var(--accent-color)]/50 focus:bg-white/10 transition-all font-mono resize-none overflow-hidden min-h-[42px]"/>
-                                <button onClick={(e) => handleCLI(e as any)} disabled={!cliInput} className="absolute right-2 bottom-2 p-1.5 bg-white/10 rounded-lg text-neutral-400 hover:text-white hover:bg-[var(--accent-color)]/20 transition-all disabled:opacity-0"><ArrowRight size={14} /></button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* --- UI MATRIX TAB --- */}
-                {activeTab === 'UI_MATRIX' && (
-                    <IntegrityMatrix />
-                )}
-
-                {/* --- MEMORY TAB (LOCAL STORAGE) --- */}
-                {activeTab === 'MEMORY' && (
-                    <div className="flex-1 bg-white dark:bg-[#0a0a0b] rounded-[32px] border border-black/5 dark:border-white/5 flex overflow-hidden shadow-lg animate-slide-up">
-                        <div className="w-1/3 border-r border-black/5 dark:border-white/5 overflow-y-auto custom-scroll p-2 bg-zinc-50 dark:bg-black/20">
-                            <div className="flex justify-between items-center p-3 mb-2">
-                                <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-neutral-500">STORAGE_KEYS</h3>
-                                <button onClick={updateStorageList} className="text-neutral-400 hover:text-accent"><RefreshCw size={12} /></button>
-                            </div>
-                            {storageKeys.map(k => (
-                                <button key={k} onClick={() => loadStorageValue(k)} className={`w-full text-left px-3 py-3 rounded-lg text-[9px] font-mono truncate transition-all mb-1 ${selectedStorageKey === k ? 'bg-[var(--accent-color)]/10 text-[var(--accent-color)] border border-[var(--accent-color)]/20' : 'text-neutral-500 hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white'}`}>
-                                    {k}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="flex-1 flex flex-col overflow-hidden bg-white dark:bg-[#0d0d0e]">
-                            {selectedStorageKey ? (
-                                <>
-                                    <div className="p-4 border-b border-black/5 dark:border-white/5 flex justify-between items-center bg-zinc-50 dark:bg-white/[0.01]">
-                                        <div className="flex items-center gap-3">
-                                            <Key size={14} className="text-accent" />
-                                            <span className="text-[10px] font-bold text-black dark:text-white uppercase tracking-wider truncate mr-2">{selectedStorageKey}</span>
-                                        </div>
-                                        <button onClick={() => { localStorage.removeItem(selectedStorageKey); updateStorageList(); setSelectedStorageKey(null); }} className="text-red-500 hover:bg-red-500/10 p-2 rounded-lg transition-colors border border-transparent hover:border-red-500/20" title="Delete Key"><Trash2 size={16} /></button>
-                                    </div>
-                                    <div className="flex-1 overflow-y-auto p-6 custom-scroll">
-                                        <JsonTree data={storageValue} />
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="flex-1 flex flex-col items-center justify-center text-neutral-400 opacity-50 gap-4">
-                                    <Database size={48} strokeWidth={1} />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">SELECT_DATA_NODE</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* CLI FOOTER */}
-            <div className="p-3 bg-[#0a0a0b] border-t border-white/10 shrink-0 relative z-20">
-                <form onSubmit={handleCLI} className="relative flex items-center group">
-                    <span className="absolute left-3 text-[var(--accent-color)] font-black text-xs animate-pulse">{'>'}</span>
-                    <input 
-                        type="text" 
-                        value={cliInput}
-                        onChange={(e) => setCliInput(e.target.value)}
-                        placeholder="ENTER_COMMAND..."
-                        className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-8 pr-12 text-[11px] text-white focus:outline-none focus:border-[var(--accent-color)]/50 focus:bg-white/10 transition-all font-mono placeholder:text-neutral-700"
-                    />
-                    <button type="submit" disabled={!cliInput} className="absolute right-2 p-1.5 bg-white/10 rounded-lg text-neutral-400 hover:text-white hover:bg-[var(--accent-color)]/20 transition-all disabled:opacity-0">
-                        <ArrowRight size={14} />
-                    </button>
-                </form>
+                    )}
+                </div>
             </div>
         </div>
     );

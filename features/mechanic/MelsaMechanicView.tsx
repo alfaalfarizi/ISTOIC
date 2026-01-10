@@ -282,7 +282,7 @@ export const HanisahMechanicView: React.FC = () => {
     };
 
     return (
-        <div className="h-full flex flex-col p-4 md:p-12 lg:p-16 pb-32 overflow-hidden font-sans animate-fade-in bg-zinc-50 dark:bg-[#050505] text-black dark:text-white">
+        <div className="h-full flex flex-col px-4 pt-[calc(env(safe-area-inset-top)+1rem)] md:px-12 lg:px-16 overflow-hidden font-sans animate-fade-in bg-zinc-50 dark:bg-[#050505] text-black dark:text-white">
             {/* Header */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-black/5 dark:border-white/5 pb-6 shrink-0 gap-4">
                 <div>
@@ -308,10 +308,10 @@ export const HanisahMechanicView: React.FC = () => {
                 </div>
             </header>
 
-            <div className="flex-1 flex flex-col lg:flex-row gap-6 overflow-hidden min-h-0">
+            <div className="flex-1 flex flex-col lg:flex-row gap-6 overflow-hidden min-h-0 pb-safe">
                 
                 {/* Left: Vitals & Tools */}
-                <div className="w-full lg:w-1/3 flex flex-col gap-6 overflow-y-auto custom-scroll pr-2">
+                <div className="w-full lg:w-1/3 flex flex-col gap-6 overflow-y-auto custom-scroll pr-2 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
                     
                     <div className="grid grid-cols-2 gap-3">
                         <MetricRing label="LATENCY" value={health.avgLatency} max={2000} unit="ms" icon={<Network size={14}/>} />
@@ -360,7 +360,7 @@ export const HanisahMechanicView: React.FC = () => {
                 </div>
 
                 {/* Right: Console / Matrix */}
-                <div className="flex-1 flex flex-col bg-[#050505] rounded-[32px] border border-white/10 shadow-2xl overflow-hidden relative">
+                <div className="flex-1 flex flex-col bg-[#050505] rounded-[32px] border border-white/10 shadow-2xl overflow-hidden relative mb-[calc(env(safe-area-inset-bottom)+1rem)]">
                     {activeTab === 'CONSOLE' ? (
                         <>
                             <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scroll relative font-mono text-sm leading-relaxed" onClick={() => inputRef.current?.focus()}>
@@ -374,7 +374,7 @@ export const HanisahMechanicView: React.FC = () => {
                                 {isProcessing && <div className="text-emerald-500 animate-pulse"># Processing...</div>}
                                 <div ref={messagesEndRef} />
                             </div>
-                            <div className="p-4 border-t border-white/10 bg-white/5">
+                            <div className="p-4 border-t border-white/10 bg-white/5 pb-[max(env(safe-area-inset-bottom),1rem)]">
                                 <form onSubmit={(e) => { e.preventDefault(); handleCommand(); }} className="flex gap-2 relative">
                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500 animate-pulse">{'>'}</span>
                                     <textarea 

@@ -279,7 +279,7 @@ const SettingsView: React.FC<SettingsViewProps> = memo(({ onNavigate }) => {
     }, [setProviderVisibility]);
 
     return (
-        <div className="h-full flex flex-col p-4 md:p-8 lg:p-12 pb-32 overflow-hidden font-sans animate-fade-in text-skin-text">
+        <div className="h-full flex flex-col px-4 pt-[calc(env(safe-area-inset-top)+1rem)] md:px-8 md:pt-12 lg:px-12 overflow-hidden font-sans animate-fade-in text-skin-text">
             
             <PromptEditorModal 
                 isOpen={isPromptModalOpen} 
@@ -309,7 +309,7 @@ const SettingsView: React.FC<SettingsViewProps> = memo(({ onNavigate }) => {
                 </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto custom-scroll pr-2 space-y-2">
+            <div className="flex-1 overflow-y-auto custom-scroll pr-2 space-y-2 pb-[calc(env(safe-area-inset-bottom)+2rem)]">
                 
                 {/* 1. VISUAL & LANGUAGE */}
                 <SettingsSection title={t.theme_label || "VISUAL_INTERFACE"} icon={<Palette size={18} />}>

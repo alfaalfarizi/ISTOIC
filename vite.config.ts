@@ -12,6 +12,7 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     
     return {
+      base: './',
       // 1. SERVER CONFIGURATION (Optimized for Local & Vercel)
       server: {
         port: 3000,
@@ -39,7 +40,7 @@ export default defineConfig(({ mode }) => {
             background_color: '#000000',
             display: 'standalone',
             orientation: 'portrait',
-            start_url: '/',
+            start_url: '.',
             icons: [
               {
                 src: '/pwa-192x192.png',

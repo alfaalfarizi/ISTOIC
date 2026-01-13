@@ -417,7 +417,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
     setLoading(false);
   };
 
-  if (stage === "CHECKING") {
+    if (stage === "CHECKING") {
     return (
       <div className="fixed inset-0 bg-[var(--bg-main)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">

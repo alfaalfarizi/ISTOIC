@@ -19,24 +19,11 @@ import { BiometricService } from '../../services/biometricService';
 import { HANISAH_KERNEL } from '../../services/melsaKernel';
 import { HANISAH_BRAIN } from '../../services/melsaBrain';
 import { type FeatureID } from '../../constants';
+import { THEME_COLORS } from '../../constants/themeColors';
 
 interface SettingsViewProps {
     onNavigate: (feature: FeatureID) => void;
 }
-
-// --- CONSTANTS ---
-const THEME_COLORS: Record<string, string> = {
-  cyan: '#00F0FF',
-  lime: '#CCFF00',
-  purple: '#BF00FF',
-  orange: '#FF5F00',
-  silver: '#94a3b8',
-  blue: '#0066FF',
-  green: '#00FF94',
-  red: '#FF003C',
-  pink: '#FF0099',
-  gold: '#FFD700'
-};
 
 // --- OPTIMIZED SUB-COMPONENTS (Memoized) ---
 

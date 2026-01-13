@@ -1,6 +1,6 @@
 // src/features/istok/services/istokIdentity.ts
 
-import { auth, db, googleProvider } from "../../../services/firebaseConfig";
+import { auth, db, googleProvider, ensureAuthPersistence } from "../../../services/firebaseConfig";
 import {
   signInWithRedirect,
   getRedirectResult,
@@ -135,6 +135,7 @@ export const IstokIdentityService = {
     }
 
     try {
+      await ensureAuthPersistence("local");
       // 1) If user just returned from redirect flow, this will contain the result
       const redirectResult = await getRedirectResult(auth);
 

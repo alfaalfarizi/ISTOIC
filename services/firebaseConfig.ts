@@ -1,7 +1,13 @@
 // src/services/firebaseConfig.ts
 
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -22,3 +28,13 @@ export const db = getFirestore(app);
 
 // Provider hanya didefinisikan, TIDAK dipakai di sini
 export const googleProvider = new GoogleAuthProvider();
+
+export const ensureAuthPersistence = async (mode: "local" | "session" = "local") => {
+  if (!auth) return;
+  try {
+    const persistence = mode === "session" ? browserSessionPersistence : browserLocalPersistence;
+    await setPersistence(auth, persistence);
+  } catch (error) {
+    console.warn("[FIREBASE] Failed to set auth persistence.", error);
+  }
+};

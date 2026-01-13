@@ -161,6 +161,7 @@ export default async function handler(req: Request) {
     // --- THE RACE (Winner Takes All) ---
     // Promise.any takes the first SUCCESSFUL response
     const winner = await raceToSuccess(racers);
+    controllers.forEach((c) => c.abort());
 
     // KILL LOSERS: Biarkan GC atau timeout menangani yang kalah, 
     // tapi kita bisa abort manual jika controller dipetakan.
@@ -202,7 +203,7 @@ export default async function handler(req: Request) {
     return new Response(customStream, {
       headers: {
         'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'no-store',
         'Connection': 'keep-alive',
         'X-Winner-Provider': winner.provider,
         'X-Key-Mask': winner.keyMask
@@ -231,6 +232,9 @@ async function fetchOpenAICompatible(
   // Masking Key ID (ambil 4 karakter terakhir untuk debug)
   const keyMask = key.slice(-4);
 
+  const timeoutController = new AbortController();
+  const timeoutId = setTimeout(() => timeoutController.abort(), 25000);
+  signal.addEventListener('abort', () => timeoutController.abort(), { once: true });
   const res = await fetch(url, {
     method: 'POST',
     headers: {
@@ -244,8 +248,9 @@ async function fetchOpenAICompatible(
       temperature: 0.7,
       max_tokens: 1500, 
     }),
-    signal: signal
+    signal: timeoutController.signal
   });
+  clearTimeout(timeoutId);
 
   if (!res.ok) throw new Error(`${providerName} (${keyMask}) Error: ${res.status}`);
   if (!res.body) throw new Error(`${providerName} No Body`);
@@ -311,12 +316,16 @@ async function fetchGemini(
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?key=${key}`;
 
+  const timeoutController = new AbortController();
+  const timeoutId = setTimeout(() => timeoutController.abort(), 25000);
+  signal.addEventListener('abort', () => timeoutController.abort(), { once: true });
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ contents }),
-    signal: signal
+    signal: timeoutController.signal
   });
+  clearTimeout(timeoutId);
 
   if (!res.ok) throw new Error(`${providerName} (${keyMask}) Error: ${res.status}`);
   if (!res.body) throw new Error(`${providerName} No Body`);

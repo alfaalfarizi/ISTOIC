@@ -5,15 +5,20 @@ export const config = {
 
 export async function POST(request: Request) {
   try {
-    const { text, target_lang } = await request.json();
+    const payload = await request.json().catch(() => ({}));
+    const { text, target_lang } = payload || {};
     const apiKey = process.env.DEEPL_API_KEY || process.env.VITE_DEEPL_API_KEY;
 
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: "Server configuration error: Missing DeepL API Key" }), { status: 500 });
+      return new Response(JSON.stringify({ error: "Server configuration error: Missing DeepL API Key" }), { status: 500, headers: { "Content-Type": "application/json" } });
     }
 
-    if (!text || !target_lang) {
-      return new Response(JSON.stringify({ error: "Missing text or target_lang" }), { status: 400 });
+    if (!text || typeof text !== "string" || !text.trim() || !target_lang) {
+      return new Response(JSON.stringify({ error: "Missing text or target_lang" }), { status: 400, headers: { "Content-Type": "application/json" } });
+    }
+
+    if (text.length > 5000) {
+      return new Response(JSON.stringify({ error: "Text too long (max 5000 chars)" }), { status: 413, headers: { "Content-Type": "application/json" } });
     }
 
     // Determine Endpoint (Free vs Pro)
@@ -23,6 +28,8 @@ export async function POST(request: Request) {
       ? 'https://api-free.deepl.com/v2/translate'
       : 'https://api.deepl.com/v2/translate';
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -33,11 +40,13 @@ export async function POST(request: Request) {
         text: [text],
         target_lang: target_lang.toUpperCase(),
       }),
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorText = await response.text();
-      return new Response(JSON.stringify({ error: `DeepL Error: ${errorText}` }), { status: response.status });
+      return new Response(JSON.stringify({ error: `DeepL Error: ${errorText}` }), { status: response.status, headers: { "Content-Type": "application/json" } });
     }
 
     const data = await response.json();
@@ -50,10 +59,10 @@ export async function POST(request: Request) {
     }
 
     return new Response(JSON.stringify({ text: translatedText }), {
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json', "Cache-Control": "no-store" }
     });
 
   } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    return new Response(JSON.stringify({ error: error.message || "Unknown error" }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
 }

@@ -63,17 +63,22 @@ const getKeys = () => ({
 // --- MAIN HANDLER (POST) ---
 export async function POST(request: Request) {
   try {
-    const { message, modelId, provider, context } = await request.json();
+    const payload = await request.json().catch(() => ({}));
+    const { message, modelId, provider, context } = payload || {};
     const KEYS = getKeys(); 
 
-    if (!message) return new Response("Message required", { status: 400 });
+    if (!message || typeof message !== "string" || !message.trim()) {
+      return new Response("Message required", { status: 400 });
+    }
 
     // Normalize Provider ID
     const activeProvider = (provider || 'GEMINI').toUpperCase();
     let activeModel = modelId;
 
     // Gabungkan Context (System Prompt) agar AI ingat instruksi
-    const systemInstruction = context || "You are a helpful assistant.";
+    const systemInstruction = typeof context === "string" && context.trim()
+      ? context
+      : "You are a helpful assistant.";
     
     // --- INTELLIGENT ROUTING ---
     switch (activeProvider) {
@@ -188,7 +193,7 @@ async function streamGemini(userMsg: string, systemMsg: string, modelId: string,
     });
 
     return new Response(stream, { 
-        headers: { "Content-Type": "text/plain; charset=utf-8" } 
+        headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" } 
     });
 
   } catch(e: any) {
@@ -207,6 +212,9 @@ async function streamOpenAICompatible(
 ) {
   if (!apiKey) throw new Error(`API Key for ${model} is missing in server environment.`);
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
+
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
@@ -223,8 +231,10 @@ async function streamOpenAICompatible(
       stream: true,
       temperature: 0.7,
       max_tokens: 4000
-    })
+    }),
+    signal: controller.signal
   });
+  clearTimeout(timeoutId);
 
   if (!response.ok) {
     const errText = await response.text();
@@ -290,6 +300,6 @@ async function streamOpenAICompatible(
   });
 
   return new Response(stream, { 
-      headers: { "Content-Type": "text/plain; charset=utf-8" } 
+      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" } 
   });
 }

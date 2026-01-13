@@ -177,6 +177,26 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes }) => {
   };
 
   return (
+ codex/remove-gradient-overlay-in-app.tsx
+    <div className="flex h-[100dvh] w-full text-skin-text font-sans bg-skin-main theme-transition overflow-hidden selection:bg-accent/30 selection:text-accent">
+      <div className="flex w-full h-full p-2 sm:p-3">
+        <div className="flex w-full h-full bg-skin-surface/80 border border-skin-border rounded-[32px] shadow-sm overflow-hidden">
+          <div className="flex w-full h-full bg-skin-card/40">
+            <Sidebar 
+              key={`sidebar-${language}`}
+              activeFeature={activeFeature} 
+              setActiveFeature={handleNavigate} 
+              chatLogic={chatLogic}
+            />
+            
+            <main className="flex-1 relative h-full w-full bg-transparent min-w-0 flex flex-col">
+              <div className="flex-1 w-full h-full overflow-hidden relative">
+                  {renderContent()}
+              </div>
+            </main>
+          </div>
+        </div>
+
     <div className="flex h-[100dvh] w-full text-skin-text font-sans bg-skin-main theme-transition overflow-hidden selection:bg-accent/30 selection:text-accent relative">
       
       {/* 1. Global Ambient Background Layer */}
@@ -206,6 +226,7 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes }) => {
                 {renderContent()}
             </div>
           </main>
+ main
       </div>
 
       <MobileNav 
@@ -224,10 +245,6 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes }) => {
           />
       )}
 
-      <style>{`
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-        .pt-safe { padding-top: env(safe-area-inset-top); }
-      `}</style>
     </div>
   );
 };

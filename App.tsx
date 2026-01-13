@@ -113,11 +113,17 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes }) => {
     const onAccentRgb = hexToRgb(onAccentColor);
     const rgb = hexToRgb(targetColor);
     
+    root.style.setProperty('--accent', targetColor);
     root.style.setProperty('--accent-color', targetColor);
     root.style.setProperty('--accent-rgb', rgb);
+    root.style.setProperty('--accent-foreground', onAccentColor);
     root.style.setProperty('--on-accent-color', onAccentColor);
     root.style.setProperty('--on-accent-rgb', onAccentRgb);
+ codex/update-theme-colors-and-ui-settings
     root.style.setProperty('--accent-glow', `rgba(${rgb.replace(/ /g, ', ')}, 0.18)`);
+
+    root.style.setProperty('--accent-glow', `rgba(${rgb.replace(/ /g, ', ')}, 0.25)`); 
+ main
     
     const navAccent = targetColor === '#000000' ? '#ffffff' : targetColor;
     root.style.setProperty('--nav-accent', navAccent);
@@ -175,9 +181,15 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes }) => {
       
       {/* 1. Global Ambient Background Layer */}
       <div className="absolute inset-0 pointer-events-none z-0 transform-gpu">
+ codex/update-theme-colors-and-ui-settings
           <div className="absolute inset-0 bg-gradient-to-br from-skin-main via-skin-main to-skin-main opacity-100"></div>
           <div className="absolute inset-0 opacity-20 dark:opacity-25 mix-blend-screen bg-gradient-to-tr from-[var(--accent-color)]/16 via-[var(--accent-color)]/6 to-transparent filter blur-[110px] animate-aurora animate-soft-float will-change-transform"></div>
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.02] mix-blend-overlay"></div>
+
+          <div className="absolute inset-0 bg-skin-main"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(var(--accent-rgb),0.08),transparent_60%)] opacity-40"></div>
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.015] mix-blend-overlay"></div>
+ main
       </div>
 
       {/* 2. Main Content Layout */}

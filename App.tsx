@@ -53,7 +53,7 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes }) => {
   const [isPending, startTransition] = useTransition(); 
 
   const [isTutorialComplete, setIsTutorialComplete] = useLocalStorage<boolean>('app_tutorial_complete_v101', false);
-  const [theme] = useLocalStorage<string>('app_theme', 'cyan');
+  const [theme] = useLocalStorage<string>('app_theme', 'stone');
   const [colorScheme] = useLocalStorage<'system' | 'light' | 'dark'>('app_color_scheme', 'system');
   const [language] = useLocalStorage<string>('app_language', 'id');
   const [isDebugOpen, setIsDebugOpen] = useState(false);
@@ -65,7 +65,7 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes }) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? 
       `${parseInt(result[1], 16)} ${parseInt(result[2], 16)} ${parseInt(result[3], 16)}` : 
-      '6 182 212'; 
+      '168 162 158'; 
   };
 
   const getContrastColor = (hexColor: string) => {
@@ -107,18 +107,23 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes }) => {
     if (activeScheme === 'dark') { root.classList.add('dark'); root.classList.remove('light'); } 
     else { root.classList.add('light'); root.classList.remove('dark'); }
 
-    let targetColor = THEME_COLORS[theme] || THEME_COLORS.cyan;
-    if (theme === 'silver' && activeScheme === 'light') targetColor = '#475569';
+    const targetColor = THEME_COLORS[theme] || THEME_COLORS.stone;
 
     const onAccentColor = getContrastColor(targetColor);
     const onAccentRgb = hexToRgb(onAccentColor);
     const rgb = hexToRgb(targetColor);
     
+    root.style.setProperty('--accent', targetColor);
     root.style.setProperty('--accent-color', targetColor);
     root.style.setProperty('--accent-rgb', rgb);
+    root.style.setProperty('--accent-foreground', onAccentColor);
     root.style.setProperty('--on-accent-color', onAccentColor);
     root.style.setProperty('--on-accent-rgb', onAccentRgb);
-    root.style.setProperty('--accent-glow', `rgba(${rgb.replace(/ /g, ', ')}, 0.45)`); 
+ codex/update-theme-colors-and-ui-settings
+    root.style.setProperty('--accent-glow', `rgba(${rgb.replace(/ /g, ', ')}, 0.18)`);
+
+    root.style.setProperty('--accent-glow', `rgba(${rgb.replace(/ /g, ', ')}, 0.25)`); 
+ main
     
     const navAccent = targetColor === '#000000' ? '#ffffff' : targetColor;
     root.style.setProperty('--nav-accent', navAccent);
@@ -172,13 +177,39 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes }) => {
   };
 
   return (
+ codex/remove-gradient-overlay-in-app.tsx
+    <div className="flex h-[100dvh] w-full text-skin-text font-sans bg-skin-main theme-transition overflow-hidden selection:bg-accent/30 selection:text-accent">
+      <div className="flex w-full h-full p-2 sm:p-3">
+        <div className="flex w-full h-full bg-skin-surface/80 border border-skin-border rounded-[32px] shadow-sm overflow-hidden">
+          <div className="flex w-full h-full bg-skin-card/40">
+            <Sidebar 
+              key={`sidebar-${language}`}
+              activeFeature={activeFeature} 
+              setActiveFeature={handleNavigate} 
+              chatLogic={chatLogic}
+            />
+            
+            <main className="flex-1 relative h-full w-full bg-transparent min-w-0 flex flex-col">
+              <div className="flex-1 w-full h-full overflow-hidden relative">
+                  {renderContent()}
+              </div>
+            </main>
+          </div>
+        </div>
+
     <div className="flex h-[100dvh] w-full text-skin-text font-sans bg-skin-main theme-transition overflow-hidden selection:bg-accent/30 selection:text-accent relative">
       
       {/* 1. Global Ambient Background Layer */}
       <div className="absolute inset-0 pointer-events-none z-0 transform-gpu">
+ codex/update-theme-colors-and-ui-settings
           <div className="absolute inset-0 bg-gradient-to-br from-skin-main via-skin-main to-skin-main opacity-100"></div>
-          <div className="absolute inset-0 opacity-20 dark:opacity-30 mix-blend-screen bg-gradient-to-tr from-[var(--accent-color)]/20 via-purple-500/10 to-blue-500/10 filter blur-[100px] animate-aurora animate-soft-float will-change-transform"></div>
+          <div className="absolute inset-0 opacity-20 dark:opacity-25 mix-blend-screen bg-gradient-to-tr from-[var(--accent-color)]/16 via-[var(--accent-color)]/6 to-transparent filter blur-[110px] animate-aurora animate-soft-float will-change-transform"></div>
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.02] mix-blend-overlay"></div>
+
+          <div className="absolute inset-0 bg-skin-main"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(var(--accent-rgb),0.08),transparent_60%)] opacity-40"></div>
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.015] mix-blend-overlay"></div>
+ main
       </div>
 
       {/* 2. Main Content Layout */}
@@ -195,6 +226,7 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes }) => {
                 {renderContent()}
             </div>
           </main>
+ main
       </div>
 
       <MobileNav 
@@ -213,10 +245,6 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes }) => {
           />
       )}
 
-      <style>{`
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-        .pt-safe { padding-top: env(safe-area-inset-top); }
-      `}</style>
     </div>
   );
 };

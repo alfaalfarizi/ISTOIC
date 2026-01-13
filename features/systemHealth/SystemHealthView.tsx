@@ -61,7 +61,7 @@ const ProviderNode: React.FC<{ provider: ProviderStatus }> = ({ provider }) => {
                      <Globe size={14} className={isHealthy ? "text-emerald-400" : "text-neutral-500"}/>}
                     <span className="text-[9px] font-black uppercase tracking-wider text-white">{provider.id}</span>
                 </div>
-                <div className={`w-1.5 h-1.5 rounded-full ${isHealthy ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : isCooldown ? 'bg-amber-500 animate-pulse' : 'bg-red-500'}`}></div>
+                <div className={`w-1.5 h-1.5 rounded-full ${isHealthy ? 'bg-emerald-500 shadow-[0_0_8px_rgba(var(--status-success),0.45)]' : isCooldown ? 'bg-amber-500 animate-pulse' : 'bg-red-500'}`}></div>
             </div>
             
             <div className="flex justify-between items-end">
@@ -312,7 +312,7 @@ export const SystemHealthView: React.FC = () => {
                                             trendData={latencyHistory} 
                                             icon={<Network size={16} />} 
                                             status={health.avgLatency > 1000 ? 'danger' : 'good'} 
-                                            color="#10b981"
+                                            color="rgb(var(--status-success))"
                                         />
                                         <VitalsCard 
                                             label="MEMORY_HEAP" 
@@ -320,7 +320,7 @@ export const SystemHealthView: React.FC = () => {
                                             trendData={memoryHistory} 
                                             icon={<HardDrive size={16} />} 
                                             status={health.memoryMb > 800 ? 'warning' : 'good'} 
-                                            color="#f59e0b"
+                                            color="rgb(var(--status-warning))"
                                         />
                                         <div onClick={runPingTest} className="cursor-pointer group p-5 rounded-[24px] border border-white/5 bg-[var(--bg-card)] hover:border-accent/30 transition-all flex flex-col justify-between h-32 relative overflow-hidden">
                                             <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -341,7 +341,7 @@ export const SystemHealthView: React.FC = () => {
 
                                     {/* 2. Network Topology */}
                                     <div className="bg-[var(--bg-card)] rounded-[32px] border border-white/10 overflow-hidden shadow-2xl relative">
-                                        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
+                                        <div className="absolute inset-0 bg-[linear-gradient(rgba(var(--text-inverse),0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(var(--text-inverse),0.02)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
                                         
                                         <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02] relative z-10">
                                             <div className="flex items-center gap-3">
@@ -501,7 +501,7 @@ export const SystemHealthView: React.FC = () => {
 };
 
 // --- SUB-COMPONENT: VITALS CARD ---
-const VitalsCard: React.FC<{ label: string, value: string, icon: React.ReactNode, status: 'good'|'warning'|'danger', subtext: string, trendData?: number[], color?: string }> = ({ label, value, icon, status, subtext, trendData, color = '#10b981' }) => (
+const VitalsCard: React.FC<{ label: string, value: string, icon: React.ReactNode, status: 'good'|'warning'|'danger', subtext: string, trendData?: number[], color?: string }> = ({ label, value, icon, status, subtext, trendData, color = 'rgb(var(--status-success))' }) => (
     <div className={`relative overflow-hidden p-5 rounded-[24px] border transition-all h-32 flex flex-col justify-between ${status === 'danger' ? 'bg-red-500/5 border-red-500/20' : status === 'warning' ? 'bg-amber-500/5 border-amber-500/20' : 'bg-[var(--bg-card)] border-white/5 hover:border-accent/20'}`}>
         <div className="flex justify-between items-start z-10 relative">
             <div className="flex items-center gap-2 text-neutral-400">

@@ -11,18 +11,18 @@
   color-scheme: light dark;
   
   /* --- TOKEN SYSTEM: LIGHT MODE --- */
-  --bg-main: #f2f3f5;       
+  --bg-main: #f6f7fb;       
   --bg-card: #ffffff;       
-  --bg-surface: #f4f4f5;    
-  --bg-surface-hover: #e4e4e7;
+  --bg-surface: #eef1f7;    
+  --bg-surface-hover: #e1e7f0;
   
-  --text-main: #09090b;     
-  --text-muted: #71717a;    
+  --text-main: #0b0e14;     
+  --text-muted: #5f6b7a;    
   
-  --border-base: rgba(0, 0, 0, 0.06);
-  --border-highlight: rgba(0, 0, 0, 0.12);
+  --border-base: rgba(15, 23, 42, 0.06);
+  --border-highlight: rgba(15, 23, 42, 0.12);
   
-  --shadow-color: 0 0 0;
+  --shadow-color: 15 23 42;
   
   /* iOS Safe Area Defaults */
   --sat: env(safe-area-inset-top);
@@ -33,16 +33,16 @@
 
 .dark {
   /* --- TOKEN SYSTEM: DARK MODE --- */
-  --bg-main: #000000;       
-  --bg-card: #0a0a0b;       
-  --bg-surface: #18181b;    
-  --bg-surface-hover: #27272a;
+  --bg-main: #05070d;       
+  --bg-card: #0c111b;       
+  --bg-surface: #121826;    
+  --bg-surface-hover: #1a2132;
   
-  --text-main: #fafafa;     
-  --text-muted: #a1a1aa;    
+  --text-main: #f8fafc;     
+  --text-muted: #94a3b8;    
   
-  --border-base: rgba(255, 255, 255, 0.08);
-  --border-highlight: rgba(255, 255, 255, 0.15);
+  --border-base: rgba(148, 163, 184, 0.12);
+  --border-highlight: rgba(148, 163, 184, 0.22);
 }
 
 html {
@@ -66,7 +66,7 @@ body {
   
   background-color: var(--bg-main);
   color: var(--text-main);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.4s ease, color 0.4s ease;
 }
 
 #root {
@@ -172,6 +172,40 @@ body.low-perf * {
 }
 .animate-slide-up {
     will-change: transform, opacity;
+}
+
+.theme-transition {
+  transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+}
+
+@keyframes softFloat {
+  0% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -6px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+.animate-soft-float {
+  animation: softFloat 6s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes sheen {
+  0% { transform: translateX(-120%); opacity: 0; }
+  20% { opacity: 0.3; }
+  50% { transform: translateX(120%); opacity: 0; }
+  100% { transform: translateX(120%); opacity: 0; }
+}
+.sheen {
+  position: relative;
+  overflow: hidden;
+}
+.sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%);
+  background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.12) 40%, transparent 70%);
+  animation: sheen 6s ease-in-out infinite;
+  pointer-events: none;
 }
 
 /* UTILITIES */

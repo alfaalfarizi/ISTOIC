@@ -189,7 +189,7 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes }) => {
       {/* 1. Global Ambient Background Layer */}
       <div className="absolute inset-0 pointer-events-none z-0 transform-gpu">
           <div className="absolute inset-0 bg-gradient-to-br from-skin-main via-skin-main to-skin-main opacity-100"></div>
-          <div className="absolute inset-0 opacity-20 dark:opacity-30 mix-blend-screen bg-gradient-to-tr from-[var(--accent-color)]/20 via-purple-500/10 to-blue-500/10 filter blur-[100px] animate-aurora will-change-transform"></div>
+          <div className="absolute inset-0 opacity-20 dark:opacity-30 mix-blend-screen bg-gradient-to-tr from-[var(--accent-color)]/20 via-purple-500/10 to-blue-500/10 filter blur-[100px] animate-aurora animate-soft-float will-change-transform"></div>
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.02] mix-blend-overlay"></div>
       </div>
 

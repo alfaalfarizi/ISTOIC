@@ -1,24 +1,144 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
     Mail, Lock, ArrowRight, ArrowLeft, KeyRound, 
     ShieldCheck, Loader2, RefreshCw, Send, CheckCircle2,
     HelpCircle, AlertTriangle
 } from 'lucide-react';
-import { auth } from '../../services/firebaseConfig';
+import { auth, db } from '../../services/firebaseConfig';
 // @ts-ignore
-import { createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
-import { IstokIdentityService } from '../istok/services/istokIdentity';
+import { createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { IstokIdentityService, IStokUserIdentity } from '../istok/services/istokIdentity';
 import { setSystemPin } from '../../utils/crypto';
 
+type ManualAuthSuccess = (identity: IStokUserIdentity) => void;
+
+const buildFallbackIdentity = (uid: string, email: string): IStokUserIdentity => {
+    const baseName = email.split('@')[0] || 'USER';
+    return {
+        uid,
+        email,
+        displayName: baseName,
+        photoURL: '',
+        istokId: IstokIdentityService.formatId(baseName),
+        codename: baseName.toUpperCase(),
+    };
+};
+
+// --- SUB-COMPONENT: LOGIN MANUAL ---
+export const LoginManual: React.FC<{ onBack: () => void, onSuccess: ManualAuthSuccess, onForgot: () => void }> = ({ onBack, onSuccess, onForgot }) => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [info, setInfo] = useState('');
+
+    const handleLogin = async () => {
+        if (!email.includes('@') || !email.includes('.')) { 
+            setError('Format email tidak valid'); 
+            return; 
+        }
+        if (!password) {
+            setError('Password wajib diisi');
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+        setInfo('');
+
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            if (!user.emailVerified) {
+                await sendEmailVerification(user);
+                setInfo('Email belum diverifikasi. Link verifikasi dikirim ulang.');
+            }
+
+            let identity: IStokUserIdentity | null = null;
+            if (db) {
+                const snap = await getDoc(doc(db, 'users', user.uid));
+                if (snap.exists()) {
+                    identity = snap.data() as IStokUserIdentity;
+                }
+            }
+
+            if (!identity) {
+                identity = buildFallbackIdentity(user.uid, email);
+                await IstokIdentityService.createProfile(identity);
+            }
+
+            onSuccess(identity);
+        } catch (e: any) {
+            let msg = e?.message || 'Gagal login.';
+            if (msg.includes('auth/invalid-credential')) msg = 'Email atau password salah.';
+            if (msg.includes('auth/user-not-found')) msg = 'Akun tidak ditemukan.';
+            if (msg.includes('auth/wrong-password')) msg = 'Password salah.';
+            setError(msg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="w-full animate-slide-up">
+            <div className="text-center mb-6">
+                <h2 className="text-xl font-black text-white uppercase tracking-tight">LOGIN EMAIL</h2>
+                <p className="text-[10px] text-neutral-500 font-mono mt-1">SECURE LOGIN ACCESS</p>
+            </div>
+
+            {error && <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs font-bold text-center mb-4 flex items-center justify-center gap-2"><AlertTriangle size={12}/> {error}</div>}
+            {info && <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 text-xs font-bold text-center mb-4">{info}</div>}
+
+            <div className="space-y-4">
+                <div className="space-y-2">
+                    <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-1">Email Address</label>
+                    <div className="relative">
+                        <input 
+                            type="email" value={email} onChange={e => setEmail(e.target.value)}
+                            className="w-full bg-[#121214] border border-white/10 rounded-2xl px-5 py-4 pl-12 text-sm font-bold text-white focus:border-emerald-500 outline-none transition-all"
+                            placeholder="nama@email.com"
+                        />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" size={18} />
+                    </div>
+                </div>
+                <div className="space-y-2">
+                    <label className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-1">Password</label>
+                    <div className="relative">
+                        <input 
+                            type="password" value={password} onChange={e => setPassword(e.target.value)}
+                            className="w-full bg-[#121214] border border-white/10 rounded-2xl px-5 py-4 pl-12 text-sm font-bold text-white focus:border-emerald-500 outline-none transition-all"
+                            placeholder="••••••••"
+                        />
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" size={18} />
+                    </div>
+                </div>
+                <button onClick={handleLogin} disabled={loading} className="w-full py-4 bg-white text-black hover:bg-neutral-200 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 disabled:opacity-70">
+                    {loading ? <Loader2 className="animate-spin" size={16}/> : <ArrowRight size={16}/>} MASUK
+                </button>
+                <button onClick={onForgot} className="w-full text-[9px] font-bold text-neutral-500 hover:text-white">
+                    LUPA AKUN?
+                </button>
+            </div>
+
+            <button onClick={onBack} className="w-full mt-4 py-3 text-[10px] font-bold text-neutral-500 hover:text-white uppercase tracking-widest flex items-center justify-center gap-2">
+                <ArrowLeft size={12} /> KEMBALI
+            </button>
+        </div>
+    );
+};
+
 // --- SUB-COMPONENT: REGISTER MANUAL (REAL EMAIL OTP) ---
-export const RegisterManual: React.FC<{ onBack: () => void, onSuccess: () => void }> = ({ onBack, onSuccess }) => {
+export const RegisterManual: React.FC<{ onBack: () => void, onSuccess: ManualAuthSuccess }> = ({ onBack, onSuccess }) => {
     const [step, setStep] = useState<'EMAIL' | 'CODE' | 'PASSWORD'>('EMAIL');
     const [email, setEmail] = useState('');
     const [code, setCode] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [info, setInfo] = useState('');
     
     // Server-side code simulation (In memory for client-side verify)
     const [generatedOtp, setGeneratedOtp] = useState<string | null>(null);
@@ -31,6 +151,7 @@ export const RegisterManual: React.FC<{ onBack: () => void, onSuccess: () => voi
 
         setLoading(true);
         setError('');
+        setInfo('');
 
         // 1. Generate 6-Digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -104,18 +225,15 @@ export const RegisterManual: React.FC<{ onBack: () => void, onSuccess: () => voi
         try {
             // Create Firebase Auth User
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+            await sendEmailVerification(userCredential.user);
             
             // Create Istok Profile
-            await IstokIdentityService.createProfile({
-                uid: userCredential.user.uid,
-                email: email,
-                displayName: email.split('@')[0],
-                photoURL: "", // Default
-                istokId: IstokIdentityService.formatId(email.split('@')[0]),
-                codename: email.split('@')[0].toUpperCase()
-            });
+            const identity = buildFallbackIdentity(userCredential.user.uid, email);
+            await IstokIdentityService.createProfile(identity);
 
-            onSuccess();
+            setInfo('Email verifikasi dikirim. Silakan cek inbox.');
+            onSuccess(identity);
         } catch (e: any) {
             let msg = e.message;
             if (msg.includes('email-already-in-use')) msg = "Email sudah terdaftar.";
@@ -133,6 +251,7 @@ export const RegisterManual: React.FC<{ onBack: () => void, onSuccess: () => voi
             </div>
 
             {error && <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs font-bold text-center mb-4 flex items-center justify-center gap-2"><AlertTriangle size={12}/> {error}</div>}
+            {info && <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 text-xs font-bold text-center mb-4">{info}</div>}
 
             {step === 'EMAIL' && (
                 <div className="space-y-4">
@@ -204,11 +323,16 @@ export const RegisterManual: React.FC<{ onBack: () => void, onSuccess: () => voi
 };
 
 // --- SUB-COMPONENT: FORGOT PIN (RESET VIA AUTH) ---
-export const ForgotPin: React.FC<{ onBack: () => void, onSuccess: () => void }> = ({ onBack, onSuccess }) => {
+export const ForgotPin: React.FC<{ onBack: () => void, onSuccess: () => void, expectedEmail?: string }> = ({ onBack, onSuccess, expectedEmail }) => {
     const [loading, setLoading] = useState(false);
     const [newPin, setNewPin] = useState('');
+    const [emailCheck, setEmailCheck] = useState('');
 
     const handleReset = async () => {
+        if (expectedEmail && emailCheck.trim().toLowerCase() !== expectedEmail.toLowerCase()) {
+            alert('Email tidak cocok dengan akun yang tersimpan.');
+            return;
+        }
         if (newPin.length < 4) return alert("PIN min 4 digit");
         if (!confirm("Reset PIN akan menghapus akses ke data terenkripsi lama jika tidak dibackup. Lanjutkan?")) return;
         
@@ -235,6 +359,16 @@ export const ForgotPin: React.FC<{ onBack: () => void, onSuccess: () => void }> 
             </div>
 
             <div className="space-y-4">
+                 {expectedEmail && (
+                    <div className="relative">
+                        <input 
+                            type="email"
+                            value={emailCheck} onChange={e => setEmailCheck(e.target.value)}
+                            className="w-full bg-[#121214] border border-white/10 rounded-2xl px-5 py-3 text-sm text-white focus:border-amber-500 outline-none"
+                            placeholder="Konfirmasi email akun"
+                        />
+                    </div>
+                 )}
                  <div className="relative">
                     <input 
                         type="password" inputMode="numeric" maxLength={6}
@@ -258,6 +392,33 @@ export const ForgotPin: React.FC<{ onBack: () => void, onSuccess: () => void }> 
 
 // --- SUB-COMPONENT: FORGOT ACCOUNT ---
 export const ForgotAccount: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+    const [email, setEmail] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [status, setStatus] = useState('');
+    const [error, setError] = useState('');
+
+    const handleSendReset = async () => {
+        if (!email.includes('@') || !email.includes('.')) {
+            setError('Format email tidak valid');
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+        setStatus('');
+
+        try {
+            await sendPasswordResetEmail(auth, email);
+            setStatus('Link reset password dikirim ke email Anda.');
+        } catch (e: any) {
+            let msg = e?.message || 'Gagal mengirim reset email.';
+            if (msg.includes('auth/user-not-found')) msg = 'Email tidak ditemukan.';
+            setError(msg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="w-full animate-slide-up">
             <div className="text-center mb-8">
@@ -275,9 +436,18 @@ export const ForgotAccount: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     </h4>
                     <p className="text-xs text-neutral-400">Masukkan email yang terdaftar untuk menerima link reset.</p>
                     <div className="flex gap-2 mt-3">
-                        <input className="flex-1 bg-black border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="email@anda.com" />
-                        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-[10px] font-bold">KIRIM</button>
+                        <input 
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="flex-1 bg-black border border-white/10 rounded-lg px-3 py-2 text-xs text-white"
+                            placeholder="email@anda.com"
+                        />
+                        <button onClick={handleSendReset} disabled={loading} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-[10px] font-bold disabled:opacity-60">
+                            {loading ? '...' : 'KIRIM'}
+                        </button>
                     </div>
+                    {status && <p className="text-[10px] text-emerald-400 mt-2">{status}</p>}
+                    {error && <p className="text-[10px] text-red-400 mt-2">{error}</p>}
                 </div>
 
                 <div className="p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10 text-left flex gap-3">

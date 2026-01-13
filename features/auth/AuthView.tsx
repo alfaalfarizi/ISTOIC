@@ -566,7 +566,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                 inputMode="numeric"
                 value={pinInput}
                 onChange={(e) => setPinInput(e.target.value.slice(0, 6))}
-                className="w-full bg-[var(--bg-surface)] border border-white/10 rounded-2xl py-5 text-center text-3xl font-black text-white tracking-[0.5em] focus:border-amber-500 outline-none"
+                className="w-full bg-[var(--bg-surface)] border border-[var(--border-base)] rounded-2xl py-5 text-center text-3xl font-black text-[var(--text-main)] tracking-[0.5em] focus:border-amber-500 outline-none"
                 placeholder="••••"
               />
 

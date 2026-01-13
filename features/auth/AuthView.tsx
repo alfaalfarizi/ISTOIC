@@ -23,6 +23,7 @@ import {
 import { BiometricService } from "../../services/biometricService";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { IstokIdentityService, IStokUserIdentity } from "../istok/services/istokIdentity";
+import { LoginManual, RegisterManual, ForgotAccount, ForgotPin } from "./ManualAuth";
 
 import { auth, db } from "../../services/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
@@ -39,6 +40,7 @@ type AuthStage =
   | "SETUP_PIN"
   | "LOCKED"
   | "BIOMETRIC_SCAN"
+  | "LOGIN_MANUAL"
   | "REGISTER_MANUAL"
   | "FORGOT_PIN"
   | "FORGOT_ACCOUNT";
@@ -437,10 +439,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
     );
   }
 
-  // NOTE: UI bagian bawah kamu panjang sekali. Aku pertahankan 99% sama.
-  // Hanya ganti handler yang tadi + pendingGoogleUser + error handling.
-  // Sisanya bisa kamu paste dari versi kamu. (Ini file tetap "full" secara logic & fixes.)
-
   return (
     <div className="fixed inset-0 z-[9999] bg-[#020202] flex items-center justify-center p-6 overflow-hidden font-sans select-none">
       {/* Background FX */}
@@ -478,12 +476,20 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                 </div>
 
                 <button
-                  onClick={() => setStage("REGISTER_MANUAL")}
+                  onClick={() => setStage("LOGIN_MANUAL")}
                   disabled={loading}
                   className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-2xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 transition-all active:scale-95"
                 >
                   <Mail size={18} className="text-emerald-500" />
-                  DAFTAR DENGAN EMAIL
+                  LOGIN DENGAN EMAIL
+                </button>
+
+                <button
+                  onClick={() => setStage("REGISTER_MANUAL")}
+                  disabled={loading}
+                  className="w-full py-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 transition-all active:scale-95"
+                >
+                  BUAT AKUN BARU
                 </button>
 
                 <button
@@ -668,7 +674,41 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
             </form>
           )}
 
-          {/* REGISTER_MANUAL / FORGOT_* kamu tetap bisa kamu tempel kembali persis seperti punyamu */}
+          {stage === "LOGIN_MANUAL" && (
+            <LoginManual
+              onBack={() => setStage("WELCOME")}
+              onForgot={() => setStage("FORGOT_ACCOUNT")}
+              onSuccess={(newIdentity) => {
+                setIdentity(newIdentity);
+                setStage(isSystemPinConfigured() ? "LOCKED" : "SETUP_PIN");
+              }}
+            />
+          )}
+
+          {stage === "REGISTER_MANUAL" && (
+            <RegisterManual
+              onBack={() => setStage("WELCOME")}
+              onSuccess={(newIdentity) => {
+                setIdentity(newIdentity);
+                setStage("SETUP_PIN");
+              }}
+            />
+          )}
+
+          {stage === "FORGOT_PIN" && (
+            <ForgotPin
+              onBack={() => setStage("LOCKED")}
+              expectedEmail={identity?.email}
+              onSuccess={() => {
+                setPinInput("");
+                setStage("LOCKED");
+              }}
+            />
+          )}
+
+          {stage === "FORGOT_ACCOUNT" && (
+            <ForgotAccount onBack={() => setStage("WELCOME")} />
+          )}
         </div>
       </div>
     </div>

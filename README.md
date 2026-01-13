@@ -52,5 +52,31 @@ Untuk akses dari HP di jaringan yang sama:
 3. Buka browser HP: `http://[IP-PC]:3000`.
 
 ---
+
+## 🤖 Android APK (Siap Install)
+
+Langkah ringkas untuk menghasilkan APK yang siap dipasang:
+
+1. Build web assets + sinkronisasi Capacitor:
+   ```bash
+   npm run android:sync
+   ```
+2. Generate APK debug:
+   ```bash
+   npm run android:apk
+   ```
+3. File APK akan tersedia di:
+   ```
+   android/app/build/outputs/apk/debug/app-debug.apk
+   ```
+4. Install ke perangkat (opsional):
+   ```bash
+   adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+   ```
+
+Catatan:
+- Untuk rilis produksi, gunakan `./gradlew assembleRelease` dan tanda tangani APK sesuai kebutuhan.
+
+---
 **IStoicAI Team | Platinum Edition v101.0**
 *"Efficiency is the foundation of ataraxia."*

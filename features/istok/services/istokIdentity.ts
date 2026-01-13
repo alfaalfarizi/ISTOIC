@@ -6,6 +6,9 @@ import {
   getRedirectResult,
   signOut as fbSignOut,
   User as FirebaseUser,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
 } from "firebase/auth";
 import {
   doc,
@@ -79,6 +82,16 @@ function readLocal(): IStokUserIdentity | null {
   }
 }
 
+async function ensureAuthPersistence(mode: "local" | "session" = "local") {
+  if (!auth) return;
+  const persistence = mode === "session" ? browserSessionPersistence : browserLocalPersistence;
+  try {
+    await setPersistence(auth, persistence);
+  } catch (error) {
+    console.warn("[ISTOK_AUTH] Failed to set auth persistence.", error);
+  }
+}
+
 /**
  * Normalize Firebase auth errors to friendly messages
  */
@@ -135,6 +148,7 @@ export const IstokIdentityService = {
     }
 
     try {
+      await ensureAuthPersistence("local");
       // 1) If user just returned from redirect flow, this will contain the result
       const redirectResult = await getRedirectResult(auth);
 

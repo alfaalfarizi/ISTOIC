@@ -123,7 +123,7 @@ const PromptEditorModal: React.FC<{
 const SettingsView: React.FC<SettingsViewProps> = memo(({ onNavigate }) => {
     // --- GLOBAL STATE ---
     const [localPersona, setLocalPersona] = useLocalStorage('user_persona_config', getUserPersona());
-    const [appTheme, setAppTheme] = useLocalStorage('app_theme', 'cyan');
+    const [appTheme, setAppTheme] = useLocalStorage('app_theme', 'stone');
     const [appLanguage, setAppLanguage] = useLocalStorage('app_language', 'id');
     const [colorScheme, setColorScheme] = useLocalStorage('app_color_scheme', 'system');
     const [identity] = useLocalStorage<any>('istok_user_identity', null);

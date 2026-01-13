@@ -22,8 +22,8 @@ export const SharedQRCode: React.FC<SharedQRCodeProps> = ({ value, size = 220, c
             width: size,
             margin: 1, 
             color: { 
-                dark: '#000000', 
-                light: '#FFFFFF' 
+                dark: `rgb(var(--surface-inverse))`,
+                light: `rgb(var(--text-inverse))`
             },
             errorCorrectionLevel: 'H' 
         })

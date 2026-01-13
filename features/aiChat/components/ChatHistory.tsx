@@ -134,7 +134,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
         fixed inset-y-0 right-0 w-[85%] md:w-[380px] 
         bg-[var(--bg-card)]/95 backdrop-blur-2xl 
         border-l border-black/5 dark:border-white/10 
-        z-[2010] shadow-[-20px_0_50px_rgba(0,0,0,0.1)] dark:shadow-[-20px_0_50px_rgba(0,0,0,0.5)]
+        z-[2010] shadow-[-20px_0_50px_rgba(var(--surface-inverse),0.1)] dark:shadow-[-20px_0_50px_rgba(var(--surface-inverse),0.5)]
         transform transition-transform duration-500 cubic-bezier(0.22, 1, 0.36, 1)
         flex flex-col
         ${isOpen ? 'translate-x-0' : 'translate-x-full'}

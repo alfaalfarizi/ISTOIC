@@ -112,7 +112,7 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete, on
               width: rect.width + 20,
               height: rect.height + 20,
               opacity: 1,
-              boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.85), 0 0 30px rgba(var(--accent-rgb), 0.5)'
+              boxShadow: '0 0 0 9999px var(--overlay-scrim-strong), 0 0 30px rgba(var(--accent-rgb), 0.5)'
           });
       } else {
           setSpotlightStyle({});
@@ -279,7 +279,7 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete, on
                                 onClick={handleNext} 
                                 className="
                                     h-12 px-6 rounded-xl font-black uppercase text-[10px] tracking-[0.2em] 
-                                    flex items-center justify-center gap-3 transition-all shadow-lg hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]
+                                    flex items-center justify-center gap-3 transition-all shadow-lg hover:shadow-[0_0_20px_rgba(var(--text-inverse),0.1)]
                                     bg-white text-black hover:scale-[1.02] active:scale-95
                                 "
                             >

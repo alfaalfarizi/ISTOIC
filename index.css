@@ -66,7 +66,7 @@ body {
   
   background-color: var(--bg-main);
   color: var(--text-main);
-  transition: background-color 0.4s ease, color 0.4s ease;
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
 #root {
@@ -113,16 +113,6 @@ body.low-perf * {
 .bg-noise {
   position: relative;
 }
-.bg-noise::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: url("https://grainy-gradients.vercel.app/noise.svg");
-  opacity: 0.03; 
-  pointer-events: none;
-  z-index: 50; 
-  mix-blend-mode: overlay;
-}
 
 /* SCROLLBAR REFINEMENT */
 ::-webkit-scrollbar {
@@ -144,26 +134,12 @@ body.low-perf * {
 }
 
 /* ANIMATIONS */
-@keyframes aurora {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
 .animate-aurora {
-  background-size: 200% 200%;
-  animation: aurora 20s ease infinite;
-  will-change: background-position;
+  background-size: 100% 100%;
 }
 
-@keyframes gradient-x {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
 .animate-gradient-text {
-  background-size: 200% 200%;
-  animation: gradient-x 4s ease infinite;
-  will-change: background-position;
+  background-size: 100% 100%;
 }
 
 @keyframes slideUp {
@@ -175,25 +151,13 @@ body.low-perf * {
 }
 
 .theme-transition {
-  transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
 }
 
-@keyframes softFloat {
-  0% { transform: translate3d(0, 0, 0); }
-  50% { transform: translate3d(0, -6px, 0); }
-  100% { transform: translate3d(0, 0, 0); }
-}
 .animate-soft-float {
-  animation: softFloat 6s ease-in-out infinite;
-  will-change: transform;
+  transform: translate3d(0, 0, 0);
 }
 
-@keyframes sheen {
-  0% { transform: translateX(-120%); opacity: 0; }
-  20% { opacity: 0.3; }
-  50% { transform: translateX(120%); opacity: 0; }
-  100% { transform: translateX(120%); opacity: 0; }
-}
 .sheen {
   position: relative;
   overflow: hidden;
@@ -203,13 +167,11 @@ body.low-perf * {
   position: absolute;
   inset: 0;
   transform: translateX(-120%);
-  background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.12) 40%, transparent 70%);
-  animation: sheen 6s ease-in-out infinite;
   pointer-events: none;
 }
 
 /* UTILITIES */
-.text-glow { text-shadow: 0 0 20px rgba(var(--accent-rgb), 0.6); }
+.text-glow { text-shadow: 0 0 8px rgba(var(--accent-rgb), 0.25); }
 .border-glass { border: 1px solid var(--border-base); }
 .glass-card-3d {
     background: rgba(255, 255, 255, 0.05);
@@ -220,9 +182,3 @@ body.low-perf * {
 
 /* TERMINAL STYLES */
 .bg-terminal-void { background-color: #030304; position: relative; }
-.terminal-scanlines::before {
-  content: " "; display: block; position: absolute;
-  top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-  z-index: 10; background-size: 100% 2px, 3px 100%; pointer-events: none; opacity: 0.15;
-}

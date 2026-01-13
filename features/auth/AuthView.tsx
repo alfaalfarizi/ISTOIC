@@ -528,7 +528,11 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                 <p className="text-xs text-[var(--text-muted)] mt-2">Buat Callsign unik untuk jaringan IStok.</p>
               </div>
 
+ codex/refactor-background-colors-in-components
               <div className="bg-[var(--bg-surface)] border border-[var(--border-base)] rounded-2xl px-4 py-4 focus-within:border-emerald-500 transition-all flex items-center">
+
+              <div className="bg-[var(--bg-surface)] border border-white/10 rounded-2xl px-4 py-4 focus-within:border-emerald-500 transition-all flex items-center">
+ main
                 <span className="text-emerald-500 font-black text-sm mr-1 select-none">ISTOIC-</span>
                 <input
                   value={codename}
@@ -566,7 +570,11 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                 inputMode="numeric"
                 value={pinInput}
                 onChange={(e) => setPinInput(e.target.value.slice(0, 6))}
+ codex/refactor-background-colors-in-components
                 className="w-full bg-[var(--bg-surface)] border border-[var(--border-base)] rounded-2xl py-5 text-center text-3xl font-black text-[var(--text-main)] tracking-[0.5em] focus:border-amber-500 outline-none"
+
+                className="w-full bg-[var(--bg-surface)] border border-white/10 rounded-2xl py-5 text-center text-3xl font-black text-white tracking-[0.5em] focus:border-amber-500 outline-none"
+ main
                 placeholder="••••"
               />
 
@@ -622,8 +630,13 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                       setPinInput(e.target.value.slice(0, 6));
                       setError(null);
                     }}
+ codex/refactor-background-colors-in-components
                     className={`w-full bg-[var(--bg-surface)] border rounded-2xl py-5 text-center text-3xl font-black text-[var(--text-main)] tracking-[0.5em] focus:outline-none transition-all placeholder:text-[var(--text-muted)] ${
                       error ? "border-red-500/50" : "border-[var(--border-base)] focus:border-emerald-500"
+
+                    className={`w-full bg-[var(--bg-surface)] border rounded-2xl py-5 text-center text-3xl font-black text-white tracking-[0.5em] focus:outline-none transition-all placeholder:text-neutral-800 ${
+                      error ? "border-red-500/50" : "border-white/10 focus:border-emerald-500"
+ main
                     }`}
                     placeholder="••••••"
                     disabled={loading}

@@ -54,7 +54,11 @@ export const CallNotification: React.FC<CallNotificationProps> = ({ identity, on
                 <div className="flex flex-col items-center space-y-6 mt-10">
                     <div className="relative">
                         {/* Profile Avatar Placeholder */}
+ codex/refactor-background-colors-in-components
                         <div className="w-32 h-32 rounded-full bg-[var(--bg-surface)] border-2 border-[var(--border-base)] flex items-center justify-center shadow-2xl relative z-10 overflow-hidden">
+
+                        <div className="w-32 h-32 rounded-full bg-[var(--bg-surface)] border-2 border-white/10 flex items-center justify-center shadow-2xl relative z-10 overflow-hidden">
+ main
                              <User size={64} className="text-white/50" />
                         </div>
                         

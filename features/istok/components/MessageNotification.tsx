@@ -36,7 +36,11 @@ export const MessageNotification: React.FC<MessageNotificationProps> = ({ sender
             className="fixed top-[calc(env(safe-area-inset-top)+12px)] left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:max-w-sm z-[12000] animate-slide-down cursor-pointer pointer-events-auto"
             onClick={onClick}
         >
+ codex/refactor-background-colors-in-components
             <div className="relative overflow-hidden bg-[var(--bg-card)]/90 backdrop-blur-2xl border border-[var(--border-base)] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.5)] ring-1 ring-white/5">
+
+            <div className="relative overflow-hidden bg-[var(--bg-card)]/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.5)] ring-1 ring-white/5">
+ main
                 
                 {/* Content Container */}
                 <div className="p-3.5 flex items-start gap-3.5">

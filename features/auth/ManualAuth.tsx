@@ -442,7 +442,11 @@ export const ForgotPin: React.FC<{ onBack: () => void; onSuccess: () => void; ex
             maxLength={6}
             value={newPin}
             onChange={(e) => setNewPin(e.target.value.replace(/[^0-9]/g, ''))}
+ codex/refactor-background-colors-in-components
             className="w-full bg-[var(--bg-surface)] border border-[var(--border-base)] rounded-2xl px-5 py-4 text-center text-2xl font-mono text-[var(--text-main)] focus:border-amber-500 outline-none tracking-[0.5em]"
+
+            className="w-full bg-[var(--bg-surface)] border border-white/10 rounded-2xl px-5 py-4 text-center text-2xl font-mono text-white focus:border-amber-500 outline-none tracking-[0.5em]"
+ main
             placeholder="BARU"
           />
         </div>

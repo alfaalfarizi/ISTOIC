@@ -198,7 +198,11 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onScan, onClose }) => {
             </div>
 
             {/* Bottom Controls */}
+ codex/refactor-background-colors-in-components
             <div className="bg-[var(--bg-card)] border-t border-[var(--border-base)] p-6 pb-safe z-20">
+
+            <div className="bg-[var(--bg-card)] border-t border-white/10 p-6 pb-safe z-20">
+ main
                 <div className="flex items-center justify-center gap-6">
                     <button className="flex flex-col items-center gap-2 text-[var(--text-muted)] group">
                         <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition border border-[var(--border-base)]">

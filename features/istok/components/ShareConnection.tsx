@@ -75,7 +75,11 @@ export const ShareConnection: React.FC<ShareConnectionProps> = ({ peerId, pin, o
     // --- RENDER ---
     return (
         <div className="fixed inset-0 z-[3000] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in font-sans">
+ codex/refactor-background-colors-in-components
             <div className="bg-[var(--bg-card)] border border-[var(--border-base)] rounded-[32px] w-full max-w-sm relative shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+
+            <div className="bg-[var(--bg-card)] border border-white/10 rounded-[32px] w-full max-w-sm relative shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+ main
                 
                 {/* Header Decoration */}
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-blue-500 to-purple-500"></div>
@@ -122,7 +126,11 @@ export const ShareConnection: React.FC<ShareConnectionProps> = ({ peerId, pin, o
                     {/* 2. MANUAL DETAILS SECTION */}
                     <div className="space-y-3">
                         {/* Access PIN */}
+ codex/refactor-background-colors-in-components
                         <div className="bg-[var(--bg-surface)] border border-[var(--border-base)] p-4 rounded-xl flex items-center justify-between group hover:border-[var(--border-base)] transition-colors">
+
+                        <div className="bg-[var(--bg-surface)] border border-white/5 p-4 rounded-xl flex items-center justify-between group hover:border-white/10 transition-colors">
+ main
                             <div className="text-left">
                                 <p className="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-widest mb-1">Access PIN</p>
                                 <p className="text-2xl font-mono font-bold text-[var(--text-main)] tracking-[0.2em]">{pin}</p>

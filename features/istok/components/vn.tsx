@@ -189,7 +189,11 @@ export const AudioMessagePlayer = React.memo(({ src, duration = 0, isMasked, mim
             flex items-center gap-3 p-3 rounded-2xl min-w-[240px] max-w-[300px] transition-all select-none relative overflow-hidden
             ${error ? 'bg-red-900/10 border border-red-500/30' : 
               isMasked ? 'bg-purple-900/10 border border-purple-500/20' : 
+ codex/refactor-background-colors-in-components
               'bg-[var(--bg-surface)] border border-[var(--border-base)] hover:border-emerald-500/30'}
+
+              'bg-[var(--bg-surface)] border border-white/10 hover:border-emerald-500/30'}
+ main
         `}>
             {/* Audio Element Hidden */}
             <audio ref={audioRef} preload="metadata" onError={() => setError(true)} />

@@ -281,7 +281,11 @@ export const IStokAuth: React.FC<IStokAuthProps> = ({
                                 value={targetId}
                                 onChange={(e) => processRawInput(e.target.value)}
                                 placeholder="Paste ID or Link..." 
+ codex/refactor-background-colors-in-components
                                 className="w-full bg-[var(--bg-surface)] border border-[var(--border-base)] rounded-2xl px-5 py-4 text-sm font-medium text-[var(--text-main)] focus:outline-none focus:border-blue-500 transition-all placeholder:text-[var(--text-muted)] pr-12"
+
+                                className="w-full bg-[var(--bg-surface)] border border-white/10 rounded-2xl px-5 py-4 text-sm font-medium text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-neutral-600 pr-12"
+ main
                                 autoFocus
                             />
                             <button 
@@ -304,7 +308,11 @@ export const IStokAuth: React.FC<IStokAuthProps> = ({
                                 inputMode="numeric"
                                 maxLength={6}
                                 placeholder="******" 
+ codex/refactor-background-colors-in-components
                                 className="w-full bg-[var(--bg-surface)] border border-[var(--border-base)] rounded-2xl px-5 py-4 text-sm font-mono text-[var(--text-main)] focus:outline-none focus:border-blue-500 transition-all placeholder:text-[var(--text-muted)] text-center tracking-[0.5em]"
+
+                                className="w-full bg-[var(--bg-surface)] border border-white/10 rounded-2xl px-5 py-4 text-sm font-mono text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-neutral-600 text-center tracking-[0.5em]"
+ main
                             />
                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" size={16} />
                         </div>

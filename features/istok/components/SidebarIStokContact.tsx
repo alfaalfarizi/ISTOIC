@@ -165,13 +165,21 @@ export const SidebarIStokContact: React.FC<SidebarIStokContactProps> = ({
 
             {/* Sidebar Panel */}
             <div className={`
+ codex/refactor-background-colors-in-components
                 fixed inset-y-0 right-0 w-full max-w-xs bg-[var(--bg-card)] border-l border-[var(--border-base)] z-[2010] 
+
+                fixed inset-y-0 right-0 w-full max-w-xs bg-[var(--bg-card)] border-l border-white/10 z-[2010] 
+ main
                 flex flex-col transform transition-transform duration-300 shadow-2xl font-sans
                 ${isOpen ? 'translate-x-0' : 'translate-x-full'}
             `}>
                 
                 {/* 1. Header Profile (Safe Area Top) */}
+ codex/refactor-background-colors-in-components
                 <div className="pt-safe px-6 pb-6 border-b border-[var(--border-base)] bg-[var(--bg-main)] relative overflow-hidden shrink-0">
+
+                <div className="pt-safe px-6 pb-6 border-b border-white/10 bg-[var(--bg-main)] relative overflow-hidden shrink-0">
+ main
                     <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-[50px] rounded-full pointer-events-none"></div>
                     
                     <div className="flex justify-between items-start mb-6 relative z-10 pt-4">
@@ -217,7 +225,11 @@ export const SidebarIStokContact: React.FC<SidebarIStokContactProps> = ({
 
                 {/* 2. Controls & Search */}
                 <div className="px-4 py-3 space-y-3 bg-[var(--bg-card)] shrink-0">
+ codex/refactor-background-colors-in-components
                     <div className="flex bg-white/5 p-1 rounded-xl border border-[var(--border-base)]">
+
+                    <div className="flex bg-white/5 p-1 rounded-xl border border-white/5">
+ main
                         <button 
                             onClick={() => setActiveTab('CHATS')} 
                             className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${activeTab === 'CHATS' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}

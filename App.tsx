@@ -26,6 +26,7 @@ import { useGlobalPeer } from './hooks/useGlobalPeer';
 import { ConnectionNotification } from './features/istok/components/ConnectionNotification';
 import { decryptData } from './utils/crypto';
 import { IStokUserIdentity } from './features/istok/services/istokIdentity';
+import { THEME_COLORS } from './constants/themeColors';
 
 const SmartNotesView = lazy(() => import('./features/smartNotes/SmartNotesView').then(module => ({ default: module.SmartNotesView })));
 const AIChatView = lazy(() => import('./features/aiChat/AIChatView'));
@@ -34,19 +35,6 @@ const SettingsView = lazy(() => import('./features/settings/SettingsView'));
 const SystemHealthView = lazy(() => import('./features/systemHealth/SystemHealthView').then(module => ({ default: module.SystemHealthView })));
 const IStokView = lazy(() => import('./features/istok/IStokView').then(module => ({ default: module.IStokView })));
 const TeleponanView = lazy(() => import('./features/teleponan/TeleponanView').then(module => ({ default: module.TeleponanView })));
-
-export const THEME_COLORS: Record<string, string> = {
-  cyan: '#00F0FF',
-  lime: '#CCFF00',
-  purple: '#BF00FF',
-  orange: '#FF5F00',
-  silver: '#FFFFFF',
-  blue: '#0066FF',
-  green: '#00FF94',
-  red: '#FF003C',
-  pink: '#FF0099',
-  gold: '#FFD700'
-};
 
 const ViewLoader = () => (
     <div className="h-full w-full flex flex-col items-center justify-center text-neutral-500 gap-4 animate-pulse">

@@ -125,8 +125,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({ msg, se
                         ${isMe 
                             ? 'bg-emerald-900/40 border-emerald-500/30 text-emerald-50 rounded-tr-none' 
                             : isAI
+ codex/refactor-background-colors-in-components
                                 ? 'bg-purple-900/20 border-purple-500/30 text-[var(--text-main)] rounded-tl-none hover:bg-purple-900/30'
                                 : 'bg-[var(--bg-surface)] text-[var(--text-main)] border-[var(--border-base)] rounded-tl-none hover:bg-[var(--bg-surface-hover)]'
+
+                                ? 'bg-purple-900/20 border-purple-500/30 text-neutral-200 rounded-tl-none hover:bg-purple-900/30'
+                                : 'bg-[var(--bg-surface)] text-neutral-200 border-white/10 rounded-tl-none hover:bg-[var(--bg-surface-hover)]'
+ main
                         }
                         ${msg.type !== 'TEXT' && msg.type !== 'AI_RESPONSE' ? 'p-1' : 'px-4 py-2'}
                     `}

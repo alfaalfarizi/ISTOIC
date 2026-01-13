@@ -295,7 +295,7 @@ export const ChatInput: React.FC<ChatInputProps> = memo(({
 
       {/* Emoji Picker Popover */}
       {showEmojiPicker && (
-          <div className="absolute bottom-[110%] left-0 w-full sm:w-80 bg-white/95 dark:bg-[#0a0a0b]/95 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-[24px] shadow-2xl z-30 animate-slide-up flex flex-col overflow-hidden ring-1 ring-white/5">
+          <div className="absolute bottom-[110%] left-0 w-full sm:w-80 bg-[var(--bg-card)]/95 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-[24px] shadow-2xl z-30 animate-slide-up flex flex-col overflow-hidden ring-1 ring-white/5">
               <div className="flex p-1 border-b border-black/5 dark:border-white/5 overflow-x-auto no-scrollbar">
                   {Object.keys(EMOJI_CATEGORIES).map((cat) => (
                       <button
@@ -349,7 +349,7 @@ export const ChatInput: React.FC<ChatInputProps> = memo(({
       <div 
         className={`
             w-full transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]
-            bg-white/80 dark:bg-[#0f0f11]/80 backdrop-blur-xl
+            bg-[var(--bg-card)]/80 backdrop-blur-xl
             border 
             rounded-[36px] p-2 flex flex-col
             shadow-[0_20px_50px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_-10px_rgba(0,0,0,0.5)]

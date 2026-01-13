@@ -191,7 +191,7 @@ export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ onComplete, on
         {/* Main Content Card - Centered but avoids spotlight if possible (simplified to center for now) */}
         <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-auto">
             <div className={`
-                relative w-full max-w-2xl bg-[#0a0a0b] border border-white/10 rounded-[32px] shadow-2xl overflow-hidden
+                relative w-full max-w-2xl bg-[var(--bg-card)] border border-white/10 rounded-[32px] shadow-2xl overflow-hidden
                 flex flex-col md:flex-row transform transition-all duration-500 ring-1 ring-white/5
                 ${isVisible ? 'translate-y-0 scale-100' : 'translate-y-10 scale-95'}
             `}>

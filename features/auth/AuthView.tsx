@@ -419,7 +419,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
 
   if (stage === "CHECKING") {
     return (
-      <div className="fixed inset-0 bg-[#020202] flex items-center justify-center">
+      <div className="fixed inset-0 bg-[var(--bg-main)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
           <p className="text-emerald-500 text-[10px] font-black tracking-[0.3em] animate-pulse">
@@ -432,7 +432,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
 
   if (stage === "BIOMETRIC_SCAN") {
     return (
-      <div className="fixed inset-0 z-[9999] bg-[#000000] flex flex-col items-center justify-center animate-fade-in text-emerald-500">
+      <div className="fixed inset-0 z-[9999] bg-[var(--bg-main)] flex flex-col items-center justify-center animate-fade-in text-emerald-500">
         <div className="relative mb-8">
           <ScanFace size={64} strokeWidth={1} className="animate-pulse" />
           <div className="absolute inset-0 border-4 border-emerald-500/20 rounded-full animate-[spin_3s_linear_infinite] w-full h-full scale-150 border-t-emerald-500"></div>
@@ -446,7 +446,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-[#020202] flex items-center justify-center p-6 overflow-hidden font-sans select-none sheen">
+    <div className="fixed inset-0 z-[9999] bg-[var(--bg-main)] flex items-center justify-center p-6 overflow-hidden font-sans select-none sheen">
       <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vh] bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none"></div>
 
@@ -528,7 +528,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                 <p className="text-xs text-neutral-500 mt-2">Buat Callsign unik untuk jaringan IStok.</p>
               </div>
 
-              <div className="bg-[#121214] border border-white/10 rounded-2xl px-4 py-4 focus-within:border-emerald-500 transition-all flex items-center">
+              <div className="bg-[var(--bg-surface)] border border-white/10 rounded-2xl px-4 py-4 focus-within:border-emerald-500 transition-all flex items-center">
                 <span className="text-emerald-500 font-black text-sm mr-1 select-none">ISTOIC-</span>
                 <input
                   value={codename}
@@ -566,7 +566,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                 inputMode="numeric"
                 value={pinInput}
                 onChange={(e) => setPinInput(e.target.value.slice(0, 6))}
-                className="w-full bg-[#121214] border border-white/10 rounded-2xl py-5 text-center text-3xl font-black text-white tracking-[0.5em] focus:border-amber-500 outline-none"
+                className="w-full bg-[var(--bg-surface)] border border-white/10 rounded-2xl py-5 text-center text-3xl font-black text-white tracking-[0.5em] focus:border-amber-500 outline-none"
                 placeholder="••••"
               />
 
@@ -622,7 +622,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                       setPinInput(e.target.value.slice(0, 6));
                       setError(null);
                     }}
-                    className={`w-full bg-[#121214] border rounded-2xl py-5 text-center text-3xl font-black text-white tracking-[0.5em] focus:outline-none transition-all placeholder:text-neutral-800 ${
+                    className={`w-full bg-[var(--bg-surface)] border rounded-2xl py-5 text-center text-3xl font-black text-white tracking-[0.5em] focus:outline-none transition-all placeholder:text-neutral-800 ${
                       error ? "border-red-500/50" : "border-white/10 focus:border-emerald-500"
                     }`}
                     placeholder="••••••"

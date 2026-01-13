@@ -442,7 +442,7 @@ export const ForgotPin: React.FC<{ onBack: () => void; onSuccess: () => void; ex
             maxLength={6}
             value={newPin}
             onChange={(e) => setNewPin(e.target.value.replace(/[^0-9]/g, ''))}
-            className="w-full bg-[#121214] border border-white/10 rounded-2xl px-5 py-4 text-center text-2xl font-mono text-white focus:border-amber-500 outline-none tracking-[0.5em]"
+            className="w-full bg-[var(--bg-surface)] border border-white/10 rounded-2xl px-5 py-4 text-center text-2xl font-mono text-white focus:border-amber-500 outline-none tracking-[0.5em]"
             placeholder="BARU"
           />
         </div>

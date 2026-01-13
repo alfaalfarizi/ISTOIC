@@ -45,7 +45,7 @@ const ThinkingAccordion = ({ content, isActive }: { content: string, isActive?: 
                 </div>
             </button>
             <div className={`transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] overflow-hidden ${isExpanded ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                <div className="relative border-t border-white/5 bg-[#050505] p-4 pl-6 overflow-x-auto custom-scroll">
+                <div className="relative border-t border-white/5 bg-[var(--bg-main)] p-4 pl-6 overflow-x-auto custom-scroll">
                     <pre className="text-[10px] font-mono leading-[1.8] text-neutral-400 whitespace-pre-wrap font-medium tracking-tight">{content}</pre>
                 </div>
             </div>
@@ -132,12 +132,12 @@ const CodeBlock = ({ language, children }: { language: string, children: React.R
     const [copied, setCopied] = useState(false);
     const handleCopy = () => { navigator.clipboard.writeText(String(children)); setCopied(true); setTimeout(() => setCopied(false), 2000); };
     return (
-        <div className="relative my-4 rounded-xl overflow-hidden border border-black/10 dark:border-white/10 bg-[#0e0e10]">
+        <div className="relative my-4 rounded-xl overflow-hidden border border-black/10 dark:border-white/10 bg-[var(--bg-card)]">
             <div className="flex items-center justify-between px-3 py-2 bg-white/5 border-b border-white/5 backdrop-blur-md">
                 <span className="text-[9px] font-black uppercase tracking-widest text-neutral-500">{language || 'TEXT'}</span>
                 <button onClick={handleCopy} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-all">{copied ? <Check size={12} className="text-emerald-500"/> : <Copy size={12} className="text-neutral-400"/>}</button>
             </div>
-            <div className="p-4 overflow-x-auto custom-scroll bg-[#050505]"><code className="language-text block text-[11px] font-mono text-neutral-300 whitespace-pre">{children}</code></div>
+            <div className="p-4 overflow-x-auto custom-scroll bg-[var(--bg-main)]"><code className="language-text block text-[11px] font-mono text-neutral-300 whitespace-pre">{children}</code></div>
         </div>
     );
 };
@@ -146,11 +146,11 @@ const TypingIndicator = ({ personaMode }: { personaMode: 'hanisah' | 'stoic' }) 
     return (
         <div className="flex justify-start mb-6 px-1 animate-fade-in w-full">
             <div className="flex flex-col gap-2 mr-3 shrink-0 mt-1">
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shadow-lg border border-white/10 bg-white dark:bg-[#121214] ${personaMode === 'hanisah' ? 'text-orange-500' : 'text-cyan-500'}`}>
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shadow-lg border border-white/10 bg-[var(--bg-surface)] ${personaMode === 'hanisah' ? 'text-orange-500' : 'text-cyan-500'}`}>
                     {personaMode === 'hanisah' ? <Flame size={16} fill="currentColor"/> : <Brain size={16} fill="currentColor"/>}
                 </div>
             </div>
-            <div className="bg-white dark:bg-[#0a0a0b] border border-black/5 dark:border-white/10 rounded-[24px] rounded-tl-sm px-5 py-4 flex items-center gap-1.5 shadow-sm h-[52px]">
+            <div className="bg-[var(--bg-card)] border border-black/5 dark:border-white/10 rounded-[24px] rounded-tl-sm px-5 py-4 flex items-center gap-1.5 shadow-sm h-[52px]">
                 <div className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                 <div className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
                 <div className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce"></div>
@@ -230,7 +230,7 @@ const MessageBubble = memo(({ msg, personaMode, isLoading, onUpdateMessage }: { 
             {/* Avatar for Model */}
             {isModel && (
                 <div className="flex flex-col gap-2 mr-3 shrink-0 mt-1">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shadow-lg border border-white/10 bg-white dark:bg-[#121214] ${accentColor}`}>
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shadow-lg border border-white/10 bg-[var(--bg-surface)] ${accentColor}`}>
                         {isError ? <AlertTriangle size={16} /> : (personaMode === 'hanisah' ? <Flame size={16} fill="currentColor"/> : <Brain size={16} fill="currentColor"/>)}
                     </div>
                 </div>
@@ -245,7 +245,7 @@ const MessageBubble = memo(({ msg, personaMode, isLoading, onUpdateMessage }: { 
                     {/* The Message Bubble */}
                     <div className={`relative px-5 py-4 overflow-hidden text-sm md:text-[15px] leading-7 font-sans tracking-wide shadow-sm break-words
                         ${isModel 
-                            ? 'bg-white dark:bg-[#0a0a0b] text-black dark:text-neutral-200 rounded-[24px] rounded-tl-sm border border-black/5 dark:border-white/10' 
+                            ? 'bg-[var(--bg-card)] text-black dark:text-neutral-200 rounded-[24px] rounded-tl-sm border border-black/5 dark:border-white/10' 
                             : 'bg-zinc-100 dark:bg-white/5 text-black dark:text-white rounded-[24px] rounded-tr-sm border border-black/5 dark:border-white/5'
                         }
                     `}>

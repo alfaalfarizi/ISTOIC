@@ -98,7 +98,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         const stackTrace = errorInfo?.componentStack || error?.stack || "No stack trace available.";
 
       return (
-        <div className="h-full w-full flex items-center justify-center p-6 animate-fade-in bg-[#f8f9fa] dark:bg-[#050505] overflow-y-auto">
+        <div className="h-full w-full flex items-center justify-center p-6 animate-fade-in bg-[var(--bg-main)] overflow-y-auto">
           <div className={`glass-card-3d p-8 max-w-lg w-full shadow-[0_0_50px_rgba(220,38,38,0.1)] flex flex-col items-center text-center ${isGeminiFatal ? 'border-amber-500/30 bg-amber-950/[0.05]' : 'border-red-500/30 bg-red-950/[0.05]'}`}>
             
             <div className={`w-20 h-20 rounded-2xl flex items-center justify-center border mb-6 shadow-[0_0_30px_rgba(239,68,68,0.2)] animate-pulse-slow ${isGeminiFatal ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>

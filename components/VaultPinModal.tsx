@@ -62,7 +62,7 @@ export const VaultPinModal: React.FC<VaultPinModalProps> = ({ isOpen, onClose, o
     return (
         <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in">
             <div className={`
-                relative w-full max-w-sm bg-white dark:bg-[#0a0a0b] border border-black/5 dark:border-white/10 rounded-[32px] p-8 
+                relative w-full max-w-sm bg-[var(--bg-card)] border border-black/5 dark:border-white/10 rounded-[32px] p-8 
                 shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex flex-col items-center gap-6
                 ${shake ? 'animate-[shake_0.5s_cubic-bezier(.36,.07,.19,.97)_both]' : ''}
             `}>

@@ -104,7 +104,7 @@ export const IntegrityMatrix: React.FC = () => {
     };
 
     return (
-        <div className="flex-1 overflow-y-auto p-6 md:p-8 relative z-20 bg-[#0a0a0b] rounded-[32px] border border-white/5 shadow-2xl animate-slide-up">
+        <div className="flex-1 overflow-y-auto p-6 md:p-8 relative z-20 bg-[var(--bg-card)] rounded-[32px] border border-white/5 shadow-2xl animate-slide-up">
             
             {/* Background Circuit Pattern */}
             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none"></div>

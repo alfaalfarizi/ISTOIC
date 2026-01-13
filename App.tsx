@@ -172,29 +172,24 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes }) => {
   };
 
   return (
-    <div className="flex h-[100dvh] w-full text-skin-text font-sans bg-skin-main theme-transition overflow-hidden selection:bg-accent/30 selection:text-accent relative">
-      
-      {/* 1. Global Ambient Background Layer */}
-      <div className="absolute inset-0 pointer-events-none z-0 transform-gpu">
-          <div className="absolute inset-0 bg-gradient-to-br from-skin-main via-skin-main to-skin-main opacity-100"></div>
-          <div className="absolute inset-0 opacity-20 dark:opacity-30 mix-blend-screen bg-gradient-to-tr from-[var(--accent-color)]/20 via-purple-500/10 to-blue-500/10 filter blur-[100px] animate-aurora animate-soft-float will-change-transform"></div>
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.02] mix-blend-overlay"></div>
-      </div>
-
-      {/* 2. Main Content Layout */}
-      <div className="flex w-full h-full relative z-10 overflow-hidden">
-          <Sidebar 
-            key={`sidebar-${language}`}
-            activeFeature={activeFeature} 
-            setActiveFeature={handleNavigate} 
-            chatLogic={chatLogic}
-          />
-          
-          <main className="flex-1 relative h-full w-full bg-transparent min-w-0 flex flex-col">
-            <div className="flex-1 w-full h-full overflow-hidden relative">
-                {renderContent()}
-            </div>
-          </main>
+    <div className="flex h-[100dvh] w-full text-skin-text font-sans bg-skin-main theme-transition overflow-hidden selection:bg-accent/30 selection:text-accent">
+      <div className="flex w-full h-full p-2 sm:p-3">
+        <div className="flex w-full h-full bg-skin-surface/80 border border-skin-border rounded-[32px] shadow-sm overflow-hidden">
+          <div className="flex w-full h-full bg-skin-card/40">
+            <Sidebar 
+              key={`sidebar-${language}`}
+              activeFeature={activeFeature} 
+              setActiveFeature={handleNavigate} 
+              chatLogic={chatLogic}
+            />
+            
+            <main className="flex-1 relative h-full w-full bg-transparent min-w-0 flex flex-col">
+              <div className="flex-1 w-full h-full overflow-hidden relative">
+                  {renderContent()}
+              </div>
+            </main>
+          </div>
+        </div>
       </div>
 
       <MobileNav 
@@ -213,10 +208,6 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes }) => {
           />
       )}
 
-      <style>{`
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-        .pt-safe { padding-top: env(safe-area-inset-top); }
-      `}</style>
     </div>
   );
 };

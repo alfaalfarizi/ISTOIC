@@ -233,7 +233,7 @@ export const IStokAuth: React.FC<IStokAuthProps> = ({
                     </div>
                 </div>
                 <div className="p-8 bg-black flex justify-center pb-safe">
-                    <button onClick={stopScanner} className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-white border border-white/20 active:scale-95 transition-all">
+                    <button onClick={stopScanner} className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-[var(--text-main)] border border-[var(--border-base)] active:scale-95 transition-all">
                         <X size={24} />
                     </button>
                 </div>
@@ -249,15 +249,15 @@ export const IStokAuth: React.FC<IStokAuthProps> = ({
                 
                 {/* Connecting Overlay */}
                 {isConnecting && (
-                    <div className="absolute inset-0 z-50 bg-[#09090b]/95 backdrop-blur-md rounded-[32px] flex flex-col items-center justify-center text-center p-6 animate-fade-in border border-emerald-500/20">
+                    <div className="absolute inset-0 z-50 bg-[var(--bg-card)]/95 backdrop-blur-md rounded-[32px] flex flex-col items-center justify-center text-center p-6 animate-fade-in border border-emerald-500/20">
                         <div className="relative mb-6">
                             {/* Radar Effect */}
                             <div className="absolute inset-0 bg-emerald-500/20 rounded-full animate-ping"></div>
-                            <div className="w-24 h-24 rounded-full border-4 border-emerald-500/30 border-t-emerald-500 animate-spin relative z-10 flex items-center justify-center bg-[#09090b]">
+                            <div className="w-24 h-24 rounded-full border-4 border-emerald-500/30 border-t-emerald-500 animate-spin relative z-10 flex items-center justify-center bg-[var(--bg-card)]">
                                 <Activity size={32} className="text-emerald-500" />
                             </div>
                         </div>
-                        <h3 className="text-lg font-black text-white uppercase tracking-widest mb-1 animate-pulse">
+                        <h3 className="text-lg font-black text-[var(--text-main)] uppercase tracking-widest mb-1 animate-pulse">
                             {connectionStage.replace('_', ' ')}
                         </h3>
                         <p className="text-xs font-mono text-emerald-600/70">ESTABLISHING SECURE TUNNEL...</p>
@@ -268,25 +268,25 @@ export const IStokAuth: React.FC<IStokAuthProps> = ({
                     <div className="w-16 h-16 bg-blue-600/20 text-blue-500 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-blue-500/30 shadow-[0_0_30px_rgba(37,99,235,0.2)]">
                         <ScanLine size={32} />
                     </div>
-                    <h2 className="text-2xl font-black text-white uppercase tracking-tight">Gabung Sesi</h2>
-                    <p className="text-neutral-400 text-xs font-medium">Masukkan ID Target atau Link untuk terhubung.</p>
+                    <h2 className="text-2xl font-black text-[var(--text-main)] uppercase tracking-tight">Gabung Sesi</h2>
+                    <p className="text-[var(--text-muted)] text-xs font-medium">Masukkan ID Target atau Link untuk terhubung.</p>
                 </div>
 
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest ml-1">Target ID / Link</label>
+                        <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1">Target ID / Link</label>
                         <div className="relative flex items-center">
                             <input 
                                 id="target-id-input"
                                 value={targetId}
                                 onChange={(e) => processRawInput(e.target.value)}
                                 placeholder="Paste ID or Link..." 
-                                className="w-full bg-[#121214] border border-white/10 rounded-2xl px-5 py-4 text-sm font-medium text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-neutral-600 pr-12"
+                                className="w-full bg-[var(--bg-surface)] border border-[var(--border-base)] rounded-2xl px-5 py-4 text-sm font-medium text-[var(--text-main)] focus:outline-none focus:border-blue-500 transition-all placeholder:text-[var(--text-muted)] pr-12"
                                 autoFocus
                             />
                             <button 
                                 onClick={handlePaste}
-                                className="absolute right-3 p-2 text-neutral-500 hover:text-white bg-white/5 rounded-xl hover:bg-white/10 transition-all"
+                                className="absolute right-3 p-2 text-[var(--text-muted)] hover:text-[var(--text-main)] bg-white/5 rounded-xl hover:bg-white/10 transition-all"
                                 title="Smart Paste"
                             >
                                 <Clipboard size={18} />
@@ -295,7 +295,7 @@ export const IStokAuth: React.FC<IStokAuthProps> = ({
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest ml-1">Akses PIN</label>
+                        <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest ml-1">Akses PIN</label>
                         <div className="relative">
                             <input 
                                 value={pin}
@@ -304,16 +304,16 @@ export const IStokAuth: React.FC<IStokAuthProps> = ({
                                 inputMode="numeric"
                                 maxLength={6}
                                 placeholder="******" 
-                                className="w-full bg-[#121214] border border-white/10 rounded-2xl px-5 py-4 text-sm font-mono text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-neutral-600 text-center tracking-[0.5em]"
+                                className="w-full bg-[var(--bg-surface)] border border-[var(--border-base)] rounded-2xl px-5 py-4 text-sm font-mono text-[var(--text-main)] focus:outline-none focus:border-blue-500 transition-all placeholder:text-[var(--text-muted)] text-center tracking-[0.5em]"
                             />
-                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600 pointer-events-none" size={16} />
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" size={16} />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-5 gap-3 pt-2">
                         <button 
                             onClick={startScanner} 
-                            className="col-span-1 h-14 bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl flex items-center justify-center text-white transition-all active:scale-95"
+                            className="col-span-1 h-14 bg-white/5 hover:bg-white/10 border border-[var(--border-base)] rounded-2xl flex items-center justify-center text-[var(--text-main)] transition-all active:scale-95"
                             title="Scan QR"
                         >
                             <Camera size={20} />

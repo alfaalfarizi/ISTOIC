@@ -46,11 +46,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({ msg, se
     const renderStatusIcon = () => {
         if (!isMe) return null;
         switch (msg.status) {
-            case 'PENDING': return <Clock size={12} className="text-neutral-500" />;
-            case 'SENT': return <Check size={14} className="text-neutral-500" />;
-            case 'DELIVERED': return <CheckCheck size={14} className="text-neutral-500" />;
+            case 'PENDING': return <Clock size={12} className="text-[var(--text-muted)]" />;
+            case 'SENT': return <Check size={14} className="text-[var(--text-muted)]" />;
+            case 'DELIVERED': return <CheckCheck size={14} className="text-[var(--text-muted)]" />;
             case 'READ': return <CheckCheck size={14} className="text-blue-400" />;
-            default: return <Clock size={12} className="text-neutral-500" />;
+            default: return <Clock size={12} className="text-[var(--text-muted)]" />;
         }
     };
 
@@ -78,17 +78,17 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({ msg, se
                 return (
                     <div className="flex items-center gap-3 p-2 min-w-[160px]">
                         <div className="p-2 bg-white/10 rounded-lg flex-shrink-0">
-                            <FileText size={24} className="text-white" />
+                            <FileText size={24} className="text-[var(--text-main)]" />
                         </div>
                         <div className="flex-1 overflow-hidden min-w-0">
-                            <p className="text-xs font-bold text-white truncate w-full">
+                            <p className="text-xs font-bold text-[var(--text-main)] truncate w-full">
                                 {msg.fileName || 'Dokumen Tanpa Nama'}
                             </p>
-                            <p className="text-[10px] text-neutral-400">
+                            <p className="text-[10px] text-[var(--text-muted)]">
                                 {msg.size ? (msg.size / 1024).toFixed(1) : '0'} KB • {msg.mimeType?.split('/')[1]?.toUpperCase() || 'FILE'}
                             </p>
                         </div>
-                        <button className="p-2 hover:bg-white/10 rounded-full transition-colors text-neutral-400 hover:text-white">
+                        <button className="p-2 hover:bg-white/10 rounded-full transition-colors text-[var(--text-muted)] hover:text-[var(--text-main)]">
                             <Download size={16} />
                         </button>
                     </div>
@@ -125,8 +125,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({ msg, se
                         ${isMe 
                             ? 'bg-emerald-900/40 border-emerald-500/30 text-emerald-50 rounded-tr-none' 
                             : isAI
-                                ? 'bg-purple-900/20 border-purple-500/30 text-neutral-200 rounded-tl-none hover:bg-purple-900/30'
-                                : 'bg-[#1a1a1a] text-neutral-200 border-white/10 rounded-tl-none hover:bg-[#252525]'
+                                ? 'bg-purple-900/20 border-purple-500/30 text-[var(--text-main)] rounded-tl-none hover:bg-purple-900/30'
+                                : 'bg-[var(--bg-surface)] text-[var(--text-main)] border-[var(--border-base)] rounded-tl-none hover:bg-[var(--bg-surface-hover)]'
                         }
                         ${msg.type !== 'TEXT' && msg.type !== 'AI_RESPONSE' ? 'p-1' : 'px-4 py-2'}
                     `}
@@ -136,7 +136,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = React.memo(({ msg, se
                 
                 {/* Meta Data (Waktu & Status) */}
                 <div className="flex items-center gap-1 mt-1 px-1 opacity-70 select-none">
-                     <span className="text-[9px] font-mono text-neutral-500">
+                     <span className="text-[9px] font-mono text-[var(--text-muted)]">
                         {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                      </span>
                      

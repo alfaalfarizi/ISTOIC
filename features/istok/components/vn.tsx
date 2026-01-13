@@ -189,7 +189,7 @@ export const AudioMessagePlayer = React.memo(({ src, duration = 0, isMasked, mim
             flex items-center gap-3 p-3 rounded-2xl min-w-[240px] max-w-[300px] transition-all select-none relative overflow-hidden
             ${error ? 'bg-red-900/10 border border-red-500/30' : 
               isMasked ? 'bg-purple-900/10 border border-purple-500/20' : 
-              'bg-[#121212] border border-white/10 hover:border-emerald-500/30'}
+              'bg-[var(--bg-surface)] border border-[var(--border-base)] hover:border-emerald-500/30'}
         `}>
             {/* Audio Element Hidden */}
             <audio ref={audioRef} preload="metadata" onError={() => setError(true)} />
@@ -237,8 +237,8 @@ export const AudioMessagePlayer = React.memo(({ src, duration = 0, isMasked, mim
                 <div className="flex items-center justify-between w-full px-1">
                      <div className="flex items-center gap-2">
                         {isMasked ? <Ghost size={10} className="text-purple-400" /> : <Lock size={10} className="text-emerald-500" />}
-                        <span className="text-[10px] font-mono font-bold text-neutral-400">
-                            {formatTime(currentTime)} <span className="text-neutral-600">/</span> {formatTime(duration)}
+                        <span className="text-[10px] font-mono font-bold text-[var(--text-muted)]">
+                            {formatTime(currentTime)} <span className="text-[var(--text-muted)]">/</span> {formatTime(duration)}
                         </span>
                     </div>
 

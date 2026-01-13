@@ -419,7 +419,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
 
   if (stage === "CHECKING") {
     return (
-      <div className="fixed inset-0 bg-[#020202] flex items-center justify-center">
+      <div className="fixed inset-0 bg-[var(--bg-main)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
           <p className="text-emerald-500 text-[10px] font-black tracking-[0.3em] animate-pulse">
@@ -432,13 +432,13 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
 
   if (stage === "BIOMETRIC_SCAN") {
     return (
-      <div className="fixed inset-0 z-[9999] bg-[#000000] flex flex-col items-center justify-center animate-fade-in text-emerald-500">
+      <div className="fixed inset-0 z-[9999] bg-[var(--bg-main)] flex flex-col items-center justify-center animate-fade-in text-emerald-500">
         <div className="relative mb-8">
           <ScanFace size={64} strokeWidth={1} className="animate-pulse" />
           <div className="absolute inset-0 border-4 border-emerald-500/20 rounded-full animate-[spin_3s_linear_infinite] w-full h-full scale-150 border-t-emerald-500"></div>
         </div>
         <h2 className="text-xl font-black tracking-widest uppercase">{bioStatus}</h2>
-        <button onClick={() => setStage("LOCKED")} className="mt-8 text-neutral-500 text-xs font-mono hover:text-white">
+        <button onClick={() => setStage("LOCKED")} className="mt-8 text-[var(--text-muted)] text-xs font-mono hover:text-[var(--text-main)]">
           USE PIN
         </button>
       </div>
@@ -446,7 +446,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-[#020202] flex items-center justify-center p-6 overflow-hidden font-sans select-none sheen">
+    <div className="fixed inset-0 z-[9999] bg-[var(--bg-main)] flex items-center justify-center p-6 overflow-hidden font-sans select-none sheen">
       <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vh] bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none"></div>
 
@@ -455,10 +455,10 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
           {stage === "WELCOME" && (
             <div className="text-center space-y-8 animate-slide-up">
               <div className="space-y-2">
-                <h1 className="text-3xl font-black text-white italic tracking-tighter uppercase">
+                <h1 className="text-3xl font-black text-[var(--text-main)] italic tracking-tighter uppercase">
                   ISTOIC <span className="text-emerald-500">TITANIUM</span>
                 </h1>
-                <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-[0.3em]">SECURE COGNITIVE OS v101.0</p>
+                <p className="text-[10px] font-mono text-[var(--text-muted)] uppercase tracking-[0.3em]">SECURE COGNITIVE OS v101.0</p>
               </div>
 
               <div className="space-y-4">
@@ -472,15 +472,15 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                 </button>
 
                 <div className="flex items-center gap-4 px-2">
-                  <div className="h-[1px] bg-white/10 flex-1"></div>
-                  <span className="text-[9px] text-neutral-600 font-black uppercase">ATAU</span>
-                  <div className="h-[1px] bg-white/10 flex-1"></div>
+                  <div className="h-[1px] bg-[var(--border-base)] flex-1"></div>
+                  <span className="text-[9px] text-[var(--text-muted)] font-black uppercase">ATAU</span>
+                  <div className="h-[1px] bg-[var(--border-base)] flex-1"></div>
                 </div>
 
                 <button
                   onClick={() => setStage("LOGIN_MANUAL")}
                   disabled={loading}
-                  className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-2xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 transition-all active:scale-95"
+                  className="w-full py-4 bg-[var(--bg-card)]/70 hover:bg-[var(--bg-card)] border border-[var(--border-base)] text-[var(--text-main)] rounded-2xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 transition-all active:scale-95"
                 >
                   <Mail size={18} className="text-emerald-500" />
                   LOGIN DENGAN EMAIL
@@ -496,7 +496,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
 
                 <button
                   onClick={() => setStage("FORGOT_ACCOUNT")}
-                  className="text-[9px] font-bold text-neutral-500 hover:text-white transition-colors flex items-center gap-2 mx-auto pt-2"
+                  className="text-[9px] font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors flex items-center gap-2 mx-auto pt-2"
                 >
                   <HelpCircle size={10} /> LUPA AKUN?
                 </button>
@@ -506,7 +506,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                 {isSystemPinConfigured() && (
                   <button
                     onClick={() => setStage("LOCKED")}
-                    className="text-[10px] font-bold text-neutral-400 hover:text-emerald-500 transition-colors flex items-center justify-center gap-2 mx-auto"
+                    className="text-[10px] font-bold text-[var(--text-muted)] hover:text-emerald-500 transition-colors flex items-center justify-center gap-2 mx-auto"
                   >
                     <KeyRound size={12} /> AKSES PERANGKAT
                   </button>
@@ -525,15 +525,15 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
             <div className="space-y-6 animate-slide-up">
               <div className="text-center">
                 <h2 className={authStyles.title}>Setup Identitas</h2>
-                <p className="text-xs text-neutral-500 mt-2">Buat Callsign unik untuk jaringan IStok.</p>
+                <p className="text-xs text-[var(--text-muted)] mt-2">Buat Callsign unik untuk jaringan IStok.</p>
               </div>
 
-              <div className="bg-[#121214] border border-white/10 rounded-2xl px-4 py-4 focus-within:border-emerald-500 transition-all flex items-center">
+              <div className="bg-[var(--bg-surface)] border border-[var(--border-base)] rounded-2xl px-4 py-4 focus-within:border-emerald-500 transition-all flex items-center">
                 <span className="text-emerald-500 font-black text-sm mr-1 select-none">ISTOIC-</span>
                 <input
                   value={codename}
                   onChange={(e) => setCodename(e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase())}
-                  className="bg-transparent border-none outline-none text-white font-bold text-lg w-full uppercase"
+                  className="bg-transparent border-none outline-none text-[var(--text-main)] font-bold text-lg w-full uppercase"
                   placeholder="BARISTA"
                   maxLength={12}
                 />
@@ -557,7 +557,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                 <KeyRound size={28} />
               </div>
               <h2 className={authStyles.title}>Kunci Perangkat</h2>
-              <p className="text-xs text-neutral-500">
+              <p className="text-xs text-[var(--text-muted)]">
                 PIN ini hanya tersimpan di perangkat ini untuk enkripsi lokal. Login berikutnya HANYA menggunakan PIN ini.
               </p>
 
@@ -566,7 +566,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                 inputMode="numeric"
                 value={pinInput}
                 onChange={(e) => setPinInput(e.target.value.slice(0, 6))}
-                className="w-full bg-[#121214] border border-white/10 rounded-2xl py-5 text-center text-3xl font-black text-white tracking-[0.5em] focus:border-amber-500 outline-none"
+                className="w-full bg-[var(--bg-surface)] border border-[var(--border-base)] rounded-2xl py-5 text-center text-3xl font-black text-[var(--text-main)] tracking-[0.5em] focus:border-amber-500 outline-none"
                 placeholder="••••"
               />
 
@@ -590,7 +590,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                 >
                   {isHardLocked ? <Lock size={32} /> : identity ? <Fingerprint size={32} /> : <Terminal size={32} />}
                 </div>
-                <h2 className="text-xl font-bold text-white uppercase tracking-tight">
+                <h2 className="text-xl font-bold text-[var(--text-main)] uppercase tracking-tight">
                   {identity?.displayName || "SYSTEM LOCKED"}
                 </h2>
                 <p className="text-[10px] font-mono text-emerald-500 tracking-wider">{identity?.istokId || "AUTH_REQUIRED"}</p>
@@ -603,7 +603,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                       <ShieldAlert size={24} className="text-red-500" />
                       <p className="text-[10px] font-black text-red-500 uppercase tracking-widest">SECURITY LOCKOUT</p>
                     </div>
-                    <p className="text-2xl font-mono text-white font-bold mt-2">
+                    <p className="text-2xl font-mono text-[var(--text-main)] font-bold mt-2">
                       00:{Math.floor(countdown / 60)
                         .toString()
                         .padStart(2, "0")}
@@ -622,8 +622,8 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                       setPinInput(e.target.value.slice(0, 6));
                       setError(null);
                     }}
-                    className={`w-full bg-[#121214] border rounded-2xl py-5 text-center text-3xl font-black text-white tracking-[0.5em] focus:outline-none transition-all placeholder:text-neutral-800 ${
-                      error ? "border-red-500/50" : "border-white/10 focus:border-emerald-500"
+                    className={`w-full bg-[var(--bg-surface)] border rounded-2xl py-5 text-center text-3xl font-black text-[var(--text-main)] tracking-[0.5em] focus:outline-none transition-all placeholder:text-[var(--text-muted)] ${
+                      error ? "border-red-500/50" : "border-[var(--border-base)] focus:border-emerald-500"
                     }`}
                     placeholder="••••••"
                     disabled={loading}
@@ -660,14 +660,14 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                     <button
                       type="button"
                       onClick={() => setStage("FORGOT_PIN")}
-                      className="text-neutral-500 text-[10px] font-bold tracking-widest hover:text-white transition-colors"
+                      className="text-[var(--text-muted)] text-[10px] font-bold tracking-widest hover:text-[var(--text-main)] transition-colors"
                     >
                       LUPA PIN?
                     </button>
                     <button
                       type="button"
                       onClick={() => setStage("WELCOME")}
-                      className="text-neutral-500 text-[10px] font-bold tracking-widest hover:text-white transition-colors"
+                      className="text-[var(--text-muted)] text-[10px] font-bold tracking-widest hover:text-[var(--text-main)] transition-colors"
                     >
                       GANTI AKUN
                     </button>

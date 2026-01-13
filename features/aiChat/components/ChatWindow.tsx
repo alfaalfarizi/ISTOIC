@@ -17,7 +17,7 @@ const SystemStatusBubble = ({ status }: { status: string }) => (
     <div className="flex items-center gap-2.5 my-2 px-4 py-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-amber-500 w-fit animate-slide-up">
         <div className="relative">
             <Network size={14} className="relative z-10" />
-            <div className="absolute inset-0 bg-amber-500 blur-md opacity-20 animate-pulse"></div>
+            <div className="absolute inset-0 bg-amber-500 blur-md opacity-20"></div>
         </div>
         <span className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
             {status}
@@ -30,17 +30,17 @@ const ThinkingAccordion = ({ content, isActive }: { content: string, isActive?: 
     const [isExpanded, setIsExpanded] = useState(isActive);
     useEffect(() => { if (isActive) setIsExpanded(true); }, [isActive]);
     return (
-        <div className={`my-3 rounded-xl overflow-hidden border transition-all duration-500 w-full group/thought ${isActive ? 'border-cyan-500/40 bg-cyan-900/10 shadow-[0_0_25px_rgba(6,182,212,0.15)] ring-1 ring-cyan-500/20' : 'border-white/5 bg-black/20'}`}>
+        <div className={`my-3 rounded-xl overflow-hidden border transition-all duration-200 w-full group/thought ${isActive ? 'border-cyan-500/40 bg-cyan-900/10 shadow-[0_0_25px_rgba(var(--status-cyan),0.15)] ring-1 ring-cyan-500/20' : 'border-white/5 bg-black/20'}`}>
             <button onClick={() => setIsExpanded(!isExpanded)} className="w-full flex items-center justify-between px-4 py-3 transition-colors cursor-pointer hover:bg-white/5">
                 <div className="flex items-center gap-3">
-                    <div className={`p-1.5 rounded-lg ${isActive ? 'bg-cyan-500 text-white animate-pulse shadow-[0_0_10px_rgba(6,182,212,0.5)]' : 'bg-white/10 text-neutral-400'}`}>
+                    <div className={`p-1.5 rounded-lg transition-colors duration-200 ${isActive ? 'bg-cyan-500 text-white shadow-[0_0_10px_rgba(var(--status-cyan),0.5)]' : 'bg-white/10 text-neutral-400'}`}>
                         {isActive ? <Infinity size={14} className="animate-spin-slow" /> : <BrainCircuit size={14} />}
                     </div>
                     <div className="flex flex-col items-start leading-none gap-1">
                         <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${isActive ? 'text-cyan-400' : 'text-neutral-500'}`}>{isActive ? 'QUANTUM PROCESSING' : 'COGNITIVE TRACE'}</span>
                     </div>
                 </div>
-                <div className={`p-1.5 rounded-lg transition-all ${isExpanded ? 'bg-cyan-500/20 text-cyan-400' : 'text-neutral-500'}`}>
+                <div className={`p-1.5 rounded-lg transition-all duration-200 ${isExpanded ? 'bg-cyan-500/20 text-cyan-400' : 'text-neutral-500'}`}>
                     <ChevronDown size={14} className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
                 </div>
             </button>
@@ -105,7 +105,7 @@ const ImageGenerationCard = ({ prompt, messageId, originalText, onUpdateMessage 
 
     return (
         <div className="my-4 rounded-2xl overflow-hidden border border-accent/20 bg-black/40 max-w-sm shadow-[0_0_30px_-10px_rgba(var(--accent-rgb),0.1)] ring-1 ring-accent/10 relative">
-            {status === 'GENERATING' && <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-10 flex flex-col items-center justify-center animate-fade-in"><span className="text-[10px] font-black uppercase tracking-[0.2em] text-white animate-pulse">DREAMING...</span></div>}
+            {status === 'GENERATING' && <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-10 flex flex-col items-center justify-center animate-fade-in"><span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">DREAMING...</span></div>}
             <div className="p-3 border-b border-white/5 flex items-center justify-between bg-white/5"><span className="text-[9px] font-black uppercase tracking-widest text-accent flex items-center gap-2"><ImageIcon size={12}/> VISUAL_SYNTHESIS</span></div>
             <div className="p-4">
                 <p className="text-[10px] font-mono text-neutral-400 mb-4 line-clamp-3 italic">"{prompt}"</p>
@@ -144,16 +144,16 @@ const CodeBlock = ({ language, children }: { language: string, children: React.R
 
 const TypingIndicator = ({ personaMode }: { personaMode: 'hanisah' | 'stoic' }) => {
     return (
-        <div className="flex justify-start mb-6 px-1 animate-fade-in w-full">
+            <div className="flex justify-start mb-6 px-1 animate-fade-in w-full">
             <div className="flex flex-col gap-2 mr-3 shrink-0 mt-1">
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center shadow-lg border border-white/10 bg-[var(--bg-surface)] ${personaMode === 'hanisah' ? 'text-orange-500' : 'text-cyan-500'}`}>
                     {personaMode === 'hanisah' ? <Flame size={16} fill="currentColor"/> : <Brain size={16} fill="currentColor"/>}
                 </div>
             </div>
             <div className="bg-[var(--bg-card)] border border-black/5 dark:border-white/10 rounded-[24px] rounded-tl-sm px-5 py-4 flex items-center gap-1.5 shadow-sm h-[52px]">
-                <div className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                <div className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                <div className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce"></div>
+                <div className="w-1.5 h-1.5 bg-neutral-400 rounded-full"></div>
+                <div className="w-1.5 h-1.5 bg-neutral-400 rounded-full"></div>
+                <div className="w-1.5 h-1.5 bg-neutral-400 rounded-full"></div>
             </div>
         </div>
     );

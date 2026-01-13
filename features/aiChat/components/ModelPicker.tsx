@@ -199,7 +199,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
 
       {/* Main Card with Premium Animation */}
       <div 
-        className="relative z-10 w-full md:max-w-5xl h-[92vh] md:h-[85vh] bg-[var(--bg-main)] rounded-t-[32px] md:rounded-[24px] border-t md:border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden ring-1 ring-white/5 animate-slide-up transform-gpu transition-all duration-300 ease-out"
+        className="relative z-10 w-full md:max-w-5xl h-[92vh] md:h-[85vh] bg-[var(--bg-main)] rounded-t-[32px] md:rounded-[24px] border-t md:border border-white/10 shadow-[0_0_50px_rgba(var(--surface-inverse),0.8)] flex flex-col overflow-hidden ring-1 ring-white/5 animate-slide-up transform-gpu transition-all duration-300 ease-out"
         style={{ willChange: 'transform, opacity' }}
       >
         
@@ -256,7 +256,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
 
                             <div className={`
                                 w-8 h-8 rounded-lg flex items-center justify-center transition-all shrink-0
-                                ${isActive ? `${data.bg} ${data.accent} shadow-[0_0_15px_rgba(0,0,0,0.5)]` : 'bg-white/5 text-neutral-500 group-hover:text-white'}
+                                ${isActive ? `${data.bg} ${data.accent} shadow-[0_0_15px_rgba(var(--surface-inverse),0.5)]` : 'bg-white/5 text-neutral-500 group-hover:text-white'}
                             `}>
                                 {data.icon}
                             </div>
@@ -267,7 +267,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
                                         {data.label}
                                     </span>
                                     {key !== 'AUTO' && (
-                                        <div className={`w-1.5 h-1.5 rounded-full ${isHealthy ? 'bg-emerald-500' : 'bg-red-500'} ${isHealthy ? 'shadow-[0_0_5px_#10b981]' : ''}`}></div>
+                                        <div className={`w-1.5 h-1.5 rounded-full ${isHealthy ? 'bg-emerald-500' : 'bg-red-500'} ${isHealthy ? 'shadow-[0_0_5px_rgba(var(--status-success),0.45)]' : ''}`}></div>
                                     )}
                                 </div>
                                 <span className="text-[8px] font-bold text-neutral-600 uppercase tracking-wide group-hover:text-neutral-500 truncate block">

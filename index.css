@@ -23,6 +23,22 @@
   --border-highlight: rgba(15, 23, 42, 0.12);
   
   --shadow-color: 15 23 42;
+
+  --overlay-scrim-strong: rgba(2, 6, 23, 0.85);
+  --overlay-scrim: rgba(2, 6, 23, 0.7);
+
+  --text-inverse: 255 255 255;
+  --surface-inverse: 0 0 0;
+
+  --status-success: 16 185 129;
+  --status-warning: 245 158 11;
+  --status-danger: 239 68 68;
+  --status-info: 59 130 246;
+  --status-cyan: 6 182 212;
+  --status-orange: 249 115 22;
+  --status-purple: 168 85 247;
+  --status-pink: 236 72 153;
+  --status-neutral: 148 163 184;
   
   /* iOS Safe Area Defaults */
   --sat: env(safe-area-inset-top);
@@ -43,6 +59,22 @@
   
   --border-base: rgba(148, 163, 184, 0.12);
   --border-highlight: rgba(148, 163, 184, 0.22);
+
+  --overlay-scrim-strong: rgba(2, 6, 23, 0.85);
+  --overlay-scrim: rgba(2, 6, 23, 0.7);
+
+  --text-inverse: 255 255 255;
+  --surface-inverse: 0 0 0;
+
+  --status-success: 16 185 129;
+  --status-warning: 245 158 11;
+  --status-danger: 239 68 68;
+  --status-info: 59 130 246;
+  --status-cyan: 6 182 212;
+  --status-orange: 249 115 22;
+  --status-purple: 168 85 247;
+  --status-pink: 236 72 153;
+  --status-neutral: 148 163 184;
 }
 
 html {
@@ -67,6 +99,11 @@ body {
   background-color: var(--bg-main);
   color: var(--text-main);
   transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+button {
+  min-height: 44px;
+  min-width: 44px;
 }
 
 #root {
@@ -107,6 +144,11 @@ body.low-perf * {
 ::selection {
   background-color: rgba(var(--accent-rgb), 0.3);
   color: inherit;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
 }
 
 /* GLOBAL NOISE TEXTURE */
@@ -188,6 +230,14 @@ body.low-perf * {
   will-change: transform;
 }
 
+.animate-pulse,
+.animate-pulse-slow,
+.animate-bounce,
+.animate-ping {
+  animation: none !important;
+  transition: color 200ms ease, background-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+}
+
 @keyframes sheen {
   0% { transform: translateX(-120%); opacity: 0; }
   20% { opacity: 0.3; }
@@ -209,7 +259,7 @@ body.low-perf * {
 }
 
 /* UTILITIES */
-.text-glow { text-shadow: 0 0 20px rgba(var(--accent-rgb), 0.6); }
+.text-glow { text-shadow: none; }
 .border-glass { border: 1px solid var(--border-base); }
 .glass-card-3d {
     background: rgba(255, 255, 255, 0.05);

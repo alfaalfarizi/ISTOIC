@@ -114,8 +114,11 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes }) => {
     const onAccentRgb = hexToRgb(onAccentColor);
     const rgb = hexToRgb(targetColor);
     
+    root.style.setProperty('--accent', targetColor);
     root.style.setProperty('--accent-color', targetColor);
     root.style.setProperty('--accent-rgb', rgb);
+    root.style.setProperty('--accent-foreground', onAccentColor);
+    root.style.setProperty('--accent-foreground-rgb', onAccentRgb);
     root.style.setProperty('--on-accent-color', onAccentColor);
     root.style.setProperty('--on-accent-rgb', onAccentRgb);
     root.style.setProperty('--accent-glow', `rgba(${rgb.replace(/ /g, ', ')}, 0.45)`); 

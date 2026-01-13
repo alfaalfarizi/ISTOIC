@@ -7,6 +7,9 @@ import {
   setPersistence,
   browserLocalPersistence,
   browserSessionPersistence,
+  signInWithPopup,
+  signInWithRedirect,
+  signOut,
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
@@ -28,6 +31,11 @@ export const db = getFirestore(app);
 
 // Provider hanya didefinisikan, TIDAK dipakai di sini
 export const googleProvider = new GoogleAuthProvider();
+
+// Backward-compatible helpers for legacy imports
+export const firebaseSignInWithPopup = signInWithPopup;
+export const firebaseSignInWithRedirect = signInWithRedirect;
+export const firebaseSignOut = signOut;
 
 export const ensureAuthPersistence = async (mode: "local" | "session" = "local") => {
   if (!auth) return;

@@ -53,7 +53,7 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes }) => {
   const [isPending, startTransition] = useTransition(); 
 
   const [isTutorialComplete, setIsTutorialComplete] = useLocalStorage<boolean>('app_tutorial_complete_v101', false);
-  const [theme] = useLocalStorage<string>('app_theme', 'cyan');
+  const [theme] = useLocalStorage<string>('app_theme', 'stone');
   const [colorScheme] = useLocalStorage<'system' | 'light' | 'dark'>('app_color_scheme', 'system');
   const [language] = useLocalStorage<string>('app_language', 'id');
   const [isDebugOpen, setIsDebugOpen] = useState(false);
@@ -65,7 +65,7 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes }) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? 
       `${parseInt(result[1], 16)} ${parseInt(result[2], 16)} ${parseInt(result[3], 16)}` : 
-      '6 182 212'; 
+      '168 162 158'; 
   };
 
   const getContrastColor = (hexColor: string) => {
@@ -107,8 +107,7 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes }) => {
     if (activeScheme === 'dark') { root.classList.add('dark'); root.classList.remove('light'); } 
     else { root.classList.add('light'); root.classList.remove('dark'); }
 
-    let targetColor = THEME_COLORS[theme] || THEME_COLORS.cyan;
-    if (theme === 'silver' && activeScheme === 'light') targetColor = '#475569';
+    const targetColor = THEME_COLORS[theme] || THEME_COLORS.stone;
 
     const onAccentColor = getContrastColor(targetColor);
     const onAccentRgb = hexToRgb(onAccentColor);
@@ -118,10 +117,17 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes }) => {
     root.style.setProperty('--accent-color', targetColor);
     root.style.setProperty('--accent-rgb', rgb);
     root.style.setProperty('--accent-foreground', onAccentColor);
+ codex/refactor-css-tokens-to-single-source-of-truth
     root.style.setProperty('--accent-foreground-rgb', onAccentRgb);
+
+ main
     root.style.setProperty('--on-accent-color', onAccentColor);
     root.style.setProperty('--on-accent-rgb', onAccentRgb);
-    root.style.setProperty('--accent-glow', `rgba(${rgb.replace(/ /g, ', ')}, 0.45)`); 
+ codex/update-theme-colors-and-ui-settings
+    root.style.setProperty('--accent-glow', `rgba(${rgb.replace(/ /g, ', ')}, 0.18)`);
+
+    root.style.setProperty('--accent-glow', `rgba(${rgb.replace(/ /g, ', ')}, 0.25)`); 
+ main
     
     const navAccent = targetColor === '#000000' ? '#ffffff' : targetColor;
     root.style.setProperty('--nav-accent', navAccent);
@@ -179,9 +185,15 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes }) => {
       
       {/* 1. Global Ambient Background Layer */}
       <div className="absolute inset-0 pointer-events-none z-0 transform-gpu">
+ codex/update-theme-colors-and-ui-settings
           <div className="absolute inset-0 bg-gradient-to-br from-skin-main via-skin-main to-skin-main opacity-100"></div>
-          <div className="absolute inset-0 opacity-20 dark:opacity-30 mix-blend-screen bg-gradient-to-tr from-[var(--accent-color)]/20 via-purple-500/10 to-blue-500/10 filter blur-[100px] animate-aurora animate-soft-float will-change-transform"></div>
+          <div className="absolute inset-0 opacity-20 dark:opacity-25 mix-blend-screen bg-gradient-to-tr from-[var(--accent-color)]/16 via-[var(--accent-color)]/6 to-transparent filter blur-[110px] animate-aurora animate-soft-float will-change-transform"></div>
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.02] mix-blend-overlay"></div>
+
+          <div className="absolute inset-0 bg-skin-main"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(var(--accent-rgb),0.08),transparent_60%)] opacity-40"></div>
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.015] mix-blend-overlay"></div>
+ main
       </div>
 
       {/* 2. Main Content Layout */}

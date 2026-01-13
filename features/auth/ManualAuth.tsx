@@ -179,7 +179,7 @@ export const LoginManual: React.FC<{ onBack: () => void; onSuccess: ManualAuthSu
               placeholder="nama@email.com"
               autoComplete="email"
             />
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" size={18} />
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
           </div>
         </div>
         <div className="space-y-2">
@@ -193,7 +193,7 @@ export const LoginManual: React.FC<{ onBack: () => void; onSuccess: ManualAuthSu
               placeholder="••••••••"
               autoComplete="current-password"
             />
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" size={18} />
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
           </div>
         </div>
         <button onClick={handleLogin} disabled={loading} className={authStyles.buttonPrimary}>
@@ -293,7 +293,7 @@ export const RegisterManual: React.FC<{ onBack: () => void; onSuccess: ManualAut
               placeholder="Nama Anda"
               autoComplete="name"
             />
-            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" size={18} />
+            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
           </div>
         </div>
         <div className="space-y-2">
@@ -307,7 +307,7 @@ export const RegisterManual: React.FC<{ onBack: () => void; onSuccess: ManualAut
               placeholder="nama@email.com"
               autoComplete="email"
             />
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" size={18} />
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
           </div>
         </div>
         <div className="space-y-2">
@@ -321,7 +321,7 @@ export const RegisterManual: React.FC<{ onBack: () => void; onSuccess: ManualAut
               placeholder="Minimal 8 karakter"
               autoComplete="new-password"
             />
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" size={18} />
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
           </div>
           <p
             className={`text-[10px] font-bold ${
@@ -329,7 +329,7 @@ export const RegisterManual: React.FC<{ onBack: () => void; onSuccess: ManualAut
                 ? 'text-emerald-400'
                 : passwordScore === 'medium'
                   ? 'text-amber-400'
-                  : 'text-neutral-500'
+                  : 'text-[var(--text-muted)]'
             }`}
           >
             {passwordScore === 'empty'
@@ -352,7 +352,7 @@ export const RegisterManual: React.FC<{ onBack: () => void; onSuccess: ManualAut
               placeholder="Ulangi password"
               autoComplete="new-password"
             />
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" size={18} />
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
           </div>
         </div>
         <button onClick={handleRegister} disabled={loading} className={authStyles.buttonSecondary}>
@@ -414,7 +414,7 @@ export const ForgotPin: React.FC<{ onBack: () => void; onSuccess: () => void; ex
           <KeyRound size={32} />
         </div>
         <h2 className={authStyles.title}>Reset PIN Akses</h2>
-        <p className="text-[10px] text-neutral-500 mt-2 max-w-[250px] mx-auto leading-relaxed">
+        <p className="text-[10px] text-[var(--text-muted)] mt-2 max-w-[250px] mx-auto leading-relaxed">
           PIN hanya tersimpan di perangkat ini. Reset PIN akan membuat data terenkripsi lama tidak terbuka.
         </p>
       </div>
@@ -442,11 +442,11 @@ export const ForgotPin: React.FC<{ onBack: () => void; onSuccess: () => void; ex
             maxLength={6}
             value={newPin}
             onChange={(e) => setNewPin(e.target.value.replace(/[^0-9]/g, ''))}
-            className="w-full bg-[#121214] border border-white/10 rounded-2xl px-5 py-4 text-center text-2xl font-mono text-white focus:border-amber-500 outline-none tracking-[0.5em]"
+            className="w-full bg-[var(--bg-surface)] border border-[var(--border-base)] rounded-2xl px-5 py-4 text-center text-2xl font-mono text-[var(--text-main)] focus:border-amber-500 outline-none tracking-[0.5em]"
             placeholder="BARU"
           />
         </div>
-        <label className="flex items-start gap-2 text-[10px] text-neutral-400">
+        <label className="flex items-start gap-2 text-[10px] text-[var(--text-muted)]">
           <input
             type="checkbox"
             checked={ackRisk}
@@ -510,19 +510,19 @@ export const ForgotAccount: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <HelpCircle size={32} />
         </div>
         <h2 className={authStyles.title}>Pemulihan Akun</h2>
-        <p className="text-xs text-neutral-400 mt-2">Masukkan email terdaftar untuk menerima link reset password.</p>
+        <p className="text-xs text-[var(--text-muted)] mt-2">Masukkan email terdaftar untuk menerima link reset password.</p>
       </div>
 
       <div className="space-y-3">
-        <div className="p-4 bg-white/5 rounded-2xl border border-white/10 text-left space-y-3">
-          <h4 className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+        <div className="p-4 bg-[var(--bg-card)]/70 rounded-2xl border border-[var(--border-base)] text-left space-y-3">
+          <h4 className="text-[10px] font-black text-[var(--text-main)] uppercase tracking-widest flex items-center gap-2">
             <Mail size={12} /> Email Recovery
           </h4>
           <div className="flex gap-2">
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 bg-black border border-white/10 rounded-lg px-3 py-2 text-xs text-white"
+              className="flex-1 bg-[var(--bg-surface)] border border-[var(--border-base)] rounded-lg px-3 py-2 text-xs text-[var(--text-main)]"
               placeholder="email@anda.com"
             />
             <button
@@ -541,7 +541,7 @@ export const ForgotAccount: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <AlertTriangle size={20} className="text-amber-500 shrink-0" />
           <div>
             <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Manual Support</h4>
-            <p className="text-[10px] text-neutral-400">
+            <p className="text-[10px] text-[var(--text-muted)]">
               Jika kehilangan akses total, silakan hubungi tim IT IStoic melalui channel aman.
             </p>
           </div>

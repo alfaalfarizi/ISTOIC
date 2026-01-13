@@ -54,7 +54,7 @@ export const CallNotification: React.FC<CallNotificationProps> = ({ identity, on
                 <div className="flex flex-col items-center space-y-6 mt-10">
                     <div className="relative">
                         {/* Profile Avatar Placeholder */}
-                        <div className="w-32 h-32 rounded-full bg-[#1a1a1a] border-2 border-white/10 flex items-center justify-center shadow-2xl relative z-10 overflow-hidden">
+                        <div className="w-32 h-32 rounded-full bg-[var(--bg-surface)] border-2 border-[var(--border-base)] flex items-center justify-center shadow-2xl relative z-10 overflow-hidden">
                              <User size={64} className="text-white/50" />
                         </div>
                         
@@ -64,11 +64,11 @@ export const CallNotification: React.FC<CallNotificationProps> = ({ identity, on
                     </div>
 
                     <div className="text-center space-y-2">
-                        <div className="flex items-center justify-center gap-2 text-emerald-400/80 bg-black/30 px-3 py-1 rounded-full backdrop-blur-md border border-white/5">
+                        <div className="flex items-center justify-center gap-2 text-emerald-400/80 bg-black/30 px-3 py-1 rounded-full backdrop-blur-md border border-[var(--border-base)]">
                             <Lock size={10} />
                             <span className="text-[10px] font-black uppercase tracking-[0.3em]">SECURE_LINE</span>
                         </div>
-                        <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-none drop-shadow-lg">
+                        <h1 className="text-4xl md:text-5xl font-black text-[var(--text-main)] tracking-tight leading-none drop-shadow-lg">
                             {identity}
                         </h1>
                         <p className="text-sm font-mono text-white/60 animate-pulse uppercase tracking-widest">
@@ -80,7 +80,7 @@ export const CallNotification: React.FC<CallNotificationProps> = ({ identity, on
                 {/* Encryption Badge */}
                 <div className="mt-auto mb-16 flex items-center gap-2 opacity-50">
                     <ShieldCheck size={14} className="text-emerald-500" />
-                    <span className="text-[9px] font-mono text-white">E2EE • AES-256 • HYDRA_NET</span>
+                    <span className="text-[9px] font-mono text-[var(--text-main)]">E2EE • AES-256 • HYDRA_NET</span>
                 </div>
 
                 {/* Actions - Bottom Sheet Style */}
@@ -103,7 +103,7 @@ export const CallNotification: React.FC<CallNotificationProps> = ({ identity, on
                             onClick={onAnswer}
                             className="relative w-20 h-20 rounded-full bg-emerald-500 text-white flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 shadow-[0_0_40px_rgba(16,185,129,0.5)] animate-bounce"
                         >
-                            <div className="absolute inset-0 rounded-full border-2 border-white/20 animate-ping"></div>
+                            <div className="absolute inset-0 rounded-full border-2 border-[var(--border-base)] animate-ping"></div>
                             <Phone size={32} fill="currentColor" className="relative z-10" />
                         </button>
                         <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Accept</span>

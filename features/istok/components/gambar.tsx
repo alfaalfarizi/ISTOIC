@@ -178,7 +178,7 @@ export const ImageMessage = React.memo(({ content, size, mimeType, onClick, onRe
         <div 
             className={`
                 relative overflow-hidden rounded-xl border group cursor-pointer transition-all duration-300 select-none
-                ${status === 'LOADING' ? 'bg-white/5 animate-pulse w-56 h-48 border-white/5' : 'bg-black border-white/10'}
+                ${status === 'LOADING' ? 'bg-white/5 animate-pulse w-56 h-48 border-[var(--border-base)]' : 'bg-black border-[var(--border-base)]'}
                 ${status === 'ERROR' ? 'bg-red-900/10 border-red-500/30 w-48 h-32' : 'hover:border-emerald-500/50'}
                 max-w-[300px] shadow-lg
             `}
@@ -232,7 +232,7 @@ export const ImageMessage = React.memo(({ content, size, mimeType, onClick, onRe
                         </div>
                         
                         <div className="flex flex-col items-center gap-1">
-                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white">CONFIDENTIAL</span>
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-main)]">CONFIDENTIAL</span>
                             <span className="text-[8px] font-mono text-emerald-500/70 border border-emerald-500/20 px-2 py-0.5 rounded-full">TAP TO DECRYPT</span>
                         </div>
                     </div>
@@ -249,9 +249,9 @@ export const ImageMessage = React.memo(({ content, size, mimeType, onClick, onRe
                                     <div className="bg-emerald-500/20 border border-emerald-500/30 p-1 rounded text-emerald-400">
                                         <Lock size={10} />
                                     </div>
-                                    <span className="text-[9px] font-bold text-white tracking-wide">E2EE SECURE</span>
+                                    <span className="text-[9px] font-bold text-[var(--text-main)] tracking-wide">E2EE SECURE</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-[9px] font-mono text-neutral-400">
+                                <div className="flex items-center gap-2 text-[9px] font-mono text-[var(--text-muted)]">
                                     {size && <span>{formatBytes(size)}</span>}
                                     {mimeType && <span className="uppercase">{mimeType.split('/')[1]}</span>}
                                 </div>
@@ -261,7 +261,7 @@ export const ImageMessage = React.memo(({ content, size, mimeType, onClick, onRe
                             <div className="flex gap-2">
                                 <button 
                                     onClick={handleCopy}
-                                    className="p-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-white backdrop-blur-sm transition-all active:scale-95"
+                                    className="p-2 bg-white/10 hover:bg-white/20 border border-[var(--border-base)] rounded-lg text-[var(--text-main)] backdrop-blur-sm transition-all active:scale-95"
                                     title="Copy Image"
                                 >
                                     {isCopied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}

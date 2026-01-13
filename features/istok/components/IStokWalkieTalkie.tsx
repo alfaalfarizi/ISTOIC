@@ -284,8 +284,8 @@ export const IStokWalkieTalkie: React.FC<IStokWalkieTalkieProps> = ({ onClose, o
                         )}
                         {status === 'IDLE' && (
                             <div className="flex flex-col items-center opacity-30">
-                                <Radio size={48} className="text-neutral-500 mb-2" />
-                                <span className="text-xl font-black text-neutral-500 tracking-widest">STANDBY</span>
+                                <Radio size={48} className="text-[var(--text-muted)] mb-2" />
+                                <span className="text-xl font-black text-[var(--text-muted)] tracking-widest">STANDBY</span>
                                 <span className="text-[10px] text-emerald-500/50 mt-2 font-mono">CHANNEL_OPEN</span>
                             </div>
                         )}
@@ -320,7 +320,7 @@ export const IStokWalkieTalkie: React.FC<IStokWalkieTalkieProps> = ({ onClose, o
                     </span>
                 </button>
 
-                <p className="text-[10px] text-neutral-500 font-mono text-center max-w-xs">
+                <p className="text-[10px] text-[var(--text-muted)] font-mono text-center max-w-xs">
                     MODE: HALF-DUPLEX (ANTI-FEEDBACK) <br/>
                     {status === 'RX' ? 'INCOMING TRANSMISSION QUEUED' : 'PRESS AND HOLD TO TRANSMIT'}
                 </p>

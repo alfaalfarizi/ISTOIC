@@ -298,7 +298,7 @@ export const TeleponanView: React.FC<TeleponanProps> = ({ onClose, existingPeer,
     };
 
     return (
-        <div className="fixed inset-0 z-[10000] bg-[#050505] flex flex-col font-sans text-emerald-500 animate-fade-in overflow-hidden select-none sheen">
+        <div className="fixed inset-0 z-[10000] bg-[var(--bg-main)] flex flex-col font-sans text-emerald-500 animate-fade-in overflow-hidden select-none sheen">
             {/* Hidden Audio Element */}
             <audio ref={remoteAudioRef} playsInline autoPlay className="hidden" />
 
@@ -317,7 +317,7 @@ export const TeleponanView: React.FC<TeleponanProps> = ({ onClose, existingPeer,
             <header className="relative z-10 p-6 pt-[calc(env(safe-area-inset-top)+1rem)] flex justify-between items-center bg-black/40 backdrop-blur-md border-b border-emerald-950/30">
                 <div className="flex items-center gap-3">
                     <div className={`w-2.5 h-2.5 rounded-full shadow-[0_0_10px_#10b981] ${state === 'CONNECTED' ? 'bg-emerald-500 animate-pulse' : 'bg-neutral-600'}`}></div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white">SECURE_VOICE_TUNNEL</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-main)]">SECURE_VOICE_TUNNEL</span>
                 </div>
                 {state === 'CONNECTED' && (
                     <div className="px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-xs font-black tracking-widest">
@@ -332,28 +332,28 @@ export const TeleponanView: React.FC<TeleponanProps> = ({ onClose, existingPeer,
                 {/* Visual Identity */}
                 <div className="relative mb-10 group">
                     <div className={`w-44 h-44 rounded-full border-2 transition-all duration-700 flex items-center justify-center relative overflow-hidden
-                        ${state === 'CONNECTED' ? 'border-emerald-500/50 shadow-[0_0_50px_rgba(16,185,129,0.2)]' : 'border-white/10 animate-pulse'}
+                        ${state === 'CONNECTED' ? 'border-emerald-500/50 shadow-[0_0_50px_rgba(16,185,129,0.2)]' : 'border-[var(--border-base)] animate-pulse'}
                         ${state === 'RECONNECTING' ? 'border-amber-500 animate-bounce' : ''}
                     `}>
                          <div className="absolute inset-0 bg-gradient-to-t from-emerald-500/10 to-transparent animate-scan-up"></div>
-                         {state === 'CONNECTED' ? <User size={64} className="text-emerald-400" /> : <Shield size={64} className="text-neutral-700" />}
+                         {state === 'CONNECTED' ? <User size={64} className="text-emerald-400" /> : <Shield size={64} className="text-[var(--text-muted)]" />}
                     </div>
 
                     {/* SAS Verification Code */}
                     {state === 'CONNECTED' && sasCode && (
-                        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-black border border-emerald-500/30 px-4 py-1.5 rounded-full shadow-2xl backdrop-blur-xl animate-fade-in">
+                        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-[var(--bg-card)] border border-emerald-500/30 px-4 py-1.5 rounded-full shadow-2xl backdrop-blur-xl animate-fade-in">
                             <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest block text-center mb-0.5 opacity-50">SAS_VERIFY</span>
-                            <span className="text-sm font-mono font-black text-white tracking-widest whitespace-nowrap">{sasCode}</span>
+                            <span className="text-sm font-mono font-black text-[var(--text-main)] tracking-widest whitespace-nowrap">{sasCode}</span>
                         </div>
                     )}
                 </div>
 
                 {/* Target Name */}
                 <div className="text-center space-y-2 mb-12">
-                    <h2 className="text-2xl font-black text-white tracking-tight uppercase break-all px-6">
+                    <h2 className="text-2xl font-black text-[var(--text-main)] tracking-tight uppercase break-all px-6">
                         {initialTargetId || incomingCall?.peer || "SIGNALING..."}
                     </h2>
-                    <div className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-neutral-500">
+                    <div className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
                         {state === 'CONNECTED' ? (
                             <span className="flex items-center gap-1.5 text-emerald-500">
                                 <Lock size={10} /> END_TO_END_ENCRYPTED
@@ -389,7 +389,7 @@ export const TeleponanView: React.FC<TeleponanProps> = ({ onClose, existingPeer,
                         ) : state === 'CONNECTED' || state === 'RECONNECTING' ? (
                             <div className="grid grid-cols-2 gap-6 items-center w-full">
                                 <button onClick={toggleMute} className={`w-16 h-16 rounded-2xl border transition-all flex flex-col items-center justify-center gap-1 mx-auto
-                                    ${isMuted ? 'bg-red-500 border-red-500 text-white animate-pulse' : 'bg-white/5 border-white/10 text-neutral-400 hover:text-white'}
+                                    ${isMuted ? 'bg-red-500 border-red-500 text-white animate-pulse' : 'bg-white/5 border-[var(--border-base)] text-[var(--text-muted)] hover:text-[var(--text-main)]'}
                                 `}>
                                     {isMuted ? <MicOff size={24}/> : <Mic size={24}/>}
                                     <span className="text-[7px] font-black uppercase">MUTE</span>
@@ -400,7 +400,7 @@ export const TeleponanView: React.FC<TeleponanProps> = ({ onClose, existingPeer,
                                 </button>
                             </div>
                         ) : (
-                            <button onClick={terminateCall} className="px-10 py-3 rounded-xl bg-white/5 border border-white/10 text-neutral-400 hover:text-red-500 hover:border-red-500/50 transition-all font-black text-xs tracking-widest">
+                            <button onClick={terminateCall} className="px-10 py-3 rounded-xl bg-white/5 border border-[var(--border-base)] text-[var(--text-muted)] hover:text-red-500 hover:border-red-500/50 transition-all font-black text-xs tracking-widest">
                                 CANCEL_UPLINK
                             </button>
                         )}

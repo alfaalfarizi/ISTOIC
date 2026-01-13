@@ -139,7 +139,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onScan, onClose }) => {
                     </h2>
                     <p className="text-[10px] text-white/60 font-mono">ALIGN QR CODE WITHIN FRAME</p>
                 </div>
-                <button onClick={onClose} className="p-3 bg-white/10 backdrop-blur rounded-full text-white hover:bg-white/20 transition active:scale-95">
+                <button onClick={onClose} className="p-3 bg-white/10 backdrop-blur rounded-full text-[var(--text-main)] hover:bg-white/20 transition active:scale-95">
                     <X size={20}/>
                 </button>
             </div>
@@ -198,10 +198,10 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onScan, onClose }) => {
             </div>
 
             {/* Bottom Controls */}
-            <div className="bg-[#09090b] border-t border-white/10 p-6 pb-safe z-20">
+            <div className="bg-[var(--bg-card)] border-t border-[var(--border-base)] p-6 pb-safe z-20">
                 <div className="flex items-center justify-center gap-6">
-                    <button className="flex flex-col items-center gap-2 text-neutral-500 group">
-                        <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition border border-white/5">
+                    <button className="flex flex-col items-center gap-2 text-[var(--text-muted)] group">
+                        <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition border border-[var(--border-base)]">
                             <Zap size={24} className="group-hover:text-yellow-400 transition"/>
                         </div>
                         <span className="text-[9px] font-bold tracking-wider">FLASH</span>

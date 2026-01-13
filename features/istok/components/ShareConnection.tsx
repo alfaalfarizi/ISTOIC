@@ -75,7 +75,7 @@ export const ShareConnection: React.FC<ShareConnectionProps> = ({ peerId, pin, o
     // --- RENDER ---
     return (
         <div className="fixed inset-0 z-[3000] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in font-sans">
-            <div className="bg-[#09090b] border border-white/10 rounded-[32px] w-full max-w-sm relative shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-[var(--bg-card)] border border-[var(--border-base)] rounded-[32px] w-full max-w-sm relative shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                 
                 {/* Header Decoration */}
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-blue-500 to-purple-500"></div>
@@ -84,14 +84,14 @@ export const ShareConnection: React.FC<ShareConnectionProps> = ({ peerId, pin, o
                 {/* Close Button */}
                 <button 
                     onClick={onClose} 
-                    className="absolute top-4 right-4 p-2 bg-white/5 hover:bg-white/10 rounded-full text-neutral-400 hover:text-white transition-colors z-10"
+                    className="absolute top-4 right-4 p-2 bg-white/5 hover:bg-white/10 rounded-full text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors z-10"
                 >
                     <X size={20}/>
                 </button>
 
                 <div className="p-6 pb-2 text-center">
-                    <h3 className="text-white font-black text-xl tracking-wide mb-1">SECURE UPLINK</h3>
-                    <p className="text-neutral-500 text-xs flex items-center justify-center gap-1.5">
+                    <h3 className="text-[var(--text-main)] font-black text-xl tracking-wide mb-1">SECURE UPLINK</h3>
+                    <p className="text-[var(--text-muted)] text-xs flex items-center justify-center gap-1.5">
                         <ShieldCheck size={12} className="text-emerald-500"/>
                         E2EE ENCRYPTED SESSION
                     </p>
@@ -113,7 +113,7 @@ export const ShareConnection: React.FC<ShareConnectionProps> = ({ peerId, pin, o
                                 <div className="w-[180px] h-[180px] bg-neutral-200 animate-pulse rounded"></div>
                             )}
                         </div>
-                        <p className="text-center text-[10px] text-neutral-500 mt-3 font-mono uppercase tracking-widest">
+                        <p className="text-center text-[10px] text-[var(--text-muted)] mt-3 font-mono uppercase tracking-widest">
                             <Smartphone size={10} className="inline mr-1"/>
                             Scan with Camera
                         </p>
@@ -122,14 +122,14 @@ export const ShareConnection: React.FC<ShareConnectionProps> = ({ peerId, pin, o
                     {/* 2. MANUAL DETAILS SECTION */}
                     <div className="space-y-3">
                         {/* Access PIN */}
-                        <div className="bg-[#121214] border border-white/5 p-4 rounded-xl flex items-center justify-between group hover:border-white/10 transition-colors">
+                        <div className="bg-[var(--bg-surface)] border border-[var(--border-base)] p-4 rounded-xl flex items-center justify-between group hover:border-[var(--border-base)] transition-colors">
                             <div className="text-left">
-                                <p className="text-[9px] text-neutral-500 font-bold uppercase tracking-widest mb-1">Access PIN</p>
-                                <p className="text-2xl font-mono font-bold text-white tracking-[0.2em]">{pin}</p>
+                                <p className="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-widest mb-1">Access PIN</p>
+                                <p className="text-2xl font-mono font-bold text-[var(--text-main)] tracking-[0.2em]">{pin}</p>
                             </div>
                             <button 
                                 onClick={handleCopyPin}
-                                className="p-2.5 bg-white/5 hover:bg-emerald-500/20 text-neutral-400 hover:text-emerald-400 rounded-lg transition-all"
+                                className="p-2.5 bg-white/5 hover:bg-emerald-500/20 text-[var(--text-muted)] hover:text-emerald-400 rounded-lg transition-all"
                             >
                                 {copiedPin ? <Check size={18}/> : <Copy size={18}/>}
                             </button>
@@ -137,8 +137,8 @@ export const ShareConnection: React.FC<ShareConnectionProps> = ({ peerId, pin, o
 
                         {/* Peer ID (Hidden/Collapsible or Small) */}
                         <div className="px-2">
-                            <p className="text-[9px] text-neutral-600 font-mono text-center mb-1">SESSION ID</p>
-                            <code className="block text-[10px] text-neutral-500 text-center break-all select-all hover:text-white transition-colors cursor-pointer" onClick={() => navigator.clipboard.writeText(peerId)}>
+                            <p className="text-[9px] text-[var(--text-muted)] font-mono text-center mb-1">SESSION ID</p>
+                            <code className="block text-[10px] text-[var(--text-muted)] text-center break-all select-all hover:text-[var(--text-main)] transition-colors cursor-pointer" onClick={() => navigator.clipboard.writeText(peerId)}>
                                 {peerId}
                             </code>
                         </div>
@@ -167,7 +167,7 @@ export const ShareConnection: React.FC<ShareConnectionProps> = ({ peerId, pin, o
                         {isNativeShareSupported && (
                             <button 
                                 onClick={handleCopyLink}
-                                className="w-full py-3 bg-white/5 hover:bg-white/10 text-neutral-300 font-bold rounded-xl flex items-center justify-center gap-2 text-xs transition-colors"
+                                className="w-full py-3 bg-white/5 hover:bg-white/10 text-[var(--text-muted)] font-bold rounded-xl flex items-center justify-center gap-2 text-xs transition-colors"
                             >
                                 <LinkIcon size={14}/> {copiedLink ? 'DISALIN' : 'SALIN URL MANUAL'}
                             </button>

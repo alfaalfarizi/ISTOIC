@@ -471,7 +471,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
     // ================= VIEW 1: DASHBOARD =================
     if (!isConnected) {
         return (
-            <div className="h-[100dvh] bg-[#050505] flex flex-col p-4 md:p-8 relative font-sans text-white overflow-hidden sheen">
+            <div className="h-[100dvh] bg-[var(--bg-main)] flex flex-col p-4 md:p-8 relative font-sans text-[var(--text-main)] overflow-hidden sheen">
                  {/* Layout preserved from original, ensuring pb-safe for input if needed */}
                  {/* Top Navigation */}
                  <div className="flex justify-between items-center z-20 mb-8 pt-[calc(env(safe-area-inset-top)+1rem)]">
@@ -481,15 +481,15 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
                          </div>
                          <div>
                              <h1 className="font-black text-xl italic tracking-tighter uppercase">ISTOK <span className="text-emerald-500">SECURE</span></h1>
-                             <div className="flex items-center gap-2 text-[9px] font-mono text-neutral-500">
+                             <div className="flex items-center gap-2 text-[9px] font-mono text-[var(--text-muted)]">
                                 <span className={`w-1.5 h-1.5 rounded-full ${isPeerAlive ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : 'bg-red-500'}`}></span>
                                 {isPeerAlive ? 'HYDRA_NET_V2' : <span className="text-red-500 animate-pulse cursor-pointer" onClick={handleForceReconnect}>RECONNECTING...</span>}
                              </div>
                          </div>
                      </div>
-                     <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/5">
+                     <div className="flex items-center gap-2 px-3 py-1 bg-[var(--bg-card)]/70 rounded-full border border-[var(--border-base)]">
                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                        <span className="text-[10px] font-mono text-neutral-400 max-w-[80px] truncate">{myProfile.id || '...'}</span>
+                        <span className="text-[10px] font-mono text-[var(--text-muted)] max-w-[80px] truncate">{myProfile.id || '...'}</span>
                      </div>
                  </div>
 
@@ -497,22 +497,22 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
                  <div className="flex-1 overflow-y-auto custom-scroll space-y-6 z-10 max-w-4xl mx-auto w-full pb-[calc(env(safe-area-inset-bottom)+2rem)]">
                      
                      {/* Identity Card */}
-                     <div className="bg-[#09090b] border border-white/10 rounded-[32px] p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-500">
+                     <div className="bg-[var(--bg-card)] border border-[var(--border-base)] rounded-[32px] p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-500">
                          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[80px] pointer-events-none group-hover:bg-emerald-500/10 transition-colors duration-500"></div>
                          
                          <div className="flex items-center gap-5 relative z-10">
                              <div className="relative">
                                 <img src={identity?.photoURL} className="w-20 h-20 rounded-full border-2 border-emerald-500/50 object-cover shadow-lg shadow-emerald-900/20" alt="User" />
-                                <div className="absolute -bottom-1 -right-1 bg-[#09090b] p-1.5 rounded-full border border-white/10">
+                                <div className="absolute -bottom-1 -right-1 bg-[var(--bg-card)] p-1.5 rounded-full border border-[var(--border-base)]">
                                     <ShieldCheck size={14} className="text-emerald-500"/>
                                 </div>
                              </div>
                              <div className="flex-1 min-w-0">
                                  <h2 className="text-2xl font-bold truncate tracking-tight">{identity?.displayName}</h2>
-                                 <p className="text-xs text-neutral-500 font-mono mb-3 truncate">{identity?.email}</p>
-                                 <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-lg border border-white/5 cursor-pointer hover:bg-white/10 transition-all active:scale-95" onClick={() => { navigator.clipboard.writeText(myProfile.id || ''); alert("ID Disalin!"); }}>
+                                 <p className="text-xs text-[var(--text-muted)] font-mono mb-3 truncate">{identity?.email}</p>
+                                 <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[var(--bg-card)]/70 rounded-lg border border-[var(--border-base)] cursor-pointer hover:bg-[var(--bg-card)] transition-all active:scale-95" onClick={() => { navigator.clipboard.writeText(myProfile.id || ''); alert("ID Disalin!"); }}>
                                      <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">ID:</span>
-                                     <code className="text-xs font-mono text-white truncate max-w-[150px]">{myProfile.id || 'INITIALIZING...'}</code>
+                                     <code className="text-xs font-mono text-[var(--text-main)] truncate max-w-[150px]">{myProfile.id || 'INITIALIZING...'}</code>
                                      <Sparkles size={12} className="text-emerald-500"/>
                                  </div>
                              </div>
@@ -520,16 +520,16 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
                      </div>
 
                      {/* Quick Connect Panel */}
-                     <div className="bg-[#09090b] border border-white/10 rounded-[32px] p-6 space-y-6 shadow-xl relative overflow-hidden">
+                     <div className="bg-[var(--bg-card)] border border-[var(--border-base)] rounded-[32px] p-6 space-y-6 shadow-xl relative overflow-hidden">
                          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500/0 via-blue-500/50 to-blue-500/0 opacity-20"></div>
                          <div className="space-y-4">
                              <div className="relative group">
                                 <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl opacity-0 group-hover:opacity-20 transition duration-500 blur"></div>
-                                <input value={targetPeerId} onChange={e=>setTargetPeerId(e.target.value.toUpperCase())} placeholder="MASUKKAN ID TARGET / LINK" className="relative w-full bg-[#121214] border border-white/10 p-4 rounded-2xl text-white text-center text-sm font-mono focus:border-blue-500 outline-none uppercase placeholder:text-neutral-700 transition-all focus:shadow-[0_0_30px_rgba(59,130,246,0.15)]"/>
-                                <button onClick={()=>setShowScanner(true)} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-neutral-500 hover:text-white bg-white/5 rounded-xl transition-all hover:scale-110 z-10"><ScanLine size={18}/></button>
+                                <input value={targetPeerId} onChange={e=>setTargetPeerId(e.target.value.toUpperCase())} placeholder="MASUKKAN ID TARGET / LINK" className="relative w-full bg-[var(--bg-surface)] border border-[var(--border-base)] p-4 rounded-2xl text-[var(--text-main)] text-center text-sm font-mono focus:border-blue-500 outline-none uppercase placeholder:text-[var(--text-muted)] transition-all focus:shadow-[0_0_30px_rgba(59,130,246,0.15)]"/>
+                                <button onClick={()=>setShowScanner(true)} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[var(--text-muted)] hover:text-[var(--text-main)] bg-[var(--bg-card)]/70 rounded-xl transition-all hover:scale-110 z-10"><ScanLine size={18}/></button>
                              </div>
                              <div className="flex gap-3">
-                                 <input value={accessPin} onChange={e=>setAccessPin(e.target.value)} placeholder="PIN (6)" maxLength={6} className="w-32 bg-[#121214] border border-white/10 p-4 rounded-2xl text-white text-center text-sm font-mono tracking-[0.3em] focus:border-blue-500 outline-none transition-all placeholder:tracking-normal placeholder:text-neutral-700 focus:shadow-[0_0_20px_rgba(59,130,246,0.15)]"/>
+                                 <input value={accessPin} onChange={e=>setAccessPin(e.target.value)} placeholder="PIN (6)" maxLength={6} className="w-32 bg-[var(--bg-surface)] border border-[var(--border-base)] p-4 rounded-2xl text-[var(--text-main)] text-center text-sm font-mono tracking-[0.3em] focus:border-blue-500 outline-none transition-all placeholder:tracking-normal placeholder:text-[var(--text-muted)] focus:shadow-[0_0_20px_rgba(59,130,246,0.15)]"/>
                                  <button onClick={()=>connectToPeer(targetPeerId, accessPin)} disabled={!targetPeerId || !isPeerAlive} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-blue-900/20 disabled:opacity-50 disabled:shadow-none transition-all flex items-center justify-center gap-2 group active:scale-95 relative overflow-hidden">
                                     <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                                     <span className="relative flex items-center gap-2">{stage === 'IDLE' ? 'SAMBUNGKAN' : <><Loader2 size={14} className="animate-spin"/> {stage}...</>} <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform"/></span>
@@ -537,8 +537,8 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
                              </div>
                          </div>
                          <div className="grid grid-cols-2 gap-3">
-                             <button onClick={()=>setShowShare(true)} className="py-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 text-neutral-300 hover:text-white transition-all flex flex-col items-center gap-2 group active:scale-95"><QrCode size={20} className="text-emerald-500 group-hover:scale-110 transition-transform"/><span className="text-[10px] font-bold uppercase tracking-wider">BAGIKAN ID</span></button>
-                             <button onClick={()=>setShowSidebar(true)} className="py-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 text-neutral-300 hover:text-white transition-all flex flex-col items-center gap-2 group active:scale-95"><Users size={20} className="text-purple-500 group-hover:scale-110 transition-transform"/><span className="text-[10px] font-bold uppercase tracking-wider">KONTAK</span></button>
+                             <button onClick={()=>setShowShare(true)} className="py-4 bg-[var(--bg-card)]/70 hover:bg-[var(--bg-card)] rounded-2xl border border-[var(--border-base)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all flex flex-col items-center gap-2 group active:scale-95"><QrCode size={20} className="text-emerald-500 group-hover:scale-110 transition-transform"/><span className="text-[10px] font-bold uppercase tracking-wider">BAGIKAN ID</span></button>
+                             <button onClick={()=>setShowSidebar(true)} className="py-4 bg-[var(--bg-card)]/70 hover:bg-[var(--bg-card)] rounded-2xl border border-[var(--border-base)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all flex flex-col items-center gap-2 group active:scale-95"><Users size={20} className="text-purple-500 group-hover:scale-110 transition-transform"/><span className="text-[10px] font-bold uppercase tracking-wider">KONTAK</span></button>
                          </div>
                      </div>
                  </div>
@@ -554,20 +554,20 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
 
     // ================= VIEW 2: CHAT INTERFACE =================
     return (
-        <div className="h-[100dvh] bg-[#050505] flex flex-col relative overflow-hidden font-sans sheen">
+        <div className="h-[100dvh] bg-[var(--bg-main)] flex flex-col relative overflow-hidden font-sans sheen">
              <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none"></div>
              
              {/* Chat Header - Fixed Safe Area Top */}
-             <div className="bg-[#09090b]/80 backdrop-blur-md border-b border-white/10 p-4 pt-[calc(env(safe-area-inset-top)+1rem)] flex justify-between items-center z-20 shadow-sm shrink-0">
+             <div className="bg-[var(--bg-card)]/80 backdrop-blur-md border-b border-[var(--border-base)] p-4 pt-[calc(env(safe-area-inset-top)+1rem)] flex justify-between items-center z-20 shadow-sm shrink-0">
                 <div className="flex items-center gap-3">
                     <div className="relative">
                         <div className="w-10 h-10 rounded-full bg-emerald-900/20 border border-emerald-500/30 flex items-center justify-center text-emerald-500 overflow-hidden shadow-[0_0_15px_rgba(16,185,129,0.2)]">
                             <User size={20}/>
                         </div>
-                        <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#09090b] ${isDataConnectionAlive ? 'bg-emerald-500 animate-pulse' : 'bg-red-500 animate-pulse'}`}></div>
+                        <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[var(--bg-card)] ${isDataConnectionAlive ? 'bg-emerald-500 animate-pulse' : 'bg-red-500 animate-pulse'}`}></div>
                     </div>
                     <div>
-                        <h3 className="text-white font-black text-sm uppercase tracking-wide flex items-center gap-2">
+                        <h3 className="text-[var(--text-main)] font-black text-sm uppercase tracking-wide flex items-center gap-2">
                             SECURE <Lock size={10} className="text-emerald-500"/>
                         </h3>
                         <div className="flex items-center gap-2 text-[9px] font-mono text-emerald-500/70">
@@ -591,8 +591,8 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
                 </div>
                 
                 <div className="flex gap-2">
-                    <button onClick={()=>setShowCall(true)} className="p-2.5 hover:bg-emerald-500/10 rounded-xl text-neutral-400 hover:text-emerald-500 transition border border-transparent hover:border-emerald-500/20"><PhoneCall size={18}/></button>
-                    <button onClick={handleDisconnectChat} className="p-2.5 hover:bg-red-500/10 rounded-xl text-neutral-400 hover:text-red-500 transition border border-transparent hover:border-red-500/20"><X size={18}/></button>
+                    <button onClick={()=>setShowCall(true)} className="p-2.5 hover:bg-emerald-500/10 rounded-xl text-[var(--text-muted)] hover:text-emerald-500 transition border border-transparent hover:border-emerald-500/20"><PhoneCall size={18}/></button>
+                    <button onClick={handleDisconnectChat} className="p-2.5 hover:bg-red-500/10 rounded-xl text-[var(--text-muted)] hover:text-red-500 transition border border-transparent hover:border-red-500/20"><X size={18}/></button>
                 </div>
              </div>
 
@@ -639,7 +639,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
             {/* Modals */}
             {showCall && <TeleponanView onClose={()=>setShowCall(false)} existingPeer={globalPeer} initialTargetId={targetPeerId} incomingCall={incomingCall} secretPin={accessPin} />}
             {incomingCall && !showCall && <CallNotification identity="Secure Peer" onAnswer={()=>setShowCall(true)} onDecline={()=>{ incomingCall.close(); setIncomingCall(null); handleMissedCall(); }} />}
-            {viewImage && <div className="fixed inset-0 z-[3000] bg-black/95 backdrop-blur flex items-center justify-center p-4 animate-fade-in" onClick={() => setViewImage(null)}><img src={viewImage} className="max-w-full max-h-full rounded-lg shadow-2xl border border-white/10" alt="Secure Content" /><button className="absolute top-4 right-4 p-3 bg-white/10 rounded-full text-white hover:bg-red-500 transition-colors"><X size={24}/></button></div>}
+            {viewImage && <div className="fixed inset-0 z-[3000] bg-black/95 backdrop-blur flex items-center justify-center p-4 animate-fade-in" onClick={() => setViewImage(null)}><img src={viewImage} className="max-w-full max-h-full rounded-lg shadow-2xl border border-[var(--border-base)]" alt="Secure Content" /><button className="absolute top-4 right-4 p-3 bg-[var(--bg-card)]/70 rounded-full text-[var(--text-main)] hover:bg-red-500 transition-colors"><X size={24}/></button></div>}
         </div>
     );
 };

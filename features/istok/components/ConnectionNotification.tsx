@@ -77,7 +77,7 @@ export const ConnectionNotification: React.FC<ConnectionNotificationProps> = ({
             <div className="
                 pointer-events-auto
                 w-full max-w-[360px]
-                bg-[#09090b] backdrop-blur-3xl 
+                bg-[var(--bg-card)] backdrop-blur-3xl 
                 border border-emerald-500/50 
                 rounded-[28px] shadow-[0_25px_80px_-15px_rgba(16,185,129,0.5)] 
                 overflow-hidden relative
@@ -98,7 +98,7 @@ export const ConnectionNotification: React.FC<ConnectionNotificationProps> = ({
                             </div>
                             <div>
                                 <h3 className="text-[10px] font-black text-emerald-400 tracking-[0.2em] uppercase leading-none mb-1">INCOMING UPLINK</h3>
-                                <p className="text-[9px] text-neutral-400 font-mono flex items-center gap-1">
+                                <p className="text-[9px] text-[var(--text-muted)] font-mono flex items-center gap-1">
                                     <Network size={10} /> HYDRA_MESH_V20
                                 </p>
                             </div>
@@ -109,14 +109,14 @@ export const ConnectionNotification: React.FC<ConnectionNotificationProps> = ({
                     </div>
 
                     {/* Identity Info */}
-                    <div className="flex items-center gap-3 mb-5 bg-white/5 p-3 rounded-2xl border border-white/5">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-neutral-800 to-black border border-white/10 flex items-center justify-center shrink-0">
-                            <User className="text-neutral-300" size={18} />
+                    <div className="flex items-center gap-3 mb-5 bg-white/5 p-3 rounded-2xl border border-[var(--border-base)]">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-neutral-800 to-black border border-[var(--border-base)] flex items-center justify-center shrink-0">
+                            <User className="text-[var(--text-muted)]" size={18} />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <h4 className="text-white font-bold text-sm truncate">{identity || 'Unknown Entity'}</h4>
+                            <h4 className="text-[var(--text-main)] font-bold text-sm truncate">{identity || 'Unknown Entity'}</h4>
                             <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-[9px] bg-black/50 px-1.5 py-0.5 rounded text-neutral-500 font-mono border border-white/5">
+                                <span className="text-[9px] bg-black/50 px-1.5 py-0.5 rounded text-[var(--text-muted)] font-mono border border-[var(--border-base)]">
                                     {peerId.substring(0,8)}...
                                 </span>
                                 <span className="text-[9px] text-emerald-500 font-bold flex items-center gap-0.5">
@@ -131,7 +131,7 @@ export const ConnectionNotification: React.FC<ConnectionNotificationProps> = ({
                         <button 
                             onClick={handleDecline}
                             disabled={isProcessing}
-                            className="py-3.5 bg-neutral-800/50 active:bg-red-900/30 border border-white/10 active:border-red-500/50 rounded-xl text-xs font-bold text-neutral-400 active:text-red-400 transition-all flex items-center justify-center gap-2 touch-manipulation select-none"
+                            className="py-3.5 bg-neutral-800/50 active:bg-red-900/30 border border-[var(--border-base)] active:border-red-500/50 rounded-xl text-xs font-bold text-[var(--text-muted)] active:text-red-400 transition-all flex items-center justify-center gap-2 touch-manipulation select-none"
                         >
                             <X size={16} /> REJECT
                         </button>
@@ -143,7 +143,7 @@ export const ConnectionNotification: React.FC<ConnectionNotificationProps> = ({
                                 py-3.5 rounded-xl text-xs font-black tracking-wide text-white shadow-lg touch-manipulation select-none
                                 flex items-center justify-center gap-2 transition-all active:scale-95
                                 ${isProcessing 
-                                    ? 'bg-neutral-800 cursor-wait opacity-80 border border-white/5' 
+                                    ? 'bg-neutral-800 cursor-wait opacity-80 border border-[var(--border-base)]' 
                                     : 'bg-emerald-600 active:bg-emerald-500 border-t border-emerald-400/30 shadow-emerald-500/20'
                                 }
                             `}

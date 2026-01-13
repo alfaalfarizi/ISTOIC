@@ -34,10 +34,10 @@ export const MobileNav: React.FC<MobileNavProps> = memo(({ activeFeature, setAct
     >
       <nav className="
         flex items-center gap-1 p-2
-        bg-white/90 dark:bg-[#0a0a0b]/90 backdrop-blur-2xl 
-        border border-black/5 dark:border-white/10 
+        bg-skin-card/90 backdrop-blur-2xl 
+        border border-skin-border/80 
         rounded-[24px] 
-        shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)]
+        shadow-[0_12px_40px_-14px_rgba(0,0,0,0.2)]
         ring-1 ring-black/5 dark:ring-white/5
       ">
         
@@ -51,11 +51,11 @@ export const MobileNav: React.FC<MobileNavProps> = memo(({ activeFeature, setAct
               aria-current={isActive ? 'page' : undefined}
               className={`
                 relative w-12 h-12 flex flex-col items-center justify-center rounded-[18px] 
-                transition-all duration-300 group
+                transition-all duration-300 group sheen
                 pointer-events-auto
                 ${isActive 
-                  ? 'bg-accent/10 text-accent' 
-                  : 'text-neutral-500 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'}
+                  ? 'bg-accent/10 text-accent shadow-[0_10px_24px_-16px_var(--accent-glow)]' 
+                  : 'text-neutral-500 hover:text-black dark:hover:text-white hover:bg-skin-surface/70 border border-transparent'}
               `}
             >
               <div className={`transition-transform duration-300 ${isActive ? '-translate-y-1 scale-110' : 'group-active:scale-95'}`}>
@@ -79,10 +79,10 @@ export const MobileNav: React.FC<MobileNavProps> = memo(({ activeFeature, setAct
                 onClick={() => setActiveFeature('settings')} 
                 aria-label="Buka Pengaturan"
                 className={`
-                    w-12 h-12 flex items-center justify-center rounded-[18px] transition-all pointer-events-auto
+                    w-12 h-12 flex items-center justify-center rounded-[18px] transition-all pointer-events-auto sheen
                     ${activeFeature === 'settings' 
                         ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg scale-105' 
-                        : 'text-neutral-500 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'}
+                        : 'text-neutral-500 hover:text-black dark:hover:text-white hover:bg-skin-surface/70'}
                 `}
             >
                 <Settings size={20} className={activeFeature === 'settings' ? 'animate-spin-slow' : ''} />

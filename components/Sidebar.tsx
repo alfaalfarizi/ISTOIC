@@ -116,11 +116,11 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ activeFeature, setActiveF
       <aside 
         className={`
           hidden md:flex flex-col fixed top-0 left-0 bottom-0 z-[1200] 
-          bg-skin-card/90 backdrop-blur-2xl 
-          border-r border-skin-border
+          bg-skin-card/95 backdrop-blur-2xl 
+          border-r border-skin-border/80
           ${transitionClass}
           ${isExpanded 
-              ? 'w-[280px] shadow-[20px_0_50px_-10px_rgba(0,0,0,0.15)] dark:shadow-[20px_0_50px_-10px_rgba(0,0,0,0.4)] translate-x-0' 
+              ? 'w-[280px] shadow-[20px_0_60px_-12px_rgba(0,0,0,0.18)] dark:shadow-[20px_0_60px_-12px_rgba(0,0,0,0.5)] translate-x-0' 
               : 'w-[88px] translate-x-0'}
           ${isForcedStealth ? 'opacity-0 pointer-events-none -translate-x-10' : 'opacity-100'}
         `}
@@ -136,15 +136,15 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ activeFeature, setActiveF
               <div className="flex items-center justify-between w-full">
                   <button 
                     onClick={() => handleNavClick('dashboard', UI_REGISTRY.SIDEBAR_BTN_LOGO)}
-                    className="relative group outline-none focus-visible:ring-2 focus-visible:ring-accent/50 rounded-[18px] transition-all"
+                    className="relative group outline-none focus-visible:ring-2 focus-visible:ring-accent/50 rounded-[18px] transition-all sheen"
                     title="Dashboard"
                   >
                     <div className={`
                       shrink-0 w-11 h-11 rounded-[18px] flex items-center justify-center 
-                      bg-gradient-to-br from-skin-card to-skin-surface
+                      bg-gradient-to-br from-skin-card to-skin-surface/90
                       border border-skin-border
-                      shadow-sm group-hover:shadow-[0_0_25px_var(--accent-glow)] group-hover:border-accent/40
-                      transition-all duration-300 transform group-hover:scale-105
+                      shadow-sm group-hover:shadow-[0_0_30px_var(--accent-glow)] group-hover:border-accent/40
+                      transition-all duration-300 transform group-hover:scale-[1.06]
                     `}>
                       <div className={`text-skin-text transition-colors duration-300 group-hover:text-accent`}>
                           {personaMode === 'hanisah' ? <Flame size={22} strokeWidth={2.5} /> : <Cpu size={22} strokeWidth={2.5} />}
@@ -163,9 +163,9 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ activeFeature, setActiveF
               </div>
 
               <div className={`absolute top-0 right-0 left-0 flex justify-center transition-all duration-300 ${!isExpanded ? 'opacity-100 translate-y-14' : 'opacity-0 pointer-events-none translate-y-10'}`}>
-                   <button 
+                  <button 
                     onClick={() => setIsExpanded(true)}
-                    className="p-2 rounded-xl text-skin-muted hover:text-accent hover:bg-accent/5 active:scale-90 transition-all outline-none"
+                    className="p-2 rounded-xl text-skin-muted hover:text-accent hover:bg-accent/10 active:scale-90 transition-all outline-none"
                   >
                       <PanelLeft size={20} strokeWidth={2} />
                   </button>
@@ -195,13 +195,13 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ activeFeature, setActiveF
                   onClick={() => !isDisabled && handleNavClick(feature.id as FeatureID, uiId)}
                   disabled={isDisabled}
                   className={`
-                    relative flex items-center rounded-[18px] transition-all duration-300 group outline-none
+                    relative flex items-center rounded-[18px] transition-all duration-300 group outline-none sheen
                     ${isExpanded ? 'w-full px-4 py-3.5 gap-4' : 'w-12 h-12 justify-center mx-auto aspect-square'}
                     ${isDisabled 
                         ? 'opacity-40 cursor-not-allowed grayscale' 
                         : isActive 
-                            ? 'bg-gradient-to-r from-accent/10 via-accent/5 to-transparent border-l-2 border-accent text-accent' 
-                            : 'hover:bg-skin-surface text-skin-muted hover:text-skin-text border-l-2 border-transparent'
+                            ? 'bg-gradient-to-r from-accent/15 via-accent/8 to-transparent border-l-2 border-accent text-accent shadow-[0_10px_30px_-18px_var(--accent-glow)]' 
+                            : 'hover:bg-skin-surface/80 text-skin-muted hover:text-skin-text border-l-2 border-transparent'
                     }
                     focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/50
                   `}
@@ -244,9 +244,9 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ activeFeature, setActiveF
              <button 
                 onClick={() => handleNavClick('system', UI_REGISTRY.SIDEBAR_BTN_SYSTEM)}
                 className={`
-                    rounded-[20px] transition-all w-full text-left group relative overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-accent/50
+                    rounded-[20px] transition-all w-full text-left group relative overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-accent/50 sheen
                     ${isExpanded 
-                        ? 'p-3.5 bg-skin-surface/50 border border-skin-border hover:border-accent/30 hover:bg-skin-surface' 
+                        ? 'p-3.5 bg-skin-surface/60 border border-skin-border hover:border-accent/30 hover:bg-skin-surface' 
                         : 'p-0 border-transparent bg-transparent justify-center flex'
                     }
                 `}
@@ -279,8 +279,8 @@ export const Sidebar: React.FC<SidebarProps> = memo(({ activeFeature, setActiveF
              <button 
                 onClick={() => handleNavClick('settings', UI_REGISTRY.SIDEBAR_BTN_SETTINGS)}
                 className={`
-                  flex items-center rounded-[18px] transition-all duration-300 group outline-none focus-visible:ring-2 focus-visible:ring-accent/50
-                  ${isExpanded ? 'w-full px-4 py-3 gap-3 bg-transparent hover:bg-skin-surface text-skin-muted hover:text-skin-text' : 'w-12 h-12 justify-center mx-auto hover:bg-skin-surface text-skin-muted'}
+                  flex items-center rounded-[18px] transition-all duration-300 group outline-none focus-visible:ring-2 focus-visible:ring-accent/50 sheen
+                  ${isExpanded ? 'w-full px-4 py-3 gap-3 bg-transparent hover:bg-skin-surface/80 text-skin-muted hover:text-skin-text' : 'w-12 h-12 justify-center mx-auto hover:bg-skin-surface/80 text-skin-muted'}
                   ${activeFeature === 'settings' ? 'text-accent' : ''}
                 `}
                 title={!isExpanded ? 'SETTINGS' : undefined}

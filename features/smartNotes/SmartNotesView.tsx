@@ -321,7 +321,7 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({ notes, setNotes 
                      onFocus={handleSearchFocus}
                      onBlur={() => setIsSearchFocused(false)}
                      placeholder={isSearchFocused ? (isSemanticMode ? "NEURAL SEARCH..." : "KEYWORD SEARCH...") : "SEARCH..."}
-                     className={`w-full h-12 bg-skin-card border rounded-2xl pl-11 pr-12 text-[10px] font-black uppercase tracking-widest focus:outline-none transition-all placeholder:text-skin-muted
+                     className={`w-full h-12 bg-skin-card border rounded-2xl pl-11 pr-12 text-[10px] font-black uppercase tracking-widest focus:outline-none transition-all placeholder:text-skin-muted sheen
                         ${isSemanticMode 
                             ? 'border-purple-500/50 shadow-[0_0_20px_rgba(168,85,247,0.2)] text-purple-500' 
                             : 'border-skin-border focus:border-accent/50 focus:shadow-[0_0_30px_-10px_var(--accent-glow)] text-skin-text'
@@ -425,7 +425,7 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({ notes, setNotes 
                                   border hover:-translate-y-1 active:scale-[0.99]
                                   ${isSelected 
                                       ? 'bg-accent/10 border-accent shadow-[0_0_40px_-10px_var(--accent-glow)]' 
-                                      : 'bg-skin-card/80 backdrop-blur-md border-skin-border hover:border-accent/30 hover:shadow-xl'
+                                      : 'bg-skin-card/80 backdrop-blur-md border-skin-border hover:border-accent/30 hover:shadow-xl sheen'
                                   }
                               `}
                           >
@@ -516,7 +516,7 @@ export const SmartNotesView: React.FC<SmartNotesViewProps> = ({ notes, setNotes 
       `}>
           {activeNoteId && (
               <div className="flex flex-col h-full max-w-[1400px] mx-auto w-full p-0 md:p-6 lg:p-8">
-                  <div className="flex-1 bg-skin-card rounded-none md:rounded-[48px] border-x-0 md:border border-skin-border shadow-2xl overflow-hidden relative flex flex-col md:ring-1 ring-white/10">
+                  <div className="flex-1 bg-skin-card rounded-none md:rounded-[48px] border-x-0 md:border border-skin-border shadow-2xl overflow-hidden relative flex flex-col md:ring-1 ring-white/10 sheen">
                       
                       <AdvancedEditor 
                           key={activeNoteId}

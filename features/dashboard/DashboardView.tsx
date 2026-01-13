@@ -19,7 +19,7 @@ const StatBox: React.FC<{ label: string; value: string; isPulse?: boolean; color
     <button 
         onClick={onClick}
         aria-label={`${label}: ${value}`}
-        className={`relative overflow-hidden bg-skin-card/60 backdrop-blur-xl p-6 md:p-7 flex flex-col justify-between rounded-[32px] border border-skin-border hover:border-accent/30 shadow-sm hover:shadow-[0_20px_40px_-10px_var(--accent-glow)] transition-all duration-500 group h-full w-full text-left ring-1 ring-skin-border ${onClick ? 'cursor-pointer active:scale-[0.98]' : 'cursor-default'}`}
+        className={`relative overflow-hidden bg-skin-card/70 backdrop-blur-xl p-6 md:p-7 flex flex-col justify-between rounded-[32px] border border-skin-border hover:border-accent/30 shadow-sm hover:shadow-[0_20px_40px_-10px_var(--accent-glow)] transition-all duration-500 group h-full w-full text-left ring-1 ring-skin-border sheen ${onClick ? 'cursor-pointer active:scale-[0.98]' : 'cursor-default'}`}
     >
         <div className="absolute inset-0 bg-gradient-to-br from-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
         <div className="absolute top-0 right-0 w-32 h-32 bg-skin-surface rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none group-hover:bg-accent/10 transition-colors"></div>
@@ -58,7 +58,7 @@ const BentoCard: React.FC<{
             style={{ animationDelay: `${delay}ms` }}
             className={`
                 relative overflow-hidden cursor-pointer rounded-[40px] 
-                bg-skin-card border border-skin-border
+                bg-skin-card border border-skin-border sheen
                 hover:border-accent/30 transition-all duration-500 animate-slide-up 
                 shadow-sm hover:shadow-[0_30px_60px_-15px_var(--accent-glow)] 
                 hover:-translate-y-1 active:scale-[0.99] group flex flex-col justify-between p-8 md:p-10 text-left

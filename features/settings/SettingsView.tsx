@@ -55,7 +55,7 @@ const SettingsSection: React.FC<{ title: string, icon: React.ReactNode, children
 const ToolRow: React.FC<{ label: string, desc: string, icon: React.ReactNode, isActive: boolean, onToggle: () => void }> = memo(({ label, desc, icon, isActive, onToggle }) => (
     <button 
         onClick={onToggle}
-        className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all active:scale-[0.98] ${isActive ? 'bg-skin-surface border-accent/30' : 'bg-transparent border-skin-border opacity-60'}`}
+        className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all active:scale-[0.98] sheen ${isActive ? 'bg-skin-surface border-accent/30' : 'bg-transparent border-skin-border opacity-60'}`}
     >
         <div className="flex items-center gap-3">
             <div className={`p-2 rounded-lg ${isActive ? 'bg-accent/10 text-accent' : 'bg-skin-surface text-skin-muted'}`}>

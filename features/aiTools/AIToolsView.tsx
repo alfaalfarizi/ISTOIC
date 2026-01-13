@@ -24,7 +24,7 @@ const AIToolsView: React.FC = memo(() => {
                 <header className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-8 animate-slide-up pb-4 will-change-transform">
                     <div className="space-y-4 flex-1">
                         <div className="flex items-center gap-4">
-                            <div className="px-4 py-2 rounded-xl bg-skin-card border border-skin-border backdrop-blur-md tech-mono text-[9px] font-black uppercase text-accent tracking-[0.3em] shadow-[0_0_20px_rgba(var(--accent-rgb),0.1)] flex items-center gap-2">
+                            <div className="px-4 py-2 rounded-xl bg-skin-card border border-skin-border backdrop-blur-md tech-mono text-[9px] font-black uppercase text-accent tracking-[0.3em] shadow-[0_0_20px_rgba(var(--accent-rgb),0.1)] flex items-center gap-2 sheen">
                                 <Fingerprint size={12} /> NEURAL_ARSENAL_v2.0
                             </div>
                             <div className="h-[1px] w-12 bg-gradient-to-r from-accent/50 to-transparent"></div>
@@ -34,7 +34,7 @@ const AIToolsView: React.FC = memo(() => {
                         </h2>
                     </div>
                     
-                    <div className="flex items-center gap-3 px-6 py-4 bg-skin-card/60 border border-skin-border rounded-2xl tech-mono text-[9px] font-black uppercase tracking-widest text-skin-muted shadow-lg backdrop-blur-xl group hover:border-accent/30 transition-all hover:shadow-[0_0_30px_rgba(var(--accent-rgb),0.15)]">
+                    <div className="flex items-center gap-3 px-6 py-4 bg-skin-card/60 border border-skin-border rounded-2xl tech-mono text-[9px] font-black uppercase tracking-widest text-skin-muted shadow-lg backdrop-blur-xl group hover:border-accent/30 transition-all hover:shadow-[0_0_30px_rgba(var(--accent-rgb),0.15)] sheen">
                          <div className="relative">
                             <Activity size={14} className="text-emerald-500 animate-pulse" /> 
                             <div className="absolute inset-0 bg-emerald-500 blur-sm opacity-50 animate-pulse"></div>

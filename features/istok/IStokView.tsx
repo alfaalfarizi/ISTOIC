@@ -471,7 +471,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
     // ================= VIEW 1: DASHBOARD =================
     if (!isConnected) {
         return (
-            <div className="h-[100dvh] bg-[#050505] flex flex-col p-4 md:p-8 relative font-sans text-white overflow-hidden">
+            <div className="h-[100dvh] bg-[#050505] flex flex-col p-4 md:p-8 relative font-sans text-white overflow-hidden sheen">
                  {/* Layout preserved from original, ensuring pb-safe for input if needed */}
                  {/* Top Navigation */}
                  <div className="flex justify-between items-center z-20 mb-8 pt-[calc(env(safe-area-inset-top)+1rem)]">
@@ -554,7 +554,7 @@ export const IStokView: React.FC<IStokViewProps> = ({ onLogout, globalPeer, init
 
     // ================= VIEW 2: CHAT INTERFACE =================
     return (
-        <div className="h-[100dvh] bg-[#050505] flex flex-col relative overflow-hidden font-sans">
+        <div className="h-[100dvh] bg-[#050505] flex flex-col relative overflow-hidden font-sans sheen">
              <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none"></div>
              
              {/* Chat Header - Fixed Safe Area Top */}

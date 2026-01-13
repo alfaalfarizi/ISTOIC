@@ -39,7 +39,7 @@ const SuggestionCard: React.FC<{ icon: React.ReactNode, label: string, desc: str
     <button 
         onClick={onClick}
         style={{ animationDelay: `${delay}ms` }}
-        className={`relative overflow-hidden group bg-white/60 dark:bg-white/[0.03] backdrop-blur-sm border border-black/5 dark:border-white/5 rounded-[20px] p-4 text-left transition-all duration-300 ease-out hover:bg-white dark:hover:bg-white/[0.08] hover:border-accent/20 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] flex items-center gap-4 h-full animate-slide-up`}
+        className={`relative overflow-hidden group bg-white/60 dark:bg-white/[0.03] backdrop-blur-sm border border-black/5 dark:border-white/5 rounded-[20px] p-4 text-left transition-all duration-300 ease-out hover:bg-white dark:hover:bg-white/[0.08] hover:border-accent/20 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] flex items-center gap-4 h-full animate-slide-up sheen`}
     >
         <div className={`w-10 h-10 rounded-xl bg-black/5 dark:bg-white/5 flex items-center justify-center transition-all duration-300 group-hover:scale-110 ${accent} border border-black/5 dark:border-white/5`}>
             {React.cloneElement(icon as React.ReactElement<any>, { size: 18, strokeWidth: 2 })}
@@ -115,7 +115,7 @@ const AIChatView: React.FC<AIChatViewProps> = ({ chatLogic }) => {
             
             {/* --- 1. HEADER (FIXED TOP) --- */}
             <header className="shrink-0 z-50 flex justify-center pt-[env(safe-area-inset-top)] px-4 w-full">
-                <div className={`mt-2 backdrop-blur-2xl border rounded-[20px] p-1.5 flex items-center justify-between gap-1 shadow-sm ring-1 transition-all duration-500 ${isHydraActive ? 'bg-black/80 dark:bg-zinc-900/90 border-emerald-500/30 ring-emerald-500/20 shadow-emerald-500/5' : 'bg-white/80 dark:bg-[#0f0f11]/90 border-black/5 dark:border-white/10 ring-black/5 dark:ring-white/5'}`}>
+                <div className={`mt-2 backdrop-blur-2xl border rounded-[20px] p-1.5 flex items-center justify-between gap-1 shadow-sm ring-1 transition-all duration-500 sheen ${isHydraActive ? 'bg-black/80 dark:bg-zinc-900/90 border-emerald-500/30 ring-emerald-500/20 shadow-emerald-500/5' : 'bg-white/80 dark:bg-[#0f0f11]/90 border-black/5 dark:border-white/10 ring-black/5 dark:ring-white/5'}`}>
                     <button className={`flex items-center gap-2 group py-1.5 px-3 rounded-xl transition-all cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 active:scale-95`} onClick={() => { debugService.logAction(UI_REGISTRY.CHAT_BTN_MODEL_PICKER, FN_REGISTRY.CHAT_SELECT_MODEL, 'OPEN'); setShowModelPicker(true); }}>
                         <div className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 ${isHydraActive ? 'text-emerald-500' : 'text-neutral-500 group-hover:text-black dark:group-hover:text-white'}`}>
                             {isHydraActive ? <Infinity size={14} className="animate-pulse" /> : <Zap size={14} />}

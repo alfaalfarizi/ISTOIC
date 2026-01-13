@@ -53,7 +53,7 @@ const ProviderNode: React.FC<{ provider: ProviderStatus }> = ({ provider }) => {
     const isCooldown = provider.status === 'COOLDOWN';
     
     return (
-        <div className={`relative overflow-hidden p-3 rounded-xl border transition-all duration-500 group ${isHealthy ? 'bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40' : isCooldown ? 'bg-amber-500/5 border-amber-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
+        <div className={`relative overflow-hidden p-3 rounded-xl border transition-all duration-500 group sheen ${isHealthy ? 'bg-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40' : isCooldown ? 'bg-amber-500/5 border-amber-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
             <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center gap-2">
                     {provider.id.includes('GEMINI') ? <Monitor size={14} className={isHealthy ? "text-emerald-400" : "text-neutral-500"}/> :

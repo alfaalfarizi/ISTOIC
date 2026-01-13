@@ -298,7 +298,7 @@ export const TeleponanView: React.FC<TeleponanProps> = ({ onClose, existingPeer,
     };
 
     return (
-        <div className="fixed inset-0 z-[10000] bg-[#050505] flex flex-col font-sans text-emerald-500 animate-fade-in overflow-hidden select-none">
+        <div className="fixed inset-0 z-[10000] bg-[#050505] flex flex-col font-sans text-emerald-500 animate-fade-in overflow-hidden select-none sheen">
             {/* Hidden Audio Element */}
             <audio ref={remoteAudioRef} playsInline autoPlay className="hidden" />
 

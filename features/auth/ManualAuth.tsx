@@ -15,6 +15,7 @@ import {
   User,
 } from 'lucide-react';
 import { auth, db, ensureAuthPersistence, firebaseConfigError } from '../../services/firebaseConfig';
+import { Button } from '../../components/ui/Button';
 import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
@@ -196,17 +197,17 @@ export const LoginManual: React.FC<{ onBack: () => void; onSuccess: ManualAuthSu
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" size={18} />
           </div>
         </div>
-        <button onClick={handleLogin} disabled={loading} className={authStyles.buttonPrimary}>
+        <Button onClick={handleLogin} disabled={loading} variant="primary" className="w-full py-4 font-black uppercase tracking-widest">
           {loading ? <Loader2 className="animate-spin" size={16} /> : <ArrowRight size={16} />} MASUK
-        </button>
+        </Button>
         <button onClick={onForgot} className={authStyles.linkMuted}>
           LUPA AKUN?
         </button>
       </div>
 
-      <button onClick={onBack} className={authStyles.buttonGhost}>
+      <Button onClick={onBack} variant="ghost" className="w-full py-3 font-bold uppercase tracking-widest">
         <ArrowLeft size={12} /> KEMBALI
-      </button>
+      </Button>
     </div>
   );
 };
@@ -355,14 +356,14 @@ export const RegisterManual: React.FC<{ onBack: () => void; onSuccess: ManualAut
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" size={18} />
           </div>
         </div>
-        <button onClick={handleRegister} disabled={loading} className={authStyles.buttonSecondary}>
+        <Button onClick={handleRegister} disabled={loading} variant="primary" className="w-full py-4 font-black uppercase tracking-widest">
           {loading ? <Loader2 className="animate-spin" size={16} /> : <ShieldCheck size={16} />} SELESAI & MASUK
-        </button>
+        </Button>
       </div>
 
-      <button onClick={onBack} className={authStyles.buttonGhost}>
+      <Button onClick={onBack} variant="ghost" className="w-full py-3 font-bold uppercase tracking-widest">
         <ArrowLeft size={12} /> KEMBALI
-      </button>
+      </Button>
     </div>
   );
 };

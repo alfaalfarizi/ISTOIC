@@ -27,6 +27,7 @@ import { LoginManual, RegisterManual, ForgotAccount, ForgotPin } from "./ManualA
 
 import { auth, db, firebaseConfigError } from "../../services/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
+import { Button } from "../../components/ui/Button";
 import { doc, getDoc } from "firebase/firestore";
 import { authStyles } from "./authStyles";
 
@@ -180,6 +181,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
       }
 
       const redirectIdentity = await IstokIdentityService.finalizeRedirectIfAny();
+      console.debug('[AUTH] finalizeRedirectIfAny ->', { redirectIdentity });
       if (redirectIdentity) {
         if (redirectIdentity.istokId) {
           setIdentity(redirectIdentity);
@@ -469,14 +471,10 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
               </div>
 
               <div className="space-y-4">
-                <button
-                  onClick={handleGoogleLogin}
-                  disabled={loading}
-                  className="w-full py-4 bg-white text-black hover:bg-neutral-200 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 transition-all active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.1)] group"
-                >
+                <Button onClick={handleGoogleLogin} disabled={loading} variant="primary" className="w-full py-4 font-black uppercase tracking-widest">
                   {loading ? <Loader2 size={18} className="animate-spin" /> : <Chrome size={18} className="text-blue-500" />}
                   LANJUTKAN DENGAN GOOGLE
-                </button>
+                </Button>
 
                 <div className="flex items-center gap-4 px-2">
                   <div className="h-[1px] bg-white/10 flex-1"></div>
@@ -484,22 +482,14 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                   <div className="h-[1px] bg-white/10 flex-1"></div>
                 </div>
 
-                <button
-                  onClick={() => setStage("LOGIN_MANUAL")}
-                  disabled={loading}
-                  className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-2xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 transition-all active:scale-95"
-                >
+                <Button onClick={() => setStage("LOGIN_MANUAL")} disabled={loading} variant="secondary" className="w-full py-4 font-black uppercase tracking-widest">
                   <Mail size={18} className="text-emerald-500" />
                   LOGIN DENGAN EMAIL
-                </button>
+                </Button>
 
-                <button
-                  onClick={() => setStage("REGISTER_MANUAL")}
-                  disabled={loading}
-                  className="w-full py-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 transition-all active:scale-95"
-                >
+                <Button onClick={() => setStage("REGISTER_MANUAL")} disabled={loading} variant="secondary" className="w-full py-3 font-black uppercase text-[10px] tracking-widest text-emerald-400">
                   BUAT AKUN BARU
-                </button>
+                </Button>
 
                 <button
                   onClick={() => setStage("FORGOT_ACCOUNT")}

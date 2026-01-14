@@ -161,6 +161,11 @@ export const IstokIdentityService = {
 
     try {
       if (isNative() || isIosPwa()) {
+        // mark that a redirect login is starting so the PWA can detect and finalize later
+        try {
+          if (typeof window !== "undefined") window.localStorage.setItem("istok_google_redirect", String(Date.now()));
+        } catch {}
+
         await signInWithRedirect(auth, googleProvider);
         return { status: "REDIRECT_STARTED" };
       }
@@ -196,7 +201,55 @@ export const IstokIdentityService = {
     await ensureAuthPersistence();
 
     try {
-      const result = await withTimeout(getRedirectResult(auth));
+      // Try to finalize a redirect-based sign-in. Some iOS PWAs lose the immediate
+      // redirect result, so we attempt multiple strategies: getRedirectResult first,
+      // then fallback to waiting for auth state changes for a short period.
+      const redirectFlag = typeof window !== "undefined" ? window.localStorage.getItem("istok_google_redirect") : null;
+
+      let result = null as any;
+
+      try {
+        result = await withTimeout(getRedirectResult(auth), 8000);
+      } catch (e) {
+        // ignore — we'll try fallback
+        result = null;
+      }
+
+      if (!result?.user) {
+        // If we have a redirect flag, wait briefly for auth state to update (user may be signed-in)
+        if (redirectFlag) {
+          const userFromState = await new Promise<any>((resolve) => {
+            let done = false;
+            const un = onAuthStateChanged(auth, (u) => {
+              if (done) return;
+              if (u) {
+                done = true;
+                try {
+                  un();
+                } catch {}
+                resolve({ user: u });
+              }
+            });
+            // timeout fallback
+            setTimeout(() => {
+              if (done) return;
+              done = true;
+              try {
+                un();
+              } catch {}
+              resolve(null);
+            }, 9000);
+          });
+
+          result = userFromState || null;
+        }
+      }
+
+      // cleanup redirect flag
+      try {
+        if (typeof window !== "undefined") window.localStorage.removeItem("istok_google_redirect");
+      } catch {}
+
       if (!result?.user) return null;
 
       const user = result.user;

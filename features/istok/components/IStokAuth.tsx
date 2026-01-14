@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 // @ts-ignore
 import jsQR from 'jsqr';
+import { Button } from '../../../components/ui/Button';
 
 interface IStokAuthProps {
     identity: string;
@@ -317,20 +318,12 @@ export const IStokAuth: React.FC<IStokAuthProps> = ({
                     </div>
 
                     <div className="grid grid-cols-5 gap-3 pt-2">
-                        <button 
-                            onClick={startScanner} 
-                            className="col-span-1 h-14 bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl flex items-center justify-center text-white transition-all active:scale-95"
-                            title="Scan QR"
-                        >
+                        <Button onClick={startScanner} variant="secondary" className="col-span-1 h-14 rounded-2xl flex items-center justify-center text-white transition-all active:scale-95">
                             <Camera size={20} />
-                        </button>
-                        <button 
-                            onClick={() => onJoin(targetId, pin)}
-                            disabled={!targetId || pin.length < 4}
-                            className="col-span-4 h-14 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all flex items-center justify-center gap-2"
-                        >
+                        </Button>
+                        <Button onClick={() => onJoin(targetId, pin)} disabled={!targetId || pin.length < 4} variant="primary" className="col-span-4 h-14 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all flex items-center justify-center gap-2">
                             CONNECT NOW <ArrowRight size={14} />
-                        </button>
+                        </Button>
                     </div>
                 </div>
 

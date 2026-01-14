@@ -15,16 +15,16 @@ type RetryContext = {
 };
 
 const TypingIndicator = ({ personaMode }: { personaMode: 'hanisah' | 'stoic' }) => (
-  <div className="flex justify-start mb-4 px-1 animate-fade-in w-full">
+  <div className="flex justify-start mb-5 px-2 md:px-4 animate-fade-in w-full">
     <div className="flex flex-col gap-2 mr-3 shrink-0 mt-1">
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow border border-[color:var(--border)] bg-[var(--surface)] text-[var(--accent)]">
-        {personaMode === 'hanisah' ? <Flame size={16} /> : <Brain size={16} />}
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md border border-[color:var(--border)] bg-gradient-to-br from-[var(--surface)] to-[var(--surface-2)] text-[var(--accent)] group-hover:shadow-lg transition-all duration-300">
+        {personaMode === 'hanisah' ? <Flame size={18} strokeWidth={2.2} /> : <Brain size={18} strokeWidth={2.2} />}
       </div>
     </div>
-    <div className="bg-[var(--surface)] border border-[color:var(--border)] rounded-[20px] px-4 py-3 flex items-center gap-1.5 shadow-sm h-[46px]">
-      <div className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-      <div className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-      <div className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce"></div>
+    <div className="bg-gradient-to-r from-[var(--surface)] to-[var(--surface-2)] border border-[color:var(--border)] rounded-2xl px-5 py-4 flex items-center gap-2 shadow-md h-[50px] backdrop-blur-sm">
+      <div className="w-2 h-2 bg-[var(--accent)] rounded-full animate-bounce [animation-delay:-0.3s]" style={{opacity: 0.8}}></div>
+      <div className="w-2 h-2 bg-[var(--accent)] rounded-full animate-bounce [animation-delay:-0.15s]" style={{opacity: 0.6}}></div>
+      <div className="w-2 h-2 bg-[var(--accent)] rounded-full animate-bounce" style={{opacity: 0.4}}></div>
     </div>
   </div>
 );
@@ -49,20 +49,20 @@ const ImageGenerationCard = ({ prompt }: { prompt: string }) => {
   };
 
   return (
-    <div className="mt-3 p-3 rounded-xl border border-[color:var(--border)] bg-[var(--surface)]">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-[12px] font-semibold text-[var(--text-muted)]">Generate Image</span>
+    <div className="mt-4 p-4 rounded-2xl border border-[color:var(--border)]/50 bg-gradient-to-br from-[var(--surface)] to-[var(--surface-2)] hover:border-[color:var(--border)] transition-all duration-300 shadow-sm hover:shadow-md">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[13px] font-semibold text-[var(--accent)] bg-[var(--accent)]/10 px-3 py-1 rounded-lg">Generate Image</span>
         <button
           onClick={handleGenerate}
           disabled={status === 'loading'}
-          className="text-[12px] px-3 py-1 rounded-lg border border-[color:var(--accent)] text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors disabled:opacity-50"
+          className="text-[13px] px-4 py-2 rounded-xl border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent)]/15 transition-all duration-200 active:scale-95 disabled:opacity-50 font-medium"
         >
-          {status === 'loading' ? 'Working...' : status === 'done' ? 'Regenerate' : 'Start'}
+          {status === 'loading' ? '⏳ Processing...' : status === 'done' ? '🔄 Regenerate' : '✨ Generate'}
         </button>
       </div>
-      <p className="text-[13px] text-[var(--text)] opacity-80 mb-2">"{prompt}"</p>
-      {imageUrl && <img src={imageUrl} alt={prompt} className="w-full rounded-lg border border-[color:var(--border)] shadow-sm" />}
-      {status === 'error' && <p className="text-[12px] text-[var(--danger)] mt-2">Image generation failed. Try again.</p>}
+      <p className="text-[13px] text-[var(--text)] opacity-85 mb-3 italic">"{prompt}"</p>
+      {imageUrl && <img src={imageUrl} alt={prompt} className="w-full rounded-xl border border-[color:var(--border)] shadow-md hover:shadow-lg transition-all duration-300 max-h-80 object-cover" />}
+      {status === 'error' && <p className="text-[13px] text-[var(--danger)] mt-2 font-medium">❌ Image generation failed. Try again.</p>}
     </div>
   );
 };
@@ -134,34 +134,34 @@ const MessageBubble = memo(
     if (isModel && !content && !isStreaming && !thought && !isError) return null;
 
     const bubbleClasses = isModel
-      ? 'bg-[var(--surface)] text-[var(--text)] border border-[color:var(--border)]'
-      : 'bg-[var(--accent)] text-[var(--text-invert)] border border-[color:var(--accent)]/40';
+      ? 'bg-gradient-to-br from-[var(--surface)] to-[var(--surface-2)] text-[var(--text)] border border-[color:var(--border)]/60 shadow-md hover:shadow-lg hover:border-[color:var(--border)] transition-all duration-300'
+      : 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)] text-[var(--text-invert)] border border-[color:var(--accent)]/50 shadow-md hover:shadow-lg transition-all duration-300';
 
     return (
-      <div className={`flex w-full mb-5 ${isModel ? 'justify-start' : 'justify-end'} px-1`}>
+      <div className={`flex w-full mb-6 ${isModel ? 'justify-start' : 'justify-end'} px-2 md:px-4 animate-fade-in`}>
         {isModel && (
-          <div className="flex flex-col gap-2 mr-3 shrink-0 mt-1">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow border border-[color:var(--border)] bg-[var(--surface)] text-[var(--accent)]">
-              {isError ? <AlertTriangle size={16} /> : personaMode === 'hanisah' ? <Flame size={16} /> : <Brain size={16} />}
+          <div className="flex flex-col gap-2 mr-4 shrink-0 mt-1">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md border border-[color:var(--border)] bg-gradient-to-br from-[var(--surface)] to-[var(--surface-2)] text-[var(--accent)] group-hover:shadow-lg transition-all duration-300">
+              {isError ? <AlertTriangle size={18} strokeWidth={2.2} /> : personaMode === 'hanisah' ? <Flame size={18} strokeWidth={2.2} /> : <Brain size={18} strokeWidth={2.2} />}
             </div>
           </div>
         )}
 
-        <div className={`flex flex-col max-w-[88%] sm:max-w-[80%] lg:max-w-[75%] min-w-0 ${isModel ? 'items-start' : 'items-end'}`}>
-          <div className={`flex items-start gap-2 ${isModel ? 'flex-row' : 'flex-row-reverse'}`}>
-            <div className={`relative px-4 py-3 rounded-2xl shadow-sm text-base leading-relaxed ${bubbleClasses}`}>
+        <div className={`flex flex-col max-w-[92%] sm:max-w-[85%] lg:max-w-[75%] min-w-0 ${isModel ? 'items-start' : 'items-end'}`}>
+          <div className={`flex items-start gap-3 ${isModel ? 'flex-row' : 'flex-row-reverse'}`}>
+            <div className={`relative px-5 py-4 md:px-6 md:py-5 rounded-2xl text-base md:text-[15px] leading-relaxed ${bubbleClasses}`}>
               {thought && (
                 <button
-                  className="flex items-center gap-2 text-[12px] font-semibold text-[var(--text-muted)] mb-2"
+                  className="flex items-center gap-2 text-[13px] font-semibold text-[var(--accent)] mb-3 px-3 py-2 bg-[var(--accent)]/10 rounded-lg w-full hover:bg-[var(--accent)]/20 transition-all duration-200"
                   onClick={() => setShowThought((prev) => !prev)}
                   aria-expanded={showThought}
                 >
-                  <ChevronDown size={14} className={`transition-transform ${showThought ? 'rotate-180' : ''}`} />
-                  Reasoning
+                  <ChevronDown size={16} className={`transition-transform duration-300 ${showThought ? 'rotate-180' : ''}`} />
+                  <span>Reasoning Process</span>
                 </button>
               )}
               {thought && showThought && (
-                <div className="mb-3 p-3 rounded-xl bg-[var(--surface)] border border-[color:var(--border)] text-sm text-[var(--text-muted)] whitespace-pre-wrap">
+                <div className="mb-4 p-4 rounded-xl bg-[var(--surface-2)]/50 border border-[color:var(--border)]/30 text-[13px] text-[var(--text-muted)] whitespace-pre-wrap font-mono opacity-90">
                   {thought}
                 </div>
               )}
@@ -175,7 +175,7 @@ const MessageBubble = memo(
                           href={href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[var(--accent)] underline decoration-[var(--accent)]"
+                          className="text-[var(--accent)] underline decoration-[var(--accent)] hover:decoration-2 transition-all duration-200"
                         >
                           {children}
                         </a>
@@ -183,14 +183,14 @@ const MessageBubble = memo(
                       code({ inline, className, children, ...props }) {
                         if (inline) {
                           return (
-                            <code className="px-1.5 py-0.5 rounded bg-[var(--surface-2)] text-[var(--text)] text-[12px]" {...props}>
+                            <code className="px-2 py-1 rounded-lg bg-[var(--surface-2)] text-[var(--accent)] text-[12px] font-semibold" {...props}>
                               {children}
                             </code>
                           );
                         }
                         const lang = /language-(\w+)/.exec(className || '');
                         return (
-                          <pre className="bg-[var(--surface-2)] border border-[color:var(--border)] rounded-xl p-3 overflow-x-auto text-[12px]">
+                          <pre className="bg-[var(--surface-2)]/80 border border-[color:var(--border)] rounded-xl p-4 overflow-x-auto text-[13px] my-3 shadow-md">
                             <code className={lang ? `language-${lang[1]}` : ''}>{children}</code>
                           </pre>
                         );
@@ -199,19 +199,19 @@ const MessageBubble = memo(
                   >
                     {content}
                   </Markdown>
-                  {isStreaming && isModel && <span className="inline-block w-2 h-4 bg-[var(--accent)] align-middle ml-1 animate-pulse"></span>}
+                  {isStreaming && isModel && <span className="inline-block w-2.5 h-5 bg-[var(--accent)] align-middle ml-1.5 animate-pulse rounded-sm"></span>}
                 </div>
               )}
 
               {imagePrompt && <ImageGenerationCard prompt={imagePrompt} />}
 
               {isError && retryContext && onRetry && (
-                <div className="mt-3">
+                <div className="mt-4">
                   <button
                     onClick={() => onRetry(msg.id, retryContext)}
-                    className="px-3 py-1.5 rounded-lg border border-[color:var(--accent)] text-[var(--accent)] text-[12px] font-semibold hover:bg-[var(--accent)]/10 transition-colors"
+                    className="px-4 py-2 rounded-xl border border-[color:var(--danger)] text-[var(--danger)] text-[13px] font-semibold hover:bg-[var(--danger)]/10 transition-all duration-200 active:scale-95"
                   >
-                    Retry
+                    🔄 Retry
                   </button>
                 </div>
               )}
@@ -220,15 +220,15 @@ const MessageBubble = memo(
             {isModel && content && (
               <button
                 onClick={handleCopy}
-                className="p-2 rounded-full hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--accent)] transition-all shrink-0 self-start"
+                className="p-2.5 rounded-xl hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--accent)] transition-all duration-200 shrink-0 self-start hover:shadow-md"
                 title="Copy text"
               >
-                {copied ? <Check size={14} className="text-[var(--success)]" /> : <Copy size={14} />}
+                {copied ? <Check size={16} className="text-[var(--success)]" /> : <Copy size={16} />}
               </button>
             )}
           </div>
 
-          <div className={`flex items-center gap-3 mt-1.5 px-2 select-none ${isModel ? 'justify-start' : 'justify-end'}`}>
+          <div className={`flex items-center gap-3 mt-2.5 px-2 select-none ${isModel ? 'justify-start' : 'justify-end'}`}>
             {isModel && (
               <AIProviderInfo
                 metadata={msg.metadata}
@@ -237,13 +237,13 @@ const MessageBubble = memo(
               />
             )}
 
-            <div className="flex items-center gap-1.5 opacity-80 text-[12px] text-[var(--text-muted)]">
+            <div className="flex items-center gap-2 opacity-75 text-[12px] text-[var(--text-muted)] font-medium">
               <span>{timestamp}</span>
               {!isModel && (
                 <>
-                  {(msg.metadata?.status === 'success' || !msg.metadata?.status) && <CheckCheck size={12} />}
-                  {msg.metadata?.status === 'loading' && <Clock size={12} className="animate-pulse" />}
-                  {msg.metadata?.status === 'error' && <AlertTriangle size={12} className="text-[var(--danger)]" />}
+                  {(msg.metadata?.status === 'success' || !msg.metadata?.status) && <CheckCheck size={14} className="text-[var(--success)]" />}
+                  {msg.metadata?.status === 'loading' && <Clock size={14} className="animate-spin text-[var(--accent)]" />}
+                  {msg.metadata?.status === 'error' && <AlertTriangle size={14} className="text-[var(--danger)]" />}
                 </>
               )}
             </div>

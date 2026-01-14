@@ -28,16 +28,16 @@ const PersonaToggle: React.FC<{ mode: 'hanisah' | 'stoic'; onToggle: () => void;
         <button 
             onClick={onToggle}
             className={cn(
-                'group relative flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] border transition-all duration-300',
+                'group relative flex items-center gap-3 px-4 py-2 rounded-xl border transition-all duration-300 font-semibold',
                 mode === 'hanisah'
-                    ? 'bg-accent/10 border-accent/30 text-accent'
-                    : 'bg-surface-2 border-border text-text'
+                    ? 'bg-gradient-to-r from-[var(--accent)]/15 to-[var(--accent)]/5 border-[color:var(--accent)]/40 text-[var(--accent)]'
+                    : 'bg-gradient-to-r from-[var(--accent-2)]/15 to-[var(--accent-2)]/5 border-[color:var(--accent-2)]/40 text-[var(--accent-2)]'
             )}
         >
-            <div className={cn('w-1.5 h-1.5 rounded-full', mode === 'hanisah' ? 'bg-accent' : 'bg-text-muted')} />
-            <span className="caption">{mode === 'hanisah' ? 'Hanisah' : 'Stoic'}</span>
-            <div className="w-[1px] h-3 bg-current opacity-20 mx-1"></div>
-            {mode === 'hanisah' ? <Flame size={12} strokeWidth={2.2} /> : <Brain size={12} strokeWidth={2.2} />}
+            <div className={cn('w-2 h-2 rounded-full transition-all duration-300', mode === 'hanisah' ? 'bg-[var(--accent)]' : 'bg-[var(--accent-2)]')} />
+            <span className="caption font-bold leading-none text-[13px]">{mode === 'hanisah' ? '✨ Hanisah' : '🧠 Stoic'}</span>
+            <div className="w-[1px] h-4 bg-current opacity-30 mx-0.5"></div>
+            {mode === 'hanisah' ? <Flame size={14} strokeWidth={2.5} /> : <Brain size={14} strokeWidth={2.5} />}
         </button>
     );
 });
@@ -49,14 +49,17 @@ const SuggestionCard: React.FC<{ icon: React.ReactNode, label: string, desc: str
         padding="md"
         onClick={onClick}
         style={{ animationDelay: `${delay}ms` }}
-        className="relative overflow-hidden group text-left transition-all duration-300 ease-out hover:-translate-y-0.5 active:scale-[0.98] flex items-center gap-4 h-full animate-slide-up"
+        className="relative overflow-hidden group text-left transition-all duration-300 ease-out hover:-translate-y-1 active:scale-[0.97] flex items-center gap-5 h-full animate-slide-up border border-[color:var(--border)]/40 bg-gradient-to-br from-[var(--surface)] to-[var(--surface-2)] hover:border-[color:var(--border)]/80 hover:bg-gradient-to-br hover:from-[var(--surface)]/98 hover:to-[var(--surface-2)]/95 shadow-sm hover:shadow-lg"
     >
-        <div className={cn('w-10 h-10 rounded-[var(--radius-md)] bg-surface-2 flex items-center justify-center transition-all duration-300 group-hover:scale-110 border border-border', accent)}>
-            {React.cloneElement(icon as React.ReactElement<any>, { size: 18, strokeWidth: 2 })}
+        <div className={cn('w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--surface-2)] to-[var(--surface)] flex items-center justify-center transition-all duration-300 group-hover:scale-125 border border-[color:var(--border)]/60 group-hover:border-[color:var(--border)]', accent)}>
+            {React.cloneElement(icon as React.ReactElement<any>, { size: 20, strokeWidth: 2.2 })}
         </div>
         <div className="flex-1 min-w-0">
-            <h4 className="section-title text-text truncate">{label}</h4>
-            <p className="caption text-text-muted truncate opacity-80 group-hover:opacity-100 transition-opacity">{desc}</p>
+            <h4 className="section-title text-text font-bold text-[15px]">{label}</h4>
+            <p className="caption text-text-muted text-[13px] truncate opacity-85 group-hover:opacity-100 transition-opacity">{desc}</p>
+        </div>
+        <div className="text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors duration-300">
+            <Code size={18} strokeWidth={2} />
         </div>
     </Card>
 ));
@@ -122,26 +125,26 @@ const AIChatView: React.FC<AIChatViewProps> = ({ chatLogic }) => {
             <VaultPinModal isOpen={showPinModal} onClose={() => setShowPinModal(false)} onSuccess={() => setIsVaultSynced(true)} />
             
             {/* --- 1. HEADER (FIXED TOP) --- */}
-            <header className="shrink-0 z-50 flex justify-center pt-[env(safe-area-inset-top)] px-4 w-full">
-                <div className={`mt-2 backdrop-blur-2xl border rounded-[20px] p-1.5 flex items-center justify-between gap-1 shadow-sm transition-all duration-500 bg-[var(--surface)]/95 border-[color:var(--border)] ring-1 ring-[color:var(--border)]`}>
-                    <button className="flex items-center gap-2 group py-1.5 px-3 rounded-xl transition-all cursor-pointer hover:bg-[var(--surface-2)] active:scale-95" onClick={() => { debugService.logAction(UI_REGISTRY.CHAT_BTN_MODEL_PICKER, FN_REGISTRY.CHAT_SELECT_MODEL, 'OPEN'); setShowModelPicker(true); }}>
-                        <div className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 ${isHydraActive ? 'text-[var(--success)]' : 'text-[var(--text-muted)] group-hover:text-[var(--text)]'}`}>
-                            {isHydraActive ? <Infinity size={14} className="animate-pulse" /> : <Zap size={14} />}
+            <header className="shrink-0 z-50 flex justify-center pt-[env(safe-area-inset-top)] px-3 md:px-4 w-full">
+                <div className={`mt-3 backdrop-blur-xl border rounded-2xl p-2 flex items-center justify-between gap-2 shadow-lg transition-all duration-500 bg-gradient-to-r from-[var(--surface)]/98 to-[var(--surface-2)]/95 border-[color:var(--border)]/70 ring-1 ring-[color:var(--border)]/40`}>
+                    <button className="flex items-center gap-2 group py-2 px-4 rounded-xl transition-all duration-200 cursor-pointer hover:bg-[var(--surface-2)]/60 active:scale-95" onClick={() => { debugService.logAction(UI_REGISTRY.CHAT_BTN_MODEL_PICKER, FN_REGISTRY.CHAT_SELECT_MODEL, 'OPEN'); setShowModelPicker(true); }}>
+                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 transition-all duration-300 ${isHydraActive ? 'text-[var(--success)] bg-[var(--success)]/15 border border-[color:var(--success)]/40' : 'text-[var(--text-muted)] group-hover:text-[var(--accent)] bg-[var(--surface-2)]/60 border border-[color:var(--border)]/40'}`}>
+                            {isHydraActive ? <Infinity size={16} className="animate-pulse" strokeWidth={2.5} /> : <Zap size={16} strokeWidth={2.5} />}
                         </div>
-                        <span className={`caption font-semibold leading-none ${isHydraActive ? 'text-success' : 'text-text-muted group-hover:text-text'}`}>{isHydraActive ? 'Hydra' : (activeModel?.name?.split(' ')[0] || 'Model')}</span>
+                        <span className={`caption font-bold leading-none ${isHydraActive ? 'text-success' : 'text-text-muted group-hover:text-accent'} transition-colors`}>{isHydraActive ? '🔮 Hydra' : (activeModel?.name?.split(' ')[0] || 'Model')}</span>
                     </button>
-                    <div className="h-4 w-[1px] bg-[color:var(--border)] mx-1"></div>
+                    <div className="h-5 w-[1px] bg-[color:var(--border)]/40 mx-2"></div>
                     <PersonaToggle mode={personaMode} onToggle={changePersona} />
-                    <div className="h-4 w-[1px] bg-[color:var(--border)] mx-1"></div>
-                    <div className="flex items-center gap-1">
-                        <button onClick={() => !isStoic && setShowImagePicker(true)} disabled={isStoic} className={`w-8 h-8 rounded-lg transition-all flex items-center justify-center active:scale-90 group ${isStoic ? 'opacity-50 cursor-not-allowed bg-[var(--surface-2)]' : 'text-[var(--accent)] hover:bg-[var(--accent)]/10'}`}>
-                            {isStoic ? <Lock size={14} /> : <ImageIcon size={16} strokeWidth={2} />}
+                    <div className="h-5 w-[1px] bg-[color:var(--border)]/40 mx-2"></div>
+                    <div className="flex items-center gap-1.5">
+                        <button onClick={() => !isStoic && setShowImagePicker(true)} disabled={isStoic} className={`w-10 h-10 rounded-xl transition-all duration-200 flex items-center justify-center active:scale-90 group font-semibold ${isStoic ? 'opacity-40 cursor-not-allowed bg-[var(--surface-2)]/40 text-[var(--text-muted)]' : 'text-[var(--accent)] hover:bg-[var(--accent)]/15 border border-transparent hover:border-[color:var(--accent)]/40'}`}>
+                            {isStoic ? <Lock size={18} strokeWidth={2.5} /> : <ImageIcon size={18} strokeWidth={2.5} />}
                         </button>
-                        <button onClick={() => { debugService.logAction(UI_REGISTRY.CHAT_BTN_HISTORY, FN_REGISTRY.CHAT_LOAD_HISTORY, 'OPEN'); setShowHistoryDrawer(true); }} className="w-8 h-8 rounded-lg hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text)] transition-all flex items-center justify-center active:scale-90 group">
-                            <History size={16} strokeWidth={2} />
+                        <button onClick={() => { debugService.logAction(UI_REGISTRY.CHAT_BTN_HISTORY, FN_REGISTRY.CHAT_LOAD_HISTORY, 'OPEN'); setShowHistoryDrawer(true); }} className="w-10 h-10 rounded-xl hover:bg-[var(--surface-2)]/60 text-[var(--text-muted)] hover:text-[var(--accent)] transition-all duration-200 flex items-center justify-center active:scale-90 group border border-transparent hover:border-[color:var(--accent)]/40">
+                            <History size={18} strokeWidth={2.5} />
                         </button>
-                        <button onClick={() => { if (isLiveLinkEnabled) { isLive ? stopSession() : startSession(personaMode); } }} className={`w-8 h-8 rounded-lg transition-all flex items-center justify-center active:scale-95 ${!isLiveLinkEnabled ? 'opacity-30 cursor-not-allowed' : isLive ? 'bg-[var(--danger)] text-[var(--on-accent-color)] animate-pulse' : 'text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger)]/10'}`} disabled={!isLiveLinkEnabled}>
-                            <Radio size={16} strokeWidth={2} />
+                        <button onClick={() => { if (isLiveLinkEnabled) { isLive ? stopSession() : startSession(personaMode); } }} className={`w-10 h-10 rounded-xl transition-all duration-200 flex items-center justify-center active:scale-90 border font-semibold ${!isLiveLinkEnabled ? 'opacity-30 cursor-not-allowed' : isLive ? 'bg-[var(--danger)] text-white border-transparent shadow-lg animate-pulse' : 'text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger)]/15 border-transparent hover:border-[color:var(--danger)]/40'}`} disabled={!isLiveLinkEnabled}>
+                            <Radio size={18} strokeWidth={2.5} />
                         </button>
                     </div>
                 </div>
@@ -149,16 +152,16 @@ const AIChatView: React.FC<AIChatViewProps> = ({ chatLogic }) => {
 
             {/* --- 2. CHAT CONTENT (FLEXIBLE) --- */}
             {/* Main content expands to fill available space, Virtuoso handles internal scroll */}
-            <div className="flex-1 min-h-0 relative w-full max-w-[900px] mx-auto pt-2">
+            <div className="flex-1 min-h-0 relative w-full max-w-[900px] mx-auto pt-4">
                 {showEmptyState ? (
                     <div className="flex flex-col h-full justify-center items-center w-full pb-20 animate-fade-in overflow-y-auto custom-scroll px-4">
-                            <div className="text-center mb-10 space-y-4">
-                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-[24px] mb-2 bg-[var(--surface-2)] text-[var(--accent)]">
-                                {personaMode === 'hanisah' ? <Flame size={32} /> : <Brain size={32} />}
+                            <div className="text-center mb-12 space-y-5">
+                            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4 bg-gradient-to-br from-[var(--accent)]/20 to-[var(--accent)]/5 text-[var(--accent)] border border-[color:var(--accent)]/30 shadow-lg">
+                                {personaMode === 'hanisah' ? <Flame size={40} strokeWidth={1.5} /> : <Brain size={40} strokeWidth={1.5} />}
                             </div>
                             <div>
-                                <h2 className="page-title text-[var(--text)]">{personaMode === 'hanisah' ? 'Hanisah' : 'Stoic'}</h2>
-                                <p className="body-sm text-[var(--text-muted)]">{personaMode === 'hanisah' ? 'Percakapan natural dan empatik' : 'Analisis runtut dan fokus'}</p>
+                                <h2 className="page-title text-2xl md:text-3xl font-bold text-[var(--text)]">{personaMode === 'hanisah' ? '✨ Hanisah' : '🧠 Stoic'}</h2>
+                                <p className="body-sm text-[var(--text-muted)] mt-2 text-[15px] font-medium">{personaMode === 'hanisah' ? 'Percakapan natural, empatik & kreatif' : 'Analisis runtut, logis & objektif'}</p>
                             </div>
                             </div>
                         
@@ -167,9 +170,9 @@ const AIChatView: React.FC<AIChatViewProps> = ({ chatLogic }) => {
                             <ChatInput input={input} setInput={setInput} isLoading={isLoading} onSubmit={sendMessage} onStop={stopGeneration} onNewChat={() => handleNewChat(personaMode)} onFocusChange={() => {}} aiName={personaMode.toUpperCase()} isVaultSynced={isVaultSynced} onToggleVaultSync={handleVaultToggle} personaMode={personaMode} isVaultEnabled={isVaultConfigEnabled} onTogglePersona={changePersona} variant="hero" onPollinations={generateWithPollinations} disableVisuals={isStoic} />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl mx-auto mt-8 opacity-80">
-                            {!isStoic ? <SuggestionCard icon={<SparklesIcon />} label="Generate visual" desc="Create high-fidelity images." onClick={() => { debugService.logAction(UI_REGISTRY.CHAT_SUGGESTION_CARD, FN_REGISTRY.CHAT_SEND_MESSAGE, 'GEN_IMG'); setInput("Generate a cinematic landscape with warm lighting."); }} accent="text-[var(--accent)] group-hover:text-[var(--accent)]" delay={150} /> : <SuggestionCard icon={<Brain />} label="First principles" desc="Deconstruct complex problems." onClick={() => { debugService.logAction(UI_REGISTRY.CHAT_SUGGESTION_CARD, FN_REGISTRY.CHAT_SEND_MESSAGE, 'LOGIC'); setInput("Analyze this problem using first principles: [Insert Problem]"); }} accent="text-[var(--accent-2)] group-hover:text-[var(--accent-2)]" delay={150} />}
-                            <SuggestionCard icon={<Code />} label="Code audit" desc="Debug & optimize algorithms." onClick={() => { debugService.logAction(UI_REGISTRY.CHAT_SUGGESTION_CARD, FN_REGISTRY.CHAT_SEND_MESSAGE, 'CODE_AUDIT'); setInput("Analyze this algorithm for complexity: [Paste Code]"); }} accent="text-[var(--success)] group-hover:text-[var(--success)]" delay={200} />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl mx-auto mt-10">
+                            {!isStoic ? <SuggestionCard icon={<SparklesIcon />} label="Buat Visual" desc="Buatkan gambar beresolusi tinggi." onClick={() => { debugService.logAction(UI_REGISTRY.CHAT_SUGGESTION_CARD, FN_REGISTRY.CHAT_SEND_MESSAGE, 'GEN_IMG'); setInput("Buatkan gambar pemandangan cinematic dengan pencahayaan hangat."); }} accent="text-[var(--accent)] group-hover:text-[var(--accent)]" delay={150} /> : <SuggestionCard icon={<Brain />} label="First Principles" desc="Urai masalah kompleks dari dasar." onClick={() => { debugService.logAction(UI_REGISTRY.CHAT_SUGGESTION_CARD, FN_REGISTRY.CHAT_SEND_MESSAGE, 'LOGIC'); setInput("Analisis masalah ini dengan first principles: [Masalah]"); }} accent="text-[var(--accent-2)] group-hover:text-[var(--accent-2)]" delay={150} />}
+                            <SuggestionCard icon={<Code />} label="Code Audit" desc="Debug & optimalkan algoritma." onClick={() => { debugService.logAction(UI_REGISTRY.CHAT_SUGGESTION_CARD, FN_REGISTRY.CHAT_SEND_MESSAGE, 'CODE_AUDIT'); setInput("Analisis algoritma ini untuk kompleksitas: [Kode]"); }} accent="text-[var(--success)] group-hover:text-[var(--success)]" delay={200} />
                         </div>
                     </div>
                 ) : (
@@ -186,11 +189,11 @@ const AIChatView: React.FC<AIChatViewProps> = ({ chatLogic }) => {
 
             {/* --- 3. INPUT (FIXED BOTTOM) --- */}
             {!showEmptyState && (
-                <div className={`shrink-0 z-50 w-full flex justify-center pb-[calc(env(safe-area-inset-bottom)+1rem)] px-4 md:px-0 transition-all duration-300 ${isMobileNavVisible ? 'mb-16' : ''}`}>
+                <div className={`shrink-0 z-50 w-full flex justify-center pb-[calc(env(safe-area-inset-bottom)+1rem)] px-3 md:px-4 transition-all duration-300 ${isMobileNavVisible ? 'mb-16' : ''}`}>
                     <div className="w-full max-w-[900px] pointer-events-auto relative">
                         {showScrollBtn && (
-                            <button onClick={() => scrollToBottom()} className="absolute -top-16 right-0 z-20 w-10 h-10 rounded-full bg-white dark:bg-[#0a0a0b] shadow-xl border border-black/10 dark:border-white/10 flex items-center justify-center text-accent animate-bounce">
-                                <ArrowDown size={18} strokeWidth={2.5} />
+                            <button onClick={() => scrollToBottom()} className="absolute -top-20 right-0 md:right-4 z-20 w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-2)] shadow-xl border border-[color:var(--accent)]/40 flex items-center justify-center text-white animate-bounce active:scale-90 transition-all duration-200">
+                                <ArrowDown size={22} strokeWidth={2.5} />
                             </button>
                         )}
                         <ChatInput input={input} setInput={setInput} isLoading={isLoading} onSubmit={sendMessage} onStop={stopGeneration} onNewChat={() => handleNewChat(personaMode)} onFocusChange={() => {}} aiName={personaMode.toUpperCase()} isVaultSynced={isVaultSynced} onToggleVaultSync={handleVaultToggle} personaMode={personaMode} isVaultEnabled={isVaultConfigEnabled} onTogglePersona={changePersona} variant="standard" onPollinations={generateWithPollinations} disableVisuals={isStoic} />

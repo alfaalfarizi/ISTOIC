@@ -9,23 +9,32 @@ import { MemoryService } from '../../../services/memoryService';
 import { useChatStorage } from '../../../hooks/useChatStorage';
 import { useAIStream } from './useAIStream';
 
-type RetryContext = {
+/** Context for retrying failed messages */
+interface RetryContext {
   prompt: string;
   attachment?: { data: string; mimeType: string };
   persona?: 'hanisah' | 'stoic';
   modelId?: string;
   threadId?: string;
-};
+}
 
-type SendOptions = {
+/** Options for sending messages */
+interface SendOptions {
   attachment?: { data: string; mimeType: string };
   promptOverride?: string;
   retryMessageId?: string;
   persona?: 'hanisah' | 'stoic';
-};
+}
 
-const HANISAH_WELCOME = '**Hanisah siap membantu.**\n\nApa yang ingin kamu bahas hari ini?';
-const STOIC_WELCOME = '**Stoic siap fokus.**\n\nBerikan konteks dan kita lanjutkan.';
+/** Persona-specific welcome messages */
+const PERSONA_MESSAGES = {
+  HANISAH: '**Hanisah siap membantu.**\n\nApa yang ingin kamu bahas hari ini?',
+  STOIC: '**Stoic siap fokus.**\n\nBerikan konteks dan kita lanjutkan.'
+} as const;
+
+// Backwards compatibility
+const HANISAH_WELCOME = PERSONA_MESSAGES.HANISAH;
+const STOIC_WELCOME = PERSONA_MESSAGES.STOIC;
 
 export const useChatLogic = (notes: Note[], setNotes: (notes: Note[]) => void) => {
   // --- 1. CORE STORAGE & STATE ---

@@ -25,7 +25,7 @@ import useLocalStorage from "../../hooks/useLocalStorage";
 import { IstokIdentityService, IStokUserIdentity } from "../istok/services/istokIdentity";
 import { LoginManual, RegisterManual, ForgotAccount, ForgotPin } from "./ManualAuth";
 
-import { auth, db, firebaseConfigError } from "../../services/firebaseConfig";
+import { auth, db, firebaseConfigError, ensureAuthPersistence } from "../../services/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { authStyles } from "./authStyles";
@@ -49,7 +49,7 @@ type AuthStage =
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 5 * 60 * 1000;
 
-const DEV_BYPASS_ENABLED = String(import.meta.env.VITE_ENABLE_DEV_BYPASS || "").toLowerCase() === "true";
+const DEV_BYPASS_ENABLED = (import.meta as any).env.VITE_ENABLE_DEV_BYPASS === 'true';
 const FIRESTORE_TIMEOUT_MS = 15000;
 
 const withTimeout = async <T,>(promise: Promise<T>, timeoutMs = FIRESTORE_TIMEOUT_MS): Promise<T> =>
@@ -453,9 +453,9 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-[#020202] flex items-center justify-center p-6 overflow-hidden font-sans select-none sheen">
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vh] bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none"></div>
+    <div className="fixed inset-0 z-[9999] bg-[var(--bg)] flex items-center justify-center p-6 overflow-hidden font-sans select-none sheen">
+      <div className="absolute inset-0 bg-[linear-gradient(var(--accent-rgb)/0.02_1px,transparent_1px),linear-gradient(90deg,var(--accent-rgb)/0.02_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vh] bg-[var(--accent)]/5 blur-[120px] rounded-full pointer-events-none"></div>
 
       <div className={`relative w-full max-w-sm ${shake ? "animate-[shake_0.5s_cubic-bezier(.36,.07,.19,.97)_both]" : ""}`}>
         <div className={authStyles.card}>

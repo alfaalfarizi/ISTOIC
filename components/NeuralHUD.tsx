@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { useNeuralLink } from '../contexts/NeuralLinkContext';
-import { Maximize2, Mic, MicOff, Radio, X, Loader2, BrainCircuit, Activity } from 'lucide-react';
+import { Maximize2, X, Loader2 } from 'lucide-react';
 
 export const NeuralHUD: React.FC = () => {
     const { isLiveMode, isMinimized, liveStatus, activeTask, setMinimized, terminateSession, analyser } = useNeuralLink();
@@ -41,42 +41,42 @@ export const NeuralHUD: React.FC = () => {
 
     return (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[1500] animate-slide-down">
-            <div className="bg-black/90 backdrop-blur-2xl border border-white/10 rounded-full px-4 py-2 flex items-center gap-4 shadow-2xl ring-1 ring-accent/20 max-w-[90vw]">
+            <div className="bg-[var(--surface)]/95 backdrop-blur-2xl border border-[color:var(--border)]/60 rounded-full px-4 py-2 flex items-center gap-4 shadow-2xl ring-1 ring-[color:var(--accent)]/10">
                 {/* Visualizer Pill */}
-                <div className="flex items-center gap-2 bg-white/5 rounded-full px-3 py-1.5 border border-white/5">
+                <div className="flex items-center gap-2 bg-[var(--surface-2)]/80 rounded-full px-3 py-1.5 border border-[color:var(--border)]/40">
                     <canvas ref={canvasRef} width={40} height={16} className="opacity-80" />
-                    <div className={`w-2 h-2 rounded-full ${liveStatus === 'ACTIVE' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                    <div className={`w-2 h-2 rounded-full ${liveStatus === 'ACTIVE' ? 'bg-[var(--success)] animate-pulse' : 'bg-[var(--danger)]'}`} />
                 </div>
 
                 {/* Status / Task Info */}
                 <div className="flex flex-col min-w-[120px] md:min-w-[180px] truncate">
-                    <span className="text-[8px] font-black uppercase tracking-widest text-neutral-500">Neural Link Active</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest text-[var(--text-muted)]">Neural Link Active</span>
                     <div className="flex items-center gap-2 truncate">
                         {activeTask ? (
                             <div className="flex items-center gap-2">
-                                <Loader2 size={10} className="animate-spin text-accent" />
-                                <span className="text-[10px] font-bold text-accent uppercase tracking-tighter truncate animate-pulse">{activeTask}</span>
+                                <Loader2 size={10} className="animate-spin text-[var(--accent)]" />
+                                <span className="text-[10px] font-bold text-[var(--accent)] uppercase tracking-tighter truncate animate-pulse">{activeTask}</span>
                             </div>
                         ) : (
-                            <span className="text-[10px] font-bold text-white uppercase tracking-tight truncate">Awaiting instruction...</span>
+                            <span className="text-[10px] font-bold text-[var(--text)] uppercase tracking-tight truncate">Awaiting instruction...</span>
                         )}
                     </div>
                 </div>
 
-                <div className="h-6 w-[1px] bg-white/10" />
+                <div className="h-6 w-[1px] bg-[color:var(--border)]/40" />
 
                 {/* Actions */}
                 <div className="flex items-center gap-1">
                     <button 
                         onClick={() => setMinimized(false)}
-                        className="p-2 text-neutral-400 hover:text-white hover:bg-white/10 rounded-full transition-all"
+                        className="p-2 text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--surface-2)]/60 rounded-full transition-all"
                         title="Expand to Fullscreen"
                     >
                         <Maximize2 size={16} />
                     </button>
                     <button 
                         onClick={terminateSession}
-                        className="p-2 text-neutral-400 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-all"
+                        className="p-2 text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger)]/10 rounded-full transition-all"
                         title="End Call"
                     >
                         <X size={16} />

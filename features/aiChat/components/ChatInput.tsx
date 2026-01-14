@@ -270,28 +270,28 @@ export const ChatInput: React.FC<ChatInputProps> = memo(
         {showEmojiPicker && <div className="fixed inset-0 z-20" onClick={() => setShowEmojiPicker(false)}></div>}
 
         {showEmojiPicker && (
-          <div className="absolute bottom-[110%] left-0 w-full sm:w-80 bg-[var(--surface)] border border-[color:var(--border)] rounded-[20px] shadow-lg z-30 animate-slide-up flex flex-col overflow-hidden">
-            <div className="flex p-1 border-b border-[color:var(--border)] overflow-x-auto no-scrollbar">
+          <div className="absolute bottom-[110%] left-0 w-full sm:w-96 bg-gradient-to-br from-[var(--surface)] to-[var(--surface-2)] border border-[color:var(--border)] rounded-[20px] shadow-xl z-30 animate-slide-up flex flex-col overflow-hidden backdrop-blur-lg">
+            <div className="flex p-2 border-b border-[color:var(--border)]/30 overflow-x-auto no-scrollbar gap-1">
               {Object.keys(EMOJI_CATEGORIES).map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setActiveEmojiCategory(cat as any)}
-                  className={`flex-1 py-2 text-[10px] font-semibold uppercase tracking-widest rounded-xl transition-all ${
+                  className={`flex-1 py-2.5 text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all duration-200 ${
                     activeEmojiCategory === cat
-                      ? 'bg-[var(--surface-2)] text-[var(--text)]'
-                      : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+                      ? 'bg-[var(--accent)]/15 text-[var(--accent)] border border-[color:var(--accent)]/40'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text)] border border-transparent hover:bg-[var(--surface-2)]/60'
                   }`}
                 >
-                  {cat}
+                  {cat.charAt(0) + cat.slice(1).toLowerCase()}
                 </button>
               ))}
             </div>
-            <div className="p-3 grid grid-cols-5 gap-1 max-h-48 overflow-y-auto custom-scroll">
+            <div className="p-4 grid grid-cols-6 gap-2 max-h-56 overflow-y-auto custom-scroll">
               {EMOJI_CATEGORIES[activeEmojiCategory].map((emoji) => (
                 <button
                   key={emoji}
                   onClick={() => handleInsertEmoji(emoji)}
-                  className="h-10 rounded-lg hover:bg-[var(--surface-2)] text-xl flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
+                  className="h-12 rounded-lg hover:bg-[var(--surface-2)] text-2xl flex items-center justify-center transition-transform hover:scale-125 active:scale-95"
                 >
                   {emoji}
                 </button>
@@ -301,17 +301,17 @@ export const ChatInput: React.FC<ChatInputProps> = memo(
         )}
 
         {pasteFlash && (
-          <div className="absolute -top-10 right-0 text-[10px] font-semibold text-[var(--success)] bg-[color:var(--success)]/10 border border-[color:var(--success)]/30 px-3 py-1 rounded-lg animate-fade-in flex items-center gap-2 backdrop-blur-sm">
-            Format cleaned
+          <div className="absolute -top-10 right-0 text-[11px] md:text-[12px] font-bold text-[var(--success)] bg-[color:var(--success)]/15 border border-[color:var(--success)]/40 px-4 py-2 rounded-xl animate-fade-in flex items-center gap-2 backdrop-blur-sm">
+            <span>✓</span> Format cleaned
           </div>
         )}
 
         <div
-          className={`w-full transition-all duration-300 bg-[var(--surface)]/95 border border-[color:var(--border)] rounded-[28px] p-2 flex flex-col shadow-[0_16px_40px_rgba(0,0,0,0.12)] ${
+          className={`w-full transition-all duration-300 bg-gradient-to-b from-[var(--surface)]/98 to-[var(--surface-2)]/95 border border-[color:var(--border)]/60 rounded-[28px] p-3 flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.15)] backdrop-blur-lg ${
             isDictating
-              ? 'ring-2 ring-[color:var(--accent)] border-[color:var(--accent)]'
+              ? 'ring-2 ring-[color:var(--accent)] border-[color:var(--accent)]/60'
               : isFocused || isDragOver
-                ? 'ring-2 ring-[color:var(--accent)]'
+                ? 'ring-2 ring-[color:var(--accent)]/40 border-[color:var(--accent)]/40'
                 : ''
           }`}
           onDragOver={(e) => {
@@ -327,20 +327,20 @@ export const ChatInput: React.FC<ChatInputProps> = memo(
         >
           {attachment && (
             <div className="px-4 pt-4 pb-2 flex animate-slide-up">
-              <div className="relative inline-block">
+              <div className="relative inline-block group">
                 <img
                   src={attachment.preview}
                   alt="Preview"
-                  className="h-20 w-auto rounded-2xl border border-[color:var(--border)] shadow-md object-cover"
+                  className="h-24 w-auto rounded-2xl border border-[color:var(--border)] shadow-lg object-cover group-hover:shadow-xl transition-all duration-300"
                 />
                 <button
                   onClick={() => setAttachment(null)}
                   aria-label="Remove Attachment"
-                  className="absolute -top-2 -right-2 bg-[var(--bg)] text-[var(--text)] rounded-full p-1.5 shadow-md hover:bg-[var(--surface-2)] transition-colors border border-[color:var(--border)]"
+                  className="absolute -top-3 -right-3 bg-[var(--danger)] text-white rounded-full p-2 shadow-lg hover:bg-[var(--danger)]/90 transition-all duration-200 active:scale-90 border border-[color:var(--danger)]/30"
                 >
-                  <X size={12} />
+                  <X size={14} strokeWidth={2.5} />
                 </button>
-                <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-[var(--bg)] text-[10px] text-[var(--text-muted)] font-mono uppercase border border-[color:var(--border)]">
+                <div className="absolute bottom-2 right-2 px-2.5 py-1 rounded-lg bg-[var(--bg)]/90 backdrop-blur-sm text-[11px] text-[var(--accent)] font-semibold uppercase border border-[color:var(--border)] shadow-md">
                   {attachment.mimeType.split('/')[1]}
                 </div>
               </div>
@@ -362,8 +362,8 @@ export const ChatInput: React.FC<ChatInputProps> = memo(
                 setIsFocused(false);
                 onFocusChange(false);
               }}
-              placeholder={isDictating ? '' : personaMode === 'hanisah' ? 'Tanya Hanisah...' : 'Kirim perintah Stoic...'}
-              className="w-full bg-transparent text-base leading-relaxed font-medium text-[var(--text)] placeholder:text-[var(--text-muted)] resize-none focus:outline-none max-h-60 custom-scroll"
+              placeholder={isDictating ? '🎤 Listening...' : personaMode === 'hanisah' ? 'Tanya Hanisah tentang apa...' : 'Kirim perintah logis ke Stoic...'}
+              className="w-full bg-transparent text-base leading-relaxed font-medium text-[var(--text)] placeholder:text-[var(--text-muted)]/70 resize-none focus:outline-none max-h-60 custom-scroll"
               rows={1}
               aria-label="Chat input"
               disabled={isLoading && !onStop}
@@ -371,7 +371,7 @@ export const ChatInput: React.FC<ChatInputProps> = memo(
 
             {!input && !attachment && !isDictating && (
               <div
-                className={`flex gap-2 mt-2 ${
+                className={`flex gap-2 mt-3 ${
                   variant === 'hero' ? 'flex-wrap opacity-0 animate-fade-in' : 'overflow-x-auto no-scrollbar mask-fade-sides'
                 }`}
                 style={variant === 'hero' ? { animationDelay: '200ms', opacity: 1 } : {}}
@@ -383,7 +383,7 @@ export const ChatInput: React.FC<ChatInputProps> = memo(
                       setInput(chip.text);
                       inputRef.current?.focus();
                     }}
-                    className="shrink-0 px-3 py-1.5 rounded-xl border text-[11px] font-medium whitespace-nowrap bg-[var(--surface-2)]/60 border-[color:var(--border)] hover:border-[color:var(--accent)] hover:bg-[var(--accent)]/10 hover:text-[var(--accent)] transition-all"
+                    className="shrink-0 px-3 py-1.5 rounded-xl border text-[12px] font-semibold whitespace-nowrap bg-[var(--accent)]/8 border-[color:var(--accent)]/30 text-[var(--text-muted)] hover:border-[color:var(--accent)] hover:bg-[var(--accent)]/15 hover:text-[var(--accent)] transition-all duration-200 active:scale-95"
                     style={{ animationDelay: `${50 * i}ms` }}
                   >
                     {chip.label}
@@ -393,115 +393,115 @@ export const ChatInput: React.FC<ChatInputProps> = memo(
             )}
           </div>
 
-          <div className="flex items-center justify-between px-3 pb-1.5 gap-2 border-t border-transparent mt-1">
-            <div className="flex gap-2 items-center">
+          <div className="flex items-center justify-between px-2 pb-1.5 gap-2 border-t border-[color:var(--border)]/30 mt-2">
+            <div className="flex gap-1.5 items-center">
               <button
                 onClick={onNewChat}
                 aria-label="New chat"
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--surface-2)] text-[var(--text)] hover:border-[color:var(--accent)] border border-transparent transition-all active:scale-95"
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--surface-2)]/60 hover:bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--accent)] border border-transparent hover:border-[color:var(--accent)]/30 transition-all duration-200 active:scale-90"
                 title={t.newChat}
               >
-                <Plus size={18} />
+                <Plus size={20} strokeWidth={2.2} />
               </button>
 
               <button
                 onClick={handleAttachClick}
                 disabled={disableVisuals}
                 aria-label="Attach image"
-                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-95 border ${
+                className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 active:scale-90 border ${
                   disableVisuals
                     ? 'opacity-40 cursor-not-allowed text-[var(--text-muted)]'
                     : attachment
-                      ? 'text-[var(--accent)] bg-[var(--accent)]/10 border-[color:var(--accent)]/30'
-                      : 'bg-[var(--surface-2)] border-transparent text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[color:var(--accent)]/40'
+                      ? 'text-[var(--accent)] bg-[var(--accent)]/15 border-[color:var(--accent)]/40'
+                      : 'bg-[var(--surface-2)]/60 hover:bg-[var(--surface-2)] border-transparent text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[color:var(--accent)]/30'
                 }`}
                 title={disableVisuals ? 'Visuals disabled' : 'Attach image'}
               >
-                <Paperclip size={18} />
+                <Paperclip size={20} strokeWidth={2.2} />
               </button>
               <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect} accept="image/*" />
 
               <button
                 onClick={() => setShowEmojiPicker((prev) => !prev)}
-                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-95 border ${
+                className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 active:scale-90 border ${
                   showEmojiPicker
-                    ? 'text-[var(--accent)] bg-[var(--accent)]/10 border-[color:var(--accent)]/30'
-                    : 'bg-[var(--surface-2)] border-transparent text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[color:var(--accent)]/30'
+                    ? 'text-[var(--accent)] bg-[var(--accent)]/15 border-[color:var(--accent)]/40'
+                    : 'bg-[var(--surface-2)]/60 hover:bg-[var(--surface-2)] border-transparent text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[color:var(--accent)]/30'
                 }`}
                 title="Insert emoji"
               >
-                <Smile size={18} />
+                <Smile size={20} strokeWidth={2.2} />
               </button>
 
               <button
                 onClick={() => !disableVisuals && onPollinations?.()}
                 disabled={disableVisuals}
-                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-95 border ${
+                className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 active:scale-90 border ${
                   disableVisuals
                     ? 'opacity-40 cursor-not-allowed text-[var(--text-muted)]'
-                    : 'bg-[var(--surface-2)] border-transparent text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[color:var(--accent)]/30'
+                    : 'bg-[var(--surface-2)]/60 hover:bg-[var(--surface-2)] border-transparent text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[color:var(--accent)]/30'
                 }`}
                 title={disableVisuals ? 'Visuals disabled' : 'Generate visual'}
               >
-                <Palette size={18} />
+                <Palette size={20} strokeWidth={2.2} />
               </button>
 
               <button
                 onClick={onToggleVaultSync}
                 disabled={!isVaultEnabled}
                 aria-label={isVaultEnabled ? (isVaultSynced ? 'Vault sync active' : 'Vault sync inactive') : 'Vault disabled'}
-                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-95 border ${
+                className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 active:scale-90 border ${
                   !isVaultEnabled
                     ? 'opacity-40'
                     : isVaultSynced
-                      ? 'text-[var(--success)] bg-[var(--success)]/10 border-[color:var(--success)]/30'
-                      : 'bg-[var(--surface-2)] border-transparent text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[color:var(--accent)]/30'
+                      ? 'text-[var(--success)] bg-[var(--success)]/15 border-[color:var(--success)]/40'
+                      : 'bg-[var(--surface-2)]/60 hover:bg-[var(--surface-2)] border-transparent text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[color:var(--accent)]/30'
                 }`}
                 title={isVaultEnabled ? 'Vault Sync' : 'Vault Disabled'}
               >
-                {isVaultSynced ? <DatabaseZap size={18} /> : <Database size={18} />}
+                {isVaultSynced ? <DatabaseZap size={20} strokeWidth={2.2} /> : <Database size={20} strokeWidth={2.2} />}
               </button>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className={`text-[11px] font-semibold transition-opacity ${input.length > 0 ? 'opacity-100' : 'opacity-0'}`} style={{ color: charTone }}>
-                {input.length} <span className="opacity-60">/ {MAX_CHARS}</span>
+              <div className={`text-[11px] font-bold transition-opacity ${input.length > 0 ? 'opacity-100' : 'opacity-0'}`} style={{ color: charTone }}>
+                {input.length}<span className="opacity-60 font-medium">/{MAX_CHARS}</span>
               </div>
 
               <button
                 onClick={toggleDictation}
                 aria-label={isDictating ? 'Stop dictation' : 'Start dictation'}
-                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-95 border ${
+                className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 active:scale-90 border ${
                   isDictating
                     ? 'bg-[var(--accent)] text-[var(--on-accent-color)] border-transparent shadow-lg'
-                    : 'bg-[var(--surface-2)] border-transparent text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[color:var(--accent)]/30'
+                    : 'bg-[var(--surface-2)]/60 hover:bg-[var(--surface-2)] border-transparent text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[color:var(--accent)]/30'
                 }`}
                 title="Voice input"
               >
-                {isDictating ? <MicOff size={18} /> : <Mic size={18} />}
+                {isDictating ? <MicOff size={20} strokeWidth={2.2} /> : <Mic size={20} strokeWidth={2.2} />}
               </button>
 
               {isLoading ? (
                 <button
                   onClick={handleStop}
                   aria-label="Stop generation"
-                  className="w-14 h-14 rounded-[18px] flex items-center justify-center transition-all duration-300 bg-[var(--danger)] text-[var(--on-accent-color)] shadow-lg hover:scale-105 active:scale-95"
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 bg-gradient-to-r from-[var(--danger)] to-[var(--danger)]/80 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 border border-[color:var(--danger)]/40"
                   title="Stop generation"
                 >
-                  <Square size={20} />
+                  <Square size={22} strokeWidth={2.5} />
                 </button>
               ) : (
                 <button
                   onClick={handleSubmit}
                   disabled={(!input.trim() && !attachment) || input.length > MAX_CHARS}
                   aria-label="Send message"
-                  className={`w-14 h-14 rounded-[18px] flex items-center justify-center transition-all duration-300 border ${
+                  className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 border font-semibold ${
                     input.trim() || attachment
-                      ? 'bg-[var(--accent)] text-[var(--on-accent-color)] border-transparent shadow-lg hover:scale-105 active:scale-95'
-                      : 'bg-[var(--surface-2)] text-[var(--text-muted)] cursor-not-allowed border-transparent'
+                      ? 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)] text-white border-transparent shadow-lg hover:shadow-xl hover:scale-105 active:scale-95'
+                      : 'bg-[var(--surface-2)]/40 text-[var(--text-muted)] cursor-not-allowed border-transparent'
                   }`}
                 >
-                  <CornerDownLeft size={24} strokeWidth={3} />
+                  <CornerDownLeft size={24} strokeWidth={2.5} />
                 </button>
               )}
             </div>

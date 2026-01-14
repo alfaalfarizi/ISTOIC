@@ -34,11 +34,11 @@ export const MobileNav: React.FC<MobileNavProps> = memo(({ activeFeature, setAct
     >
       <nav className="
         flex items-center gap-1 p-2
-        bg-skin-card/90 backdrop-blur-2xl 
-        border border-skin-border/80 
-        rounded-[24px] 
-        shadow-[0_12px_40px_-14px_rgba(0,0,0,0.2)]
-        ring-1 ring-black/5 dark:ring-white/5
+        bg-surface/95 backdrop-blur-xl 
+        border border-border
+        rounded-2xl 
+        shadow-[0_12px_40px_-14px_rgba(0,0,0,0.3)]
+        ring-1 ring-white/5
       ">
         
         {FEATURES.map((f) => {
@@ -50,12 +50,12 @@ export const MobileNav: React.FC<MobileNavProps> = memo(({ activeFeature, setAct
               aria-label={`Buka ${f.name}`}
               aria-current={isActive ? 'page' : undefined}
               className={`
-                relative w-12 h-12 min-w-[44px] min-h-[44px] touch-target flex flex-col items-center justify-center rounded-[18px] 
+                relative w-12 h-12 min-w-[44px] min-h-[44px] touch-target flex flex-col items-center justify-center rounded-lg 
                 transition-all duration-300 group
                 pointer-events-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]
                 ${isActive 
-                  ? 'bg-accent/10 text-accent shadow-[0_10px_24px_-16px_var(--accent-glow)]' 
-                  : 'text-text-muted hover:text-text hover:bg-surface border border-transparent'}
+                  ? 'bg-accent text-text-invert font-semibold shadow-sm' 
+                  : 'text-text-muted hover:text-text hover:bg-surface-2'}
               `}
             >
               <div className={`transition-transform duration-300 ${isActive ? '-translate-y-1 scale-110' : 'group-active:scale-95'}`}>
@@ -65,17 +65,17 @@ export const MobileNav: React.FC<MobileNavProps> = memo(({ activeFeature, setAct
           );
         })}
 
-        <div className="w-[1px] h-6 bg-black/10 dark:bg-white/10 mx-1"></div>
+        <div className="w-[1px] h-6 bg-border mx-1"></div>
 
         <div className="flex items-center gap-1">
             <button 
                 onClick={() => setActiveFeature('settings')} 
                 aria-label="Buka Pengaturan"
                 className={`
-                    w-12 h-12 min-w-[44px] min-h-[44px] touch-target flex items-center justify-center rounded-[18px] transition-all pointer-events-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]
+                    w-12 h-12 min-w-[44px] min-h-[44px] touch-target flex items-center justify-center rounded-lg transition-all pointer-events-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]
                     ${activeFeature === 'settings' 
-                        ? 'bg-accent text-text-invert shadow-lg scale-105' 
-                        : 'text-text-muted hover:text-text hover:bg-surface'}
+                        ? 'bg-accent text-text-invert shadow-sm' 
+                        : 'text-text-muted hover:text-text hover:bg-surface-2'}
                 `}
             >
                 <Settings size={20} className={activeFeature === 'settings' ? 'animate-spin-slow' : ''} />

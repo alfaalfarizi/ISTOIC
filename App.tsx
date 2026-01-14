@@ -183,7 +183,7 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes, isDebugOpen, s
                         case 'tools': return <ErrorBoundary viewName="NEURAL_ARSENAL"><AIToolsView key={language} /></ErrorBoundary>;
                         case 'system': return <ErrorBoundary viewName="SYSTEM_HEALTH"><SystemHealthView key={language} /></ErrorBoundary>;
                         case 'settings': return <ErrorBoundary viewName="CORE_CONFIG"><SettingsView key={language} onNavigate={handleNavigate} /></ErrorBoundary>;
-                        default: return <ErrorBoundary viewName="UNKNOWN_MODULE"><DashboardView key={language} onNavigate={handleNavigate} notes={notes} /></ErrorBoundary>;
+                        default: return <ErrorBoundary viewName="UNKNOWN_MODULE"><DashboardView key={language} onNavigate={handleNavigate} notes={notes} userName={userName || 'Account'} onLogout={onLogout} /></ErrorBoundary>;
                     }
                 })()}
             </div>

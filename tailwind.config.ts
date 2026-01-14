@@ -1,8 +1,6 @@
 import type { Config } from 'tailwindcss';
 
-// Helper to generate color values that respect Tailwind's opacity utilities.
-// Typed as `any` to keep Tailwind runtime behavior while avoiding overly strict TS config typing.
-const withOpacity = (variable: string): any => {
+const withOpacity = (variable: string) => {
   return ({ opacityValue }: { opacityValue?: string }) => {
     if (opacityValue === undefined) {
       return `rgb(var(${variable}))`;

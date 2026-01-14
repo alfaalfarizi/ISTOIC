@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, Suspense, lazy, useTransition, useRef, useCallback } from 'react';
-import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
+import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { Sidebar } from './components/Sidebar';
 import { MobileNav } from './components/MobileNav';
@@ -239,7 +239,7 @@ const AppContent: React.FC<AppContentProps> = ({ notes, setNotes, isDebugOpen, s
   };
 
   return (
-    <div className="flex min-h-[100dvh] w-full text-skin-text font-sans bg-skin-main theme-transition selection:bg-accent/30 selection:text-accent relative">
+    <div className="flex h-[100dvh] w-full text-skin-text font-sans bg-skin-main theme-transition overflow-hidden selection:bg-accent/30 selection:text-accent relative">
       
       {/* 1. Global Ambient Background Layer */}
       <div className="absolute inset-0 pointer-events-none z-0 transform-gpu">
@@ -386,37 +386,29 @@ const App: React.FC = () => {
     // ANDROID BACK BUTTON HANDLER (Capacitor)
     useEffect(() => {
         if (!Capacitor.isNativePlatform()) return;
-
-        let backHandler: PluginListenerHandle | undefined;
-
-        const setupBackHandler = async () => {
-            backHandler = await CapApp.addListener('backButton', ({ canGoBack }) => {
-                if (isDebugOpen) {
-                    setIsDebugOpen(false);
-                    return;
+        const backHandler = CapApp.addListener('backButton', ({ canGoBack }) => {
+            if (isDebugOpen) {
+                setIsDebugOpen(false);
+                return;
+            }
+            if (incomingConnection) {
+                clearIncoming();
+                return;
+            }
+            if (sessionMode === 'ISTOK' || sessionMode === 'TELEPONAN') {
+                setSessionMode('ISTOIC');
+                return;
+            }
+            if (sessionMode === 'ISTOIC') {
+                if (canGoBack) {
+                    window.history.back();
+                } else {
+                    setSessionMode('SELECT');
                 }
-                if (incomingConnection) {
-                    clearIncoming();
-                    return;
-                }
-                if (sessionMode === 'ISTOK' || sessionMode === 'TELEPONAN') {
-                    setSessionMode('ISTOIC');
-                    return;
-                }
-                if (sessionMode === 'ISTOIC') {
-                    if (canGoBack) {
-                        window.history.back();
-                    } else {
-                        setSessionMode('SELECT');
-                    }
-                }
-            });
-        };
-
-        void setupBackHandler();
-
+            }
+        });
         return () => {
-            backHandler?.remove();
+            backHandler.remove();
         };
     }, [sessionMode, isDebugOpen, incomingConnection, clearIncoming]);
     

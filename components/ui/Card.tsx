@@ -40,7 +40,7 @@ export const Card = React.forwardRef<HTMLElement, CardProps>(
     const Component = as;
     return (
       <Component
-        ref={ref as any}
+        ref={ref as React.Ref<HTMLElement>}
         className={cn(cardVariants({ tone, interactive, padding }), className)}
         {...props}
       />

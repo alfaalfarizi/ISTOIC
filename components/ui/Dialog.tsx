@@ -53,7 +53,7 @@ export const Dialog: React.FC<DialogProps> = ({ open, onClose, title, size = 'md
     const content = (
         <div
             ref={overlayRef}
-            className="fixed inset-0 z-[1200] bg-[rgb(var(--overlay-rgb)/0.6)] backdrop-blur-sm flex items-center justify-center px-4 pt-safe pb-safe"
+            className="fixed inset-0 z-[1200] bg-[rgb(var(--overlay-rgb)/0.6)] backdrop-blur-sm flex items-center justify-center px-4 py-10 md:py-16"
             onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
             role="dialog"
             aria-modal="true"
@@ -73,12 +73,7 @@ export const Dialog: React.FC<DialogProps> = ({ open, onClose, title, size = 'md
                 }
             }}
         >
-            <div
-                className={`relative w-full ${getSizeClass(size)} overflow-hidden rounded-[var(--radius-lg)] border border-border bg-surface shadow-[var(--shadow-strong)] flex flex-col`}
-                style={{
-                    maxHeight: 'calc(100dvh - var(--sat) - var(--sab) - 32px)'
-                }}
-            >
+            <div className={`relative w-full ${getSizeClass(size)} max-h-full overflow-hidden rounded-[var(--radius-lg)] border border-border bg-surface shadow-[var(--shadow-strong)] flex flex-col`}>
                 <div className="flex items-start justify-between gap-4 px-6 py-4 border-b border-border bg-surface-2">
                     <div>
                         <p className="overline text-text-muted">{title || 'Dialog'}</p>
@@ -92,7 +87,7 @@ export const Dialog: React.FC<DialogProps> = ({ open, onClose, title, size = 'md
                         <X size={18} />
                     </button>
                 </div>
-                <div className="flex-1 overflow-auto px-6 py-5 custom-scroll bg-surface" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <div className="flex-1 overflow-auto px-6 py-5 custom-scroll bg-surface">
                     {children}
                 </div>
                 {footer && (

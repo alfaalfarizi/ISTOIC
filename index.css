@@ -166,6 +166,32 @@ body {
   transition: background-color 0.4s ease, color 0.4s ease;
 }
 
+/* Focus styles for keyboard users (mobile + desktop) */
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: calc(var(--radius-sm));
+}
+
+/* Helper utility to ensure touch-friendly hit targets */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Respect user's reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+} 
+
 #root {
   height: 100%;
   width: 100%;

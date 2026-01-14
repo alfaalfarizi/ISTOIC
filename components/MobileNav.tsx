@@ -50,9 +50,9 @@ export const MobileNav: React.FC<MobileNavProps> = memo(({ activeFeature, setAct
               aria-label={`Buka ${f.name}`}
               aria-current={isActive ? 'page' : undefined}
               className={`
-                relative w-12 h-12 flex flex-col items-center justify-center rounded-[18px] 
+                relative w-12 h-12 min-w-[44px] min-h-[44px] touch-target flex flex-col items-center justify-center rounded-[18px] 
                 transition-all duration-300 group
-                pointer-events-auto
+                pointer-events-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]
                 ${isActive 
                   ? 'bg-accent/10 text-accent shadow-[0_10px_24px_-16px_var(--accent-glow)]' 
                   : 'text-text-muted hover:text-text hover:bg-surface border border-transparent'}
@@ -72,7 +72,7 @@ export const MobileNav: React.FC<MobileNavProps> = memo(({ activeFeature, setAct
                 onClick={() => setActiveFeature('settings')} 
                 aria-label="Buka Pengaturan"
                 className={`
-                    w-12 h-12 flex items-center justify-center rounded-[18px] transition-all pointer-events-auto
+                    w-12 h-12 min-w-[44px] min-h-[44px] touch-target flex items-center justify-center rounded-[18px] transition-all pointer-events-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]
                     ${activeFeature === 'settings' 
                         ? 'bg-accent text-text-invert shadow-lg scale-105' 
                         : 'text-text-muted hover:text-text hover:bg-surface'}

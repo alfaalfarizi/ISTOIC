@@ -80,14 +80,16 @@ export const LiveMiniPlayer: React.FC = () => {
                 <div className="p-3 border-t border-white/10 flex justify-between gap-2 bg-[#050505]">
                     <button 
                         onClick={toggleMinimize}
-                        className="flex-1 bg-white/10 hover:bg-white/20 text-white rounded-lg py-2 flex items-center justify-center transition-all"
+                        aria-label="Maximize"
+                        className="flex-1 bg-white/10 hover:bg-white/20 text-white rounded-lg py-2 min-h-[44px] touch-target flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
                         title="Maximize"
                     >
                         <Maximize2 size={16} />
                     </button>
                     <button 
                         onClick={stopSession}
-                        className="flex-1 bg-red-500/20 hover:bg-red-600 text-red-500 hover:text-white rounded-lg py-2 flex items-center justify-center transition-all border border-red-500/20 hover:border-transparent"
+                        aria-label="Terminate Connection"
+                        className="flex-1 bg-red-500/20 hover:bg-red-600 text-red-500 hover:text-white rounded-lg py-2 min-h-[44px] touch-target flex items-center justify-center transition-all border border-red-500/20 hover:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
                         title="Terminate Connection"
                     >
                         <PhoneOff size={16} />

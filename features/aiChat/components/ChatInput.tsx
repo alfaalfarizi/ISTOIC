@@ -100,7 +100,8 @@ export const ChatInput: React.FC<ChatInputProps> = memo(
         const textarea = inputRef.current;
         requestAnimationFrame(() => {
           textarea.style.height = 'auto';
-          const newHeight = Math.min(textarea.scrollHeight, 150);
+          const maxHeight = Math.min(240, window.innerHeight * 0.4);
+          const newHeight = Math.min(textarea.scrollHeight, maxHeight);
           textarea.style.height = `${Math.max(24, newHeight)}px`;
         });
       }
@@ -307,7 +308,7 @@ export const ChatInput: React.FC<ChatInputProps> = memo(
         )}
 
         <div
-          className={`w-full transition-all duration-300 bg-gradient-to-b from-[var(--surface)]/98 to-[var(--surface-2)]/95 border border-[color:var(--border)]/60 rounded-[28px] p-3 flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.15)] backdrop-blur-lg ${
+          className={`w-full transition-all duration-300 bg-[var(--surface)] border border-[color:var(--border)]/80 rounded-[24px] p-3 flex flex-col shadow-[0_10px_30px_rgba(15,23,42,0.08)] ${
             isDictating
               ? 'ring-2 ring-[color:var(--accent)] border-[color:var(--accent)]/60'
               : isFocused || isDragOver
@@ -363,7 +364,7 @@ export const ChatInput: React.FC<ChatInputProps> = memo(
                 onFocusChange(false);
               }}
               placeholder={isDictating ? '🎤 Listening...' : personaMode === 'hanisah' ? 'Tanya Hanisah tentang apa...' : 'Kirim perintah logis ke Stoic...'}
-              className="w-full bg-transparent text-base leading-relaxed font-medium text-[var(--text)] placeholder:text-[var(--text-muted)]/70 resize-none focus:outline-none max-h-60 custom-scroll"
+              className="w-full bg-transparent text-[15px] leading-relaxed font-medium text-[var(--text)] placeholder:text-[var(--text-muted)]/70 resize-none focus:outline-none max-h-[40vh] custom-scroll"
               rows={1}
               aria-label="Chat input"
               disabled={isLoading && !onStop}
@@ -518,4 +519,3 @@ export const ChatInput: React.FC<ChatInputProps> = memo(
     );
   }
 );
-

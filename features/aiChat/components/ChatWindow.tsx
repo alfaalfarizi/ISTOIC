@@ -15,13 +15,13 @@ type RetryContext = {
 };
 
 const TypingIndicator = ({ personaMode }: { personaMode: 'hanisah' | 'stoic' }) => (
-  <div className="flex justify-start mb-5 px-2 md:px-4 animate-fade-in w-full">
+  <div className="flex justify-start mb-5 px-3 md:px-6 animate-fade-in w-full">
     <div className="flex flex-col gap-2 mr-3 shrink-0 mt-1">
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md border border-[color:var(--border)] bg-gradient-to-br from-[var(--surface)] to-[var(--surface-2)] text-[var(--accent)] group-hover:shadow-lg transition-all duration-300">
+      <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm border border-[color:var(--border)] bg-[var(--surface)] text-[var(--accent)]">
         {personaMode === 'hanisah' ? <Flame size={18} strokeWidth={2.2} /> : <Brain size={18} strokeWidth={2.2} />}
       </div>
     </div>
-    <div className="bg-gradient-to-r from-[var(--surface)] to-[var(--surface-2)] border border-[color:var(--border)] rounded-2xl px-5 py-4 flex items-center gap-2 shadow-md h-[50px] backdrop-blur-sm">
+    <div className="bg-[var(--surface)] border border-[color:var(--border)]/70 rounded-[20px] px-5 py-4 flex items-center gap-2 shadow-sm h-[46px]">
       <div className="w-2 h-2 bg-[var(--accent)] rounded-full animate-bounce [animation-delay:-0.3s]" style={{opacity: 0.8}}></div>
       <div className="w-2 h-2 bg-[var(--accent)] rounded-full animate-bounce [animation-delay:-0.15s]" style={{opacity: 0.6}}></div>
       <div className="w-2 h-2 bg-[var(--accent)] rounded-full animate-bounce" style={{opacity: 0.4}}></div>
@@ -134,22 +134,27 @@ const MessageBubble = memo(
     if (isModel && !content && !isStreaming && !thought && !isError) return null;
 
     const bubbleClasses = isModel
-      ? 'bg-gradient-to-br from-[var(--surface)] to-[var(--surface-2)] text-[var(--text)] border border-[color:var(--border)]/60 shadow-md hover:shadow-lg hover:border-[color:var(--border)] transition-all duration-300'
-      : 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-2)] text-[var(--text-invert)] border border-[color:var(--accent)]/50 shadow-md hover:shadow-lg transition-all duration-300';
+      ? 'bg-[var(--surface)] text-[var(--text)] border border-[color:var(--border)]/70 shadow-[0_8px_24px_rgba(15,23,42,0.08)]'
+      : 'bg-[var(--accent)] text-[var(--text-invert)] border border-[color:var(--accent)]/40 shadow-[0_8px_24px_rgba(var(--accent-rgb),0.25)]';
+
+    const inlineCodeClass = isModel
+      ? 'bg-[var(--surface-2)] text-[var(--accent)]'
+      : 'bg-white/20 text-[var(--text-invert)]';
+    const proseTextClass = isModel ? 'text-[var(--text)]' : 'text-[var(--text-invert)] prose-invert';
 
     return (
-      <div className={`flex w-full mb-6 ${isModel ? 'justify-start' : 'justify-end'} px-2 md:px-4 animate-fade-in`}>
+      <div className={`flex w-full mb-6 ${isModel ? 'justify-start' : 'justify-end'} px-3 md:px-6 animate-fade-in`}>
         {isModel && (
           <div className="flex flex-col gap-2 mr-4 shrink-0 mt-1">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md border border-[color:var(--border)] bg-gradient-to-br from-[var(--surface)] to-[var(--surface-2)] text-[var(--accent)] group-hover:shadow-lg transition-all duration-300">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm border border-[color:var(--border)] bg-[var(--surface)] text-[var(--accent)]">
               {isError ? <AlertTriangle size={18} strokeWidth={2.2} /> : personaMode === 'hanisah' ? <Flame size={18} strokeWidth={2.2} /> : <Brain size={18} strokeWidth={2.2} />}
             </div>
           </div>
         )}
 
-        <div className={`flex flex-col max-w-[92%] sm:max-w-[85%] lg:max-w-[75%] min-w-0 ${isModel ? 'items-start' : 'items-end'}`}>
+        <div className={`flex flex-col max-w-[92%] sm:max-w-[82%] lg:max-w-[72%] min-w-0 ${isModel ? 'items-start' : 'items-end'}`}>
           <div className={`flex items-start gap-3 ${isModel ? 'flex-row' : 'flex-row-reverse'}`}>
-            <div className={`relative px-5 py-4 md:px-6 md:py-5 rounded-2xl text-base md:text-[15px] leading-relaxed ${bubbleClasses}`}>
+            <div className={`relative px-5 py-4 md:px-6 md:py-5 rounded-[20px] text-[15px] leading-relaxed ${bubbleClasses}`}>
               {thought && (
                 <button
                   className="flex items-center gap-2 text-[13px] font-semibold text-[var(--accent)] mb-3 px-3 py-2 bg-[var(--accent)]/10 rounded-lg w-full hover:bg-[var(--accent)]/20 transition-all duration-200"
@@ -167,7 +172,7 @@ const MessageBubble = memo(
               )}
 
               {content && (
-                <div className="prose dark:prose-invert prose-sm max-w-none break-words text-[var(--text)]">
+                <div className={`prose prose-sm max-w-none break-words ${proseTextClass} prose-p:leading-relaxed prose-li:leading-relaxed`}>
                   <Markdown
                     components={{
                       a: ({ children, href }) => (
@@ -175,7 +180,11 @@ const MessageBubble = memo(
                           href={href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[var(--accent)] underline decoration-[var(--accent)] hover:decoration-2 transition-all duration-200"
+                          className={
+                            isModel
+                              ? 'text-[var(--accent)] underline decoration-[var(--accent)] hover:decoration-2 transition-all duration-200'
+                              : 'text-[var(--text-invert)] underline decoration-white/60 hover:decoration-white transition-all duration-200'
+                          }
                         >
                           {children}
                         </a>
@@ -183,14 +192,14 @@ const MessageBubble = memo(
                       code({ inline, className, children, ...props }) {
                         if (inline) {
                           return (
-                            <code className="px-2 py-1 rounded-lg bg-[var(--surface-2)] text-[var(--accent)] text-[12px] font-semibold" {...props}>
+                            <code className={`px-2 py-1 rounded-lg text-[12px] font-semibold ${inlineCodeClass}`} {...props}>
                               {children}
                             </code>
                           );
                         }
                         const lang = /language-(\w+)/.exec(className || '');
                         return (
-                          <pre className="bg-[var(--surface-2)]/80 border border-[color:var(--border)] rounded-xl p-4 overflow-x-auto text-[13px] my-3 shadow-md">
+                          <pre className="bg-[var(--surface-2)] border border-[color:var(--border)] rounded-xl p-4 overflow-x-auto text-[13px] my-3 shadow-sm max-w-full">
                             <code className={lang ? `language-${lang[1]}` : ''}>{children}</code>
                           </pre>
                         );
@@ -276,10 +285,11 @@ interface ChatWindowProps {
   isLoading: boolean;
   messagesEndRef: React.RefObject<HTMLDivElement>;
   onRetry?: (messageId: string, retryContext: RetryContext) => void;
+  onAtBottomChange?: (atBottom: boolean) => void;
 }
 
 export const ChatWindow: React.FC<ChatWindowProps> = memo(
-  ({ messages, personaMode, isLoading, messagesEndRef, onRetry }) => {
+  ({ messages, personaMode, isLoading, messagesEndRef, onRetry, onAtBottomChange }) => {
     const virtuosoRef = useRef<VirtuosoHandle>(null);
     const [isAtBottom, setIsAtBottom] = useState(true);
 
@@ -306,9 +316,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = memo(
       return () => <div className="h-4" ref={messagesEndRef} />;
     }, [messagesEndRef]);
 
-    const handleAtBottomChange = useCallback((atBottom: boolean) => {
-      setIsAtBottom(atBottom);
-    }, []);
+    const handleAtBottomChange = useCallback(
+      (atBottom: boolean) => {
+        setIsAtBottom(atBottom);
+        onAtBottomChange?.(atBottom);
+      },
+      [onAtBottomChange]
+    );
 
     return (
       <div className="h-full w-full min-h-0 flex-1 flex flex-col relative bg-[var(--bg)]" style={{ overscrollBehavior: 'contain' }}>
@@ -353,9 +367,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = memo(
     );
   }
 );
-
-
-
 
 
 
